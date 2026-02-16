@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}{{ level.name_ar }} - {{ track.name_ar }} - Verse Framework{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+    <a href="{{ url_for('home') }}">🏠 الرئيسية</a>
+    <span class="breadcrumb-sep">‹</span>
+    <a href="{{ url_for('track', track_id=track.id) }}">{{ track.icon }} {{ track.name_ar }}</a>
+    <span class="breadcrumb-sep">‹</span>
+    <span class="breadcrumb-current">{{ level.icon }} {{ level.name_ar }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="level-hero" style="--track-color: {{ track.color }}">
+    <div class="level-hero-content">
+        <span class="level-hero-icon">{{ level.icon }}</span>
+        <h1>
+            <span class="editable-field" data-api-url="/api/level/{{ track.id }}/{{ level.id }}" data-field-name="name_ar">
+                <span class="editable-text">{{ level.name_ar }}</span>
+                <button class="edit-btn" onclick="startInlineEdit(this)">✏️</button>
+            </span>
+        </h1>
+        <p class="level-hero-en">{{ level.name }}</p>
+        <p class="level-hero-slogan">
+            "<span class="editable-field" data-api-url="/api/level/{{ track.id }}/{{ level.id }}" data-field-name="slogan">
+                <span class="editable-text">{{ level.slogan }}</span>
+                <button class="edit-btn" onclick="startInlineEdit(this)">✏️</button>
+            </span>"
+        </p>
+        <p class="level-hero-goal">
+            <span class="editable-field" data-api-url="/api/level/{{ track.id }}/{{ level.id }}" data-field-name="goal">
+                <span class="editable-text">{{ level.goal }}</span>
+                <button class="edit-btn" onclick="startInlineEdit(this)">✏️</button>
+            </span>
+        </p>
+    </div>
+</section>
+
+<section class="units-section">
+    <h2 class="section-title">📖 الوحدات التعليمية</h2>
+    <div class="units-grid">
+        {% for unit in level.units %}
+        <a href="{{ url_for('unit', track_id=track.id, level_id=level.id, unit_id=unit.id) }}" class="unit-card animate-on-scroll" style="--track-color: {{ track.color }}; --unit-index: {{ loop.index }}">
+            <div class="unit-number">الوحدة {{ loop.index }}</div>
+            <h3 class="unit-name">{{ unit.name }}</h3>
+            <p class="unit-name-en">{{ unit.name_en }}</p>
+            <p class="unit-description">{{ unit.description }}</p>
+            <div class="unit-preview-info">
+                <div class="unit-objectives-count">
+                    <span class="count-icon">🎯</span>
+                    <span>{{ unit.objectives|length }} أهداف</span>
+                </div>
+                <div class="unit-project-badge">
+                    <span class="count-icon">🏗️</span>
+                    <span>{{ unit.project.name }}</span>
+                </div>
+            </div>
+            <div class="unit-skills">
+                {% for skill in unit.skills %}
+                <span class="skill-tag">{{ skill }}</span>
+                {% endfor %}
+            </div>
+            <div class="unit-arrow">← اكتشف</div>
+        </a>
+        {% endfor %}
+
+        <!-- Add Unit Card (visible only in edit mode) -->
+        <div class="add-unit-card" onclick="addUnit('{{ track.id }}', '{{ level.id }}')">
+            <span class="add-icon">➕</span>
+            <span>إضافة وحدة جديدة</span>
+        </div>
+    </div>
+</section>
+{% endblock %}

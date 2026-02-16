@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}{{ track.name_ar }} - Verse Framework{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+    <a href="{{ url_for('home') }}">🏠 الرئيسية</a>
+    <span class="breadcrumb-sep">‹</span>
+    <span class="breadcrumb-current">{{ track.icon }} {{ track.name_ar }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="track-hero" style="--track-color: {{ track.color }}">
+    <div class="track-hero-content">
+        <span class="track-hero-icon">{{ track.icon }}</span>
+        <h1>
+            <span class="editable-field" data-api-url="/api/track/{{ track.id }}" data-field-name="name_ar">
+                <span class="editable-text">{{ track.name_ar }}</span>
+                <button class="edit-btn" onclick="startInlineEdit(this)">✏️</button>
+            </span>
+        </h1>
+        <p class="track-hero-en">{{ track.name }}</p>
+        <p class="track-hero-desc">
+            <span class="editable-field" data-api-url="/api/track/{{ track.id }}" data-field-name="description_ar">
+                <span class="editable-text">{{ track.description_ar }}</span>
+                <button class="edit-btn" onclick="startInlineEdit(this)">✏️</button>
+            </span>
+        </p>
+    </div>
+</section>
+
+<section class="levels-section">
+    <h2 class="section-title">📚 المستويات</h2>
+    <div class="levels-timeline">
+        {% for level in track.levels %}
+        <a href="{{ url_for('level', track_id=track.id, level_id=level.id) }}" class="level-card animate-on-scroll" style="--track-color: {{ track.color }}; --level-index: {{ loop.index }}">
+            <div class="level-number">{{ loop.index }}</div>
+            <div class="level-content">
+                <div class="level-header">
+                    <span class="level-icon-large">{{ level.icon }}</span>
+                    <div>
+                        <h3>{{ level.name_ar }}</h3>
+                        <span class="level-name-en">{{ level.name }}</span>
+                    </div>
+                </div>
+                <p class="level-slogan">"{{ level.slogan }}"</p>
+                <p class="level-goal">{{ level.goal }}</p>
+                <div class="level-units-preview">
+                    {% for unit in level.units %}
+                    <span class="unit-dot" title="{{ unit.name }}"></span>
+                    {% endfor %}
+                    <span class="units-count">{{ level.units|length }} وحدات</span>
+                </div>
+            </div>
+            <div class="level-arrow">←</div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

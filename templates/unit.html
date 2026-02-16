@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}{{ unit.name }} - {{ level.name_ar }} - {{ track.name_ar }}{% endblock %}
+
+{% block breadcrumb %}
+<div class="breadcrumb">
+    <a href="{{ url_for('home') }}">🏠 الرئيسية</a>
+    <span class="breadcrumb-sep">‹</span>
+    <a href="{{ url_for('track', track_id=track.id) }}">{{ track.icon }} {{ track.name_ar }}</a>
+    <span class="breadcrumb-sep">‹</span>
+    <a href="{{ url_for('level', track_id=track.id, level_id=level.id) }}">{{ level.icon }} {{ level.name_ar }}</a>
+    <span class="breadcrumb-sep">‹</span>
+    <span class="breadcrumb-current">{{ unit.name }}</span>
+</div>
+{% endblock %}
+
+{% block content %}
+<section class="unit-hero" style="--track-color: {{ track.color }}">
+    <div class="unit-hero-content">
+        <div class="unit-hero-badge">{{ track.icon }} {{ track.name_ar }} • {{ level.icon }} {{ level.name_ar }}</div>
+
+        <h1>
+            <span class="editable-field" data-api-url="/api/unit/{{ track.id }}/{{ level.id }}/{{ unit.id }}" data-field-name="name">
+                <span class="editable-text">{{ unit.name }}</span>
+                <button class="edit-btn" onclick="startInlineEdit(this)">✏️</button>
+            </span>
+        </h1>
+
+        <p class="unit-hero-en">
+            <span class="editable-field" data-api-url="/api/unit/{{ track.id }}/{{ level.id }}/{{ unit.id }}" data-field-name="name_en">
+                <span class="editable-text">{{ unit.name_en }}</span>
+                <button class="edit-btn" onclick="startInlineEdit(this)">✏️</button>
+            </span>
+        </p>
+
+        <p class="unit-hero-desc">
+            <span class="editable-field" data-api-url="/api/unit/{{ track.id }}/{{ level.id }}/{{ unit.id }}" data-field-name="description">
+                <span class="editable-text">{{ unit.description }}</span>
+                <button class="edit-btn" onclick="startInlineEdit(this)">✏️</button>
+            </span>
+        </p>
+
+        <div class="section-actions">
+            <button class="delete-btn" onclick="deleteUnit('{{ track.id }}', '{{ level.id }}', '{{ unit.id }}')">🗑️ حذف الوحدة</button>
+        </div>
+    </div>
+</section>
+
+<div class="unit-content-wrapper">
+    <section class="objectives-section animate-on-scroll">
+        <h2 class="section-title">🎯 أهداف التعلم</h2>
+        <div class="objectives-list">
+            {% for obj in unit.objectives %}
+            {% set bloom_colors = {
+                'تذكر': '#74B9FF',
+                'فهم': '#55EFC4',
+                'تطبيق': '#FFEAA7',
+                'تحليل': '#FD79A8',
+                'تقييم': '#E17055',
+                'ابتكار': '#A29BFE'
+            } %}
+            <div class="objective-card" style="--bloom-color: {{ bloom_colors.get(obj.bloom, '#74B9FF') }}"
+                 data-obj-id="{{ obj.id }}"
+                 data-obj-bloom="{{ obj.bloom }}"
+                 data-obj-objective="{{ obj.objective }}"
+                 data-obj-outcome="{{ obj.outcome }}">
+                <div class="objective-header">
+                    <span class="bloom-badge" style="background-color: {{ bloom_colors.get(obj.bloom, '#74B9FF') }}">
+                        {{ obj.bloom }}
+                        <span class="bloom-en">{{ obj.bloom_en }}</span>
+                    </span>
+                    <button class="edit-btn obj-edit-btn">✏️ تعديل</button>
+                    <button class="delete-btn obj-delete-btn" style="padding: 4px 10px; font-size: 0.8rem;">🗑️</button>
+                </div>
+                <div class="objective-body">
+                    <div class="objective-text">
+                        <h4>🎯 الهدف</h4>
+                        <p>{{ obj.objective }}</p>
+                    </div>
+                    <div class="outcome-text">
+                        <h4>✅ المخرج</h4>
+                        <p>{{ obj.outcome }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="section-actions">
+            <button class="add-btn" onclick="addObjective('{{ track.id }}', '{{ level.id }}', '{{ unit.id }}')">➕ إضافة هدف</button>
+        </div>
+    </section>
+
+    <section class="project-section animate-on-scroll">
+        <h2 class="section-title">🏗️ المشروع</h2>
+        <div class="project-card" style="--track-color: {{ track.color }}">
+            <div class="project-icon">🚀</div>
+            <h3>
+                <span class="editable-field" data-api-url="/api/unit/{{ track.id }}/{{ level.id }}/{{ unit.id }}" data-field-name="project_name">
+                    <span class="editable-text">{{ unit.project.name }}</span>
+                    <button class="edit-btn" onclick="startInlineEdit(this)">✏️</button>
+                </span>
+            </h3>
+            <p>
+                <span class="editable-field" data-api-url="/api/unit/{{ track.id }}/{{ level.id }}/{{ unit.id }}" data-field-name="project_description">
+                    <span class="editable-text">{{ unit.project.description }}</span>
+                    <button class="edit-btn" onclick="startInlineEdit(this)">✏️</button>
+                </span>
+            </p>
+        </div>
+    </section>
+
+    <section class="skills-section animate-on-scroll">
+        <h2 class="section-title">💡 المهارات المكتسبة</h2>
+        <div class="skills-grid">
+            {% for skill in unit.skills_raw %}
+            <div class="skill-card" style="--track-color: {{ track.color }}" data-skill-id="{{ skill.id }}">
+                <span class="skill-icon">⭐</span>
+                <span>{{ skill.name }}</span>
+                <button class="delete-btn skill-delete-btn" style="padding: 2px 8px; font-size: 0.75rem; margin-right: auto;">✕</button>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="section-actions">
+            <button class="add-btn" onclick="addSkill('{{ track.id }}', '{{ level.id }}', '{{ unit.id }}')">➕ إضافة مهارة</button>
+        </div>
+    </section>
+
+    <div class="unit-navigation">
+        {% set unit_index = level.units.index(unit) if unit in level.units else -1 %}
+        {% if unit_index == -1 %}
+            {% for u in level.units %}
+                {% if u.id == unit.id %}
+                    {% set unit_index = loop.index0 %}
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+
+        {% set ns = namespace(idx=-1) %}
+        {% for u in level.units %}
+            {% if u.id == unit.id %}
+                {% set ns.idx = loop.index0 %}
+            {% endif %}
+        {% endfor %}
+
+        {% if ns.idx > 0 %}
+        <a href="{{ url_for('unit', track_id=track.id, level_id=level.id, unit_id=level.units[ns.idx - 1].id) }}" class="nav-btn nav-prev" style="--track-color: {{ track.color }}">
+            → الوحدة السابقة
+        </a>
+        {% else %}
+        <div></div>
+        {% endif %}
+
+        {% if ns.idx >= 0 and ns.idx < level.units|length - 1 %}
+        <a href="{{ url_for('unit', track_id=track.id, level_id=level.id, unit_id=level.units[ns.idx + 1].id) }}" class="nav-btn nav-next" style="--track-color: {{ track.color }}">
+            الوحدة التالية ←
+        </a>
+        {% else %}
+        <div></div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

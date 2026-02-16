@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}Verse Framework - إطار فيرس التعليمي{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <h1 class="hero-title">🌟 إطار فيرس التعليمي 🌟</h1>
+        <p class="hero-subtitle">اكتشف عوالم التقنية الأربعة وابدأ رحلتك نحو المستقبل!</p>
+        <div class="hero-stats">
+            <div class="stat-item">
+                <span class="stat-number">4</span>
+                <span class="stat-label">مسارات</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">16</span>
+                <span class="stat-label">مستوى</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number">64</span>
+                <span class="stat-label">وحدة تعليمية</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="tracks-section">
+    <h2 class="section-title">🚀 اختر مسارك</h2>
+    <div class="tracks-grid">
+        {% for track in tracks %}
+        <a href="{{ url_for('track', track_id=track.id) }}" class="track-card animate-on-scroll" style="--track-color: {{ track.color }}">
+            <div class="track-icon">{{ track.icon }}</div>
+            <h3 class="track-name">{{ track.name_ar }}</h3>
+            <p class="track-name-en">{{ track.name }}</p>
+            <p class="track-description">{{ track.description_ar }}</p>
+            <div class="track-meta">
+                <span class="meta-badge">4 مستويات</span>
+                <span class="meta-badge">16 وحدة</span>
+            </div>
+            <div class="track-arrow">←</div>
+        </a>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="levels-preview">
+    <h2 class="section-title">📈 مستويات التعلم</h2>
+    <div class="levels-row">
+        <div class="level-preview-card">
+            <span class="level-icon">🔍</span>
+            <h4>المستكشف</h4>
+            <p>Explorer</p>
+        </div>
+        <div class="level-arrow-connector">→</div>
+        <div class="level-preview-card">
+            <span class="level-icon">🔨</span>
+            <h4>المبدع</h4>
+            <p>Builder</p>
+        </div>
+        <div class="level-arrow-connector">→</div>
+        <div class="level-preview-card">
+            <span class="level-icon">🧠</span>
+            <h4>المفكر</h4>
+            <p>Thinker</p>
+        </div>
+        <div class="level-arrow-connector">→</div>
+        <div class="level-preview-card">
+            <span class="level-icon">🚀</span>
+            <h4>المبتكر</h4>
+            <p>Innovator</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
