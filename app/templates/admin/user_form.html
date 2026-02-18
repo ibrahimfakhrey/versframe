@@ -1,0 +1,66 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}{{ 'تعديل المستخدم' if user is defined and user else 'إضافة مستخدم جديد' }}{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:600px;">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label class="form-label">الاسم بالعربية *</label>
+            <input type="text" name="name_ar" class="form-input" value="{{ user.name_ar if user is defined and user else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">الاسم بالإنجليزية</label>
+            <input type="text" name="name_en" class="form-input" value="{{ user.name_en if user is defined and user else '' }}" dir="ltr">
+        </div>
+        <div class="form-group">
+            <label class="form-label">البريد الإلكتروني *</label>
+            <input type="email" name="email" class="form-input" value="{{ user.email if user is defined and user else '' }}" required dir="ltr">
+        </div>
+        <div class="form-group">
+            <label class="form-label">رقم الهاتف</label>
+            <input type="tel" name="phone" class="form-input" value="{{ user.phone if user is defined and user and user.phone else '' }}" dir="ltr">
+        </div>
+        <div class="form-group">
+            <label class="form-label">الدور *</label>
+            <select name="role" class="form-select">
+                {% set current_role = user.role.value if user is defined and user else 'student' %}
+                <option value="student" {{ 'selected' if current_role=='student' }}>طالب</option>
+                <option value="teacher" {{ 'selected' if current_role=='teacher' }}>معلم</option>
+                <option value="parent" {{ 'selected' if current_role=='parent' }}>ولي أمر</option>
+                <option value="assessor" {{ 'selected' if current_role=='assessor' }}>مقيّم</option>
+                <option value="admin" {{ 'selected' if current_role=='admin' }}>مدير</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">{{ 'كلمة المرور الجديدة (اتركها فارغة لعدم التغيير)' if user is defined and user else 'كلمة المرور *' }}</label>
+            <input type="password" name="password" class="form-input" {{ '' if user is defined and user else 'required' }} dir="ltr" minlength="6">
+        </div>
+        {% if user is defined and user %}
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:var(--space-sm);cursor:pointer;">
+                <input type="checkbox" name="is_active" {{ 'checked' if user.is_active }} style="accent-color:var(--sv-purple);">
+                <span>الحساب نشط</span>
+            </label>
+        </div>
+        {% endif %}
+        <div style="display:flex;gap:var(--space-md);">
+            <button type="submit" class="btn btn-primary">{{ 'حفظ التعديلات' if user is defined and user else 'إنشاء المستخدم' }}</button>
+            <a href="{{ url_for('admin.users') }}" class="btn btn-outline">إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

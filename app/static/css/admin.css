@@ -1,0 +1,73 @@
+/* === Admin Specific === */
+.admin-quick-actions {
+  display: flex;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-xl);
+}
+
+/* Resource upload area */
+.upload-area {
+  border: 2px dashed var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-2xl);
+  text-align: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.upload-area:hover {
+  border-color: var(--sv-purple);
+  background: var(--sv-purple-glow);
+}
+.upload-area.dragging {
+  border-color: var(--sv-orange);
+  background: var(--sv-orange-glow);
+}
+.upload-icon { font-size: 2rem; margin-bottom: var(--space-md); }
+.upload-text { font-size: var(--text-sm); color: var(--text-secondary); }
+
+/* Calendar placeholder */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.calendar-header {
+  padding: var(--space-sm);
+  text-align: center;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-bold);
+  color: var(--text-secondary);
+}
+.calendar-day {
+  padding: var(--space-sm);
+  min-height: 80px;
+  background: var(--bg-card);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-xs);
+}
+.calendar-day.today { border: 2px solid var(--sv-purple); }
+.calendar-event {
+  padding: 2px 6px;
+  background: var(--sv-purple-glow);
+  color: var(--sv-purple);
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* User role indicator */
+.role-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  display: inline-block;
+}
+.role-dot.admin { background: var(--danger); }
+.role-dot.teacher { background: var(--sv-purple); }
+.role-dot.student { background: var(--sv-orange); }
+.role-dot.parent { background: var(--success); }
+.role-dot.assessor { background: var(--info); }

@@ -1,0 +1,211 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}الشارات - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+.badges-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+.badge-stat-card {
+    text-align: center;
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+.badge-stat-value {
+    font-size: var(--text-3xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--sv-purple);
+}
+.badge-stat-label {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin-top: var(--space-xs);
+}
+.badges-section-title {
+    font-size: var(--text-lg);
+    font-weight: var(--fw-bold);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.badge-detail-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+}
+.badge-detail-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    border-radius: var(--radius-xl);
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    text-align: center;
+    transition: all var(--transition-fast);
+}
+.badge-detail-item:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+.badge-detail-item.earned {
+    border-color: var(--sv-purple);
+    background: linear-gradient(180deg, rgba(100,13,95,0.04) 0%, var(--bg-card) 100%);
+}
+.badge-detail-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    background: linear-gradient(135deg, var(--sv-purple), var(--sv-orange));
+    color: white;
+    box-shadow: var(--shadow-purple);
+}
+.badge-detail-item.locked .badge-detail-icon {
+    background: var(--border);
+    color: var(--text-muted);
+    filter: grayscale(1);
+    box-shadow: none;
+}
+.badge-detail-name {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+}
+.badge-detail-desc {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    line-height: 1.4;
+}
+.badge-earned-date {
+    font-size: var(--text-xs);
+    color: var(--sv-orange);
+    font-weight: var(--fw-medium);
+}
+@media (max-width: 768px) {
+    .badges-stats { grid-template-columns: 1fr; }
+    .badge-detail-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
+}
+</style>
+{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.badges') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت اليومية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
+    <span>التقويم</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}الشارات{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">🏅 مجموعة الشارات</div>
+    <div class="page-subtitle">شاراتك المكتسبة وإنجازاتك في الفيرس</div>
+</div>
+
+<!-- Stats -->
+<div class="badges-stats">
+    <div class="badge-stat-card">
+        <div class="badge-stat-value">{{ earned_badges|length }}</div>
+        <div class="badge-stat-label">شارات مكتسبة</div>
+    </div>
+    <div class="badge-stat-card">
+        <div class="badge-stat-value">{{ all_badges|length }}</div>
+        <div class="badge-stat-label">إجمالي الشارات</div>
+    </div>
+    <div class="badge-stat-card">
+        <div class="badge-stat-value">
+            {% if all_badges|length > 0 %}
+                {{ ((earned_badges|length / all_badges|length) * 100)|int }}%
+            {% else %}
+                0%
+            {% endif %}
+        </div>
+        <div class="badge-stat-label">نسبة الإنجاز</div>
+    </div>
+</div>
+
+<!-- Earned Badges -->
+{% if earned_badges %}
+<div class="badges-section-title">🌟 الشارات المكتسبة</div>
+<div class="badge-detail-grid">
+    {% for eb in earned_badges %}
+    <div class="badge-detail-item earned">
+        <div class="badge-detail-icon">{{ eb.badge.icon }}</div>
+        <div class="badge-detail-name">{{ eb.badge.name_ar }}</div>
+        <div class="badge-detail-desc">{{ eb.badge.description }}</div>
+        <div class="badge-earned-date">{{ eb.earned_at.strftime('%d/%m/%Y') }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+<!-- Locked Badges -->
+{% set earned_ids = earned_badges|map(attribute='badge.id')|list if earned_badges else [] %}
+{% set locked_badges = [] %}
+{% for badge in all_badges %}
+    {% if badge.id not in earned_ids %}
+        {% if locked_badges.append(badge) %}{% endif %}
+    {% endif %}
+{% endfor %}
+
+{% if locked_badges %}
+<div class="badges-section-title">🔒 شارات لم تُكتسب بعد</div>
+<div class="badge-detail-grid">
+    {% for badge in locked_badges %}
+    <div class="badge-detail-item locked">
+        <div class="badge-detail-icon">{{ badge.icon }}</div>
+        <div class="badge-detail-name">{{ badge.name_ar }}</div>
+        <div class="badge-detail-desc">{{ badge.description }}</div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
+
+{% if not earned_badges and not all_badges %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon">🏅</div>
+        <div class="empty-state-text">لا توجد شارات متاحة حاليًا</div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

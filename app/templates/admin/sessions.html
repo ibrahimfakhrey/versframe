@@ -1,0 +1,74 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}إدارة الجلسات{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;gap:var(--space-sm);margin-bottom:var(--space-lg);">
+    <a href="{{ url_for('admin.sessions') }}" class="btn {{ 'btn-primary' if not status_filter else 'btn-outline' }} btn-sm">الكل</a>
+    <a href="{{ url_for('admin.sessions', status='scheduled') }}" class="btn {{ 'btn-primary' if status_filter=='scheduled' else 'btn-outline' }} btn-sm">مجدولة</a>
+    <a href="{{ url_for('admin.sessions', status='live') }}" class="btn {{ 'btn-primary' if status_filter=='live' else 'btn-outline' }} btn-sm">مباشرة</a>
+    <a href="{{ url_for('admin.sessions', status='completed') }}" class="btn {{ 'btn-primary' if status_filter=='completed' else 'btn-outline' }} btn-sm">مكتملة</a>
+</div>
+
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr><th>العنوان</th><th>المجموعة</th><th>المعلم</th><th>الموعد</th><th>الحالة</th><th>إجراءات</th></tr>
+        </thead>
+        <tbody>
+            {% for s in items %}
+            <tr>
+                <td style="font-weight:600;">{{ s.title }}</td>
+                <td class="text-sm">{{ s.group.name if s.group else '—' }}</td>
+                <td class="text-sm">{{ s.teacher.name_ar if s.teacher else '—' }}</td>
+                <td class="text-sm">{{ s.scheduled_at.strftime('%Y-%m-%d %H:%M') if s.scheduled_at else '—' }}</td>
+                <td>
+                    {% if s.status.value == 'live' %}
+                    <span class="badge" style="background:var(--status-success-bg);color:var(--status-success);">مباشرة</span>
+                    {% elif s.status.value == 'scheduled' %}
+                    <span class="badge" style="background:var(--status-info-bg);color:var(--status-info);">مجدولة</span>
+                    {% elif s.status.value == 'completed' %}
+                    <span class="badge">مكتملة</span>
+                    {% else %}
+                    <span class="badge" style="background:var(--status-warning-bg);color:var(--status-warning);">{{ s.status.value }}</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{{ url_for('admin.session_detail', session_id=s.id) }}" class="btn btn-ghost btn-sm">تفاصيل</a>
+                    {% if s.status.value == 'scheduled' %}
+                    <button onclick="startSession({{ s.id }})" class="btn btn-primary btn-sm">بدء</button>
+                    {% elif s.status.value == 'live' %}
+                    <button onclick="endSession({{ s.id }})" class="btn btn-outline btn-sm">إنهاء</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted" style="padding:var(--space-xl);">لا توجد جلسات</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pages > 1 %}
+<div class="pagination">
+    {% for p in range(1, pages + 1) %}
+    <a href="{{ url_for('admin.sessions', page=p, status=status_filter) }}" class="pagination-item {{ 'active' if p == page else '' }}">{{ p }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

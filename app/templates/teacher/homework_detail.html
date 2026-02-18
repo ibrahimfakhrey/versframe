@@ -1,0 +1,197 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}{{ hw.title|default('تفاصيل الواجب') }} - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('teacher.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('teacher.groups') }}" class="sidebar-link">
+    <span class="sidebar-icon">👥</span>
+    <span>المجموعات</span>
+</a>
+<a href="{{ url_for('teacher.sessions') }}" class="sidebar-link">
+    <span class="sidebar-icon">📅</span>
+    <span>الجلسات</span>
+</a>
+<a href="{{ url_for('teacher.homework') }}" class="sidebar-link active">
+    <span class="sidebar-icon">📝</span>
+    <span>الواجبات</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}تفاصيل الواجب{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('teacher.homework') }}" class="btn btn-sm btn-ghost">
+    ← العودة للواجبات
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Homework Info -->
+<div class="stats-grid">
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-purple-glow); color: var(--sv-purple);">📝</div>
+        <div>
+            <div class="stat-value text-sm" style="font-size: var(--text-base);">{{ hw.title }}</div>
+            <div class="stat-label">عنوان الواجب</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--info-light); color: var(--info);">👥</div>
+        <div>
+            <div class="stat-value text-sm" style="font-size: var(--text-base);">{{ hw.group.name if hw.group else '--' }}</div>
+            <div class="stat-label">المجموعة</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-orange-glow); color: var(--sv-orange);">📤</div>
+        <div>
+            <div class="stat-value">{{ submissions|length }}</div>
+            <div class="stat-label">إجمالي التسليمات</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--success-light); color: var(--success);">✅</div>
+        <div>
+            <div class="stat-value">{{ submissions|selectattr('grade')|list|length }}</div>
+            <div class="stat-label">تم تقييمها</div>
+        </div>
+    </div>
+</div>
+
+{% if hw.description %}
+<div class="card" style="margin-bottom: var(--space-xl);">
+    <div class="card-header">
+        <h2 class="card-title">وصف الواجب</h2>
+    </div>
+    <div style="padding: var(--space-lg);">
+        <p style="color: var(--text-secondary); line-height: 1.8;">{{ hw.description }}</p>
+    </div>
+    {% if hw.due_date %}
+    <div style="padding: 0 var(--space-lg) var(--space-lg);">
+        <span class="text-sm text-muted">الموعد النهائي: {{ hw.due_date }}</span>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<!-- Submissions List -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">التسليمات</h2>
+    </div>
+
+    {% if submissions %}
+    <div style="display: flex; flex-direction: column; gap: var(--space-lg); padding: var(--space-lg);">
+        {% for sub in submissions %}
+        <div style="border: 1px solid var(--border-light); border-radius: var(--radius-lg); overflow: hidden; {% if sub.grade is none %}border-right: 4px solid var(--sv-orange);{% else %}border-right: 4px solid var(--success);{% endif %}">
+            <!-- Submission Header -->
+            <div style="padding: var(--space-lg); display: flex; align-items: center; justify-content: space-between; background: var(--bg);">
+                <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                    <div class="avatar avatar-sm">
+                        {% if sub.student.avatar_url %}
+                        <img src="{{ sub.student.avatar_url }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                        {% else %}
+                        {{ sub.student.name_ar[0] if sub.student.name_ar else '?' }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <a href="{{ url_for('teacher.student_profile', student_id=sub.student.id) }}" style="font-weight: 700; font-size: var(--text-sm); color: var(--text-primary); text-decoration: none;">
+                            {{ sub.student.name_ar }}
+                        </a>
+                        <div class="text-muted" style="font-size: var(--text-xs);">
+                            تم التسليم: {{ sub.submitted_at|default('', true) }}
+                        </div>
+                    </div>
+                </div>
+                {% if sub.grade is not none %}
+                    {% if sub.grade >= 90 %}
+                    <span class="badge badge-success">{{ sub.grade }} / 100 (ممتاز)</span>
+                    {% elif sub.grade >= 80 %}
+                    <span class="badge badge-success">{{ sub.grade }} / 100 (جيد جداً)</span>
+                    {% elif sub.grade >= 70 %}
+                    <span class="badge badge-info">{{ sub.grade }} / 100 (جيد)</span>
+                    {% else %}
+                    <span class="badge badge-warning">{{ sub.grade }} / 100</span>
+                    {% endif %}
+                {% else %}
+                    <span class="badge badge-warning">بانتظار التقييم</span>
+                {% endif %}
+            </div>
+
+            <!-- Submission Content -->
+            {% if sub.content %}
+            <div style="padding: var(--space-md) var(--space-lg); border-top: 1px solid var(--border-light);">
+                <div class="text-sm text-muted" style="margin-bottom: var(--space-xs); font-weight: 700;">إجابة الطالب:</div>
+                <div style="background: var(--bg); padding: var(--space-md); border-radius: var(--radius-md); font-size: var(--text-sm); line-height: 1.8; white-space: pre-wrap;">{{ sub.content }}</div>
+            </div>
+            {% endif %}
+
+            {% if sub.file_url %}
+            <div style="padding: var(--space-sm) var(--space-lg);">
+                <a href="{{ sub.file_url }}" target="_blank" class="btn btn-sm btn-ghost" style="color: var(--sv-purple);">
+                    📎 عرض الملف المرفق
+                </a>
+            </div>
+            {% endif %}
+
+            <!-- Grade Form / Feedback Display -->
+            <div style="padding: var(--space-lg); border-top: 1px solid var(--border-light);">
+                {% if sub.grade is none %}
+                <form action="{{ url_for('teacher.homework_grade', hw_id=hw.id, submission_id=sub.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <div style="display: flex; align-items: flex-end; gap: var(--space-md); flex-wrap: wrap;">
+                        <div class="form-group" style="margin-bottom: 0;">
+                            <label class="form-label">الدرجة (من 100)</label>
+                            <input type="number" name="grade" class="form-input" min="0" max="100" placeholder="0-100" required style="width: 120px;">
+                        </div>
+                        <div class="form-group" style="margin-bottom: 0; flex: 1; min-width: 200px;">
+                            <label class="form-label">ملاحظات للطالب</label>
+                            <input type="text" name="feedback" class="form-input" placeholder="اكتب ملاحظة للطالب...">
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-orange">تقييم</button>
+                    </div>
+                    <div class="form-hint" style="margin-top: var(--space-sm);">
+                        نقاط XP: ممتاز (90+) = 50 XP | جيد جداً (80+) = 30 XP | جيد (70+) = 20 XP | أقل = 10 XP
+                    </div>
+                </form>
+                {% else %}
+                <div style="display: flex; align-items: center; gap: var(--space-md); flex-wrap: wrap;">
+                    <div>
+                        <span class="text-sm text-muted">الدرجة:</span>
+                        <span style="font-weight: 700; font-size: var(--text-lg);">{{ sub.grade }} / 100</span>
+                    </div>
+                    {% if sub.graded_at %}
+                    <span class="text-sm text-muted">تم التقييم: {{ sub.graded_at }}</span>
+                    {% endif %}
+                </div>
+                {% if sub.feedback %}
+                <div style="margin-top: var(--space-sm); padding: var(--space-sm) var(--space-md); background: var(--success-light); border-radius: var(--radius-sm); font-size: var(--text-sm);">
+                    <strong>ملاحظات المعلم:</strong> {{ sub.feedback }}
+                </div>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <div class="empty-state-text">لا توجد تسليمات بعد</div>
+        <p class="text-muted text-sm">لم يقم أي طالب بتسليم هذا الواجب حتى الآن</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/teacher.js') }}"></script>
+{% endblock %}

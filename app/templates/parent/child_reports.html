@@ -1,0 +1,173 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}تقارير {{ child.name_ar }}{% endblock %}
+{% block topbar_title %}تقارير الطالب{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('parent.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('parent.children') }}" class="sidebar-link active">
+    <span class="sidebar-icon">👨‍👧‍👦</span>
+    <span>أبنائي</span>
+</a>
+<a href="{{ url_for('parent.messages') }}" class="sidebar-link">
+    <span class="sidebar-icon">✉️</span>
+    <span>الرسائل</span>
+</a>
+{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('parent.child_detail', child_id=child.id) }}" class="btn btn-sm btn-ghost">← العودة للملف الشخصي</a>
+{% endblock %}
+
+{% block content %}
+<!-- رأس الصفحة -->
+<div class="page-header">
+    <h2 class="page-title">📊 تقارير {{ child.name_ar }}</h2>
+    <p class="page-subtitle">تقارير التقييم والحصص الدراسية</p>
+</div>
+
+<!-- تبويبات -->
+<div class="tabs" id="reportTabs">
+    <button class="tab active" onclick="switchReportTab('assessments', this)">تقارير التقييم</button>
+    <button class="tab" onclick="switchReportTab('sessions', this)">تقارير الحصص</button>
+</div>
+
+<!-- تقارير التقييم -->
+<div id="tab-assessments">
+    {% if assessment_reports %}
+    <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+        {% for report in assessment_reports %}
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h4 class="card-title">{{ report.title or 'تقرير تقييم' }}</h4>
+                    <div style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-xs);">
+                        {{ report.created_at.strftime('%Y-%m-%d') if report.created_at else '' }}
+                        {% if report.assessor %}
+                        &middot; المقيّم: {{ report.assessor.name_ar }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    {% if report.score is not none %}
+                    <div style="text-align: center;">
+                        <div style="font-size: var(--text-2xl); font-weight: var(--fw-extrabold); color: var(--sv-purple);">{{ report.score }}%</div>
+                        <div style="font-size: var(--text-xs); color: var(--text-secondary);">الدرجة</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if report.summary %}
+            <div style="padding: var(--space-md); background: var(--bg); border-radius: var(--radius-md); margin-bottom: var(--space-md);">
+                <div style="font-weight: var(--fw-bold); font-size: var(--text-sm); margin-bottom: var(--space-xs);">الملخص</div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.7;">{{ report.summary }}</p>
+            </div>
+            {% endif %}
+
+            {% if report.strengths %}
+            <div style="margin-bottom: var(--space-md);">
+                <div style="font-weight: var(--fw-bold); font-size: var(--text-sm); color: var(--success); margin-bottom: var(--space-xs);">نقاط القوة</div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.7;">{{ report.strengths }}</p>
+            </div>
+            {% endif %}
+
+            {% if report.improvements %}
+            <div style="margin-bottom: var(--space-md);">
+                <div style="font-weight: var(--fw-bold); font-size: var(--text-sm); color: var(--sv-orange); margin-bottom: var(--space-xs);">نقاط التحسين</div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.7;">{{ report.improvements }}</p>
+            </div>
+            {% endif %}
+
+            {% if report.recommendations %}
+            <div>
+                <div style="font-weight: var(--fw-bold); font-size: var(--text-sm); color: var(--info); margin-bottom: var(--space-xs);">التوصيات</div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.7;">{{ report.recommendations }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="card empty-state">
+        <div class="empty-state-icon">📊</div>
+        <div class="empty-state-text">لا توجد تقارير تقييم بعد</div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- تقارير الحصص -->
+<div id="tab-sessions" style="display: none;">
+    {% if session_reports %}
+    <div class="card">
+        <div class="table-wrapper">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>الحصة</th>
+                        <th>التاريخ</th>
+                        <th>المعلم</th>
+                        <th>الحضور</th>
+                        <th>المشاركة</th>
+                        <th>الملاحظات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for report in session_reports %}
+                    <tr>
+                        <td style="font-weight: var(--fw-bold);">{{ report.session_title or '-' }}</td>
+                        <td>{{ report.date.strftime('%Y-%m-%d') if report.date else '-' }}</td>
+                        <td>{{ report.teacher_name or '-' }}</td>
+                        <td>
+                            {% if report.attended %}
+                            <span class="badge badge-success">حاضر</span>
+                            {% else %}
+                            <span class="badge badge-danger">غائب</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if report.participation %}
+                            <div class="progress" style="width: 80px; height: 6px;">
+                                <div class="progress-bar" style="width: {{ report.participation }}%;"></div>
+                            </div>
+                            {% else %}
+                            <span style="color: var(--text-muted);">-</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-size: var(--text-xs); color: var(--text-secondary); max-width: 200px;">
+                            {{ report.notes or '-' }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% else %}
+    <div class="card empty-state">
+        <div class="empty-state-icon">📚</div>
+        <div class="empty-state-text">لا توجد تقارير حصص بعد</div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+function switchReportTab(tabName, btn) {
+    // إخفاء جميع التبويبات
+    document.getElementById('tab-assessments').style.display = 'none';
+    document.getElementById('tab-sessions').style.display = 'none';
+
+    // إزالة active من جميع الأزرار
+    document.querySelectorAll('#reportTabs .tab').forEach(t => t.classList.remove('active'));
+
+    // إظهار التبويب المطلوب
+    document.getElementById('tab-' + tabName).style.display = 'block';
+    btn.classList.add('active');
+}
+</script>
+{% endblock %}

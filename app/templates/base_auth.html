@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#640D5F 0%,#4a0945 40%,#1a0a2e 100%);padding:var(--space-lg);position:relative;overflow:hidden;">
+    <!-- Stars -->
+    <div style="position:absolute;inset:0;overflow:hidden;">
+        {% for i in range(30) %}
+        <div style="position:absolute;width:{{ [2,3,4]|random }}px;height:{{ [2,3,4]|random }}px;background:white;border-radius:50%;opacity:{{ [0.3,0.5,0.7]|random }};top:{{ range(5,95)|random }}%;left:{{ range(5,95)|random }}%;animation:twinkle {{ [2,3,4,5]|random }}s infinite {{ [0,1,2]|random }}s;"></div>
+        {% endfor %}
+    </div>
+
+    <div class="card animate-fade" style="max-width:440px;width:100%;padding:var(--space-2xl);position:relative;z-index:1;">
+        <div style="text-align:center;margin-bottom:var(--space-xl);">
+            <div style="width:64px;height:64px;background:linear-gradient(135deg,var(--sv-purple),var(--sv-orange));border-radius:16px;display:flex;align-items:center;justify-content:center;color:white;font-weight:800;font-size:24px;margin:0 auto var(--space-md);">SV</div>
+            <h2 style="margin-bottom:var(--space-xs);">{% block auth_title %}شلبي فيرس{% endblock %}</h2>
+            <p class="text-muted text-sm" style="margin:0;">{% block auth_subtitle %}رحلة للمستقبل{% endblock %}</p>
+        </div>
+        {% block auth_content %}{% endblock %}
+    </div>
+</div>
+
+<style>
+@keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+}
+</style>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}لوحة المعلم{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item active" href="{{ url_for('teacher.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('teacher.groups') }}">📚 مجموعاتي</a>
+<a class="sidebar-nav-item" href="{{ url_for('teacher.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('teacher.homework') }}">📝 الواجبات</a>
+{% endblock %}
+
+{% block content %}
+<!-- Today's Sessions -->
+<h2 style="margin-bottom:var(--space-md);">الجلسات القادمة</h2>
+{% if upcoming %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--space-md);margin-bottom:var(--space-xl);">
+    {% for s in upcoming %}
+    <div class="card" style="border-right:4px solid var(--sv-purple);">
+        <h3 style="margin-bottom:var(--space-xs);">{{ s.title }}</h3>
+        <div class="text-sm text-muted" style="margin-bottom:var(--space-sm);">
+            {{ s.group.name if s.group else '—' }} | {{ s.scheduled_at.strftime('%H:%M') if s.scheduled_at else '—' }}
+        </div>
+        <div style="display:flex;gap:var(--space-sm);">
+            <form action="{{ url_for('teacher.session_start', session_id=s.id) }}" method="POST" style="margin:0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn btn-primary btn-sm">بدء الجلسة</button>
+            </form>
+            <a href="{{ url_for('teacher.session_detail', session_id=s.id) }}" class="btn btn-outline btn-sm">تفاصيل</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align:center;padding:var(--space-xl);margin-bottom:var(--space-xl);">
+    <p class="text-muted">لا توجد جلسات قادمة</p>
+</div>
+{% endif %}
+
+<div class="two-col-grid">
+    <!-- My Groups -->
+    <div class="card">
+        <div class="card-header">
+            <h3>مجموعاتي</h3>
+            <a href="{{ url_for('teacher.groups') }}" class="btn btn-ghost btn-sm">عرض الكل</a>
+        </div>
+        <div class="card-body">
+            {% for g in groups %}
+            <a href="{{ url_for('teacher.group_detail', group_id=g.id) }}" class="activity-item" style="text-decoration:none;color:inherit;">
+                <div style="width:40px;height:40px;background:var(--sv-purple-glow);border-radius:var(--radius-md);display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--sv-purple);">{{ g.students.count() }}</div>
+                <div style="flex:1;">
+                    <div style="font-weight:600;">{{ g.name }}</div>
+                    <div class="text-sm text-muted">{{ g.track.name_ar if g.track else '' }} | {{ g.students.count() }} طالب</div>
+                </div>
+            </a>
+            {% else %}
+            <div class="empty-state-inline">لا توجد مجموعات</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Sessions -->
+    <div class="card">
+        <div class="card-header">
+            <h3>آخر الجلسات</h3>
+            <a href="{{ url_for('teacher.sessions') }}" class="btn btn-ghost btn-sm">عرض الكل</a>
+        </div>
+        <div class="card-body">
+            {% for s in recent %}
+            <div class="activity-item">
+                <div style="flex:1;">
+                    <div style="font-weight:600;">{{ s.title }}</div>
+                    <div class="text-sm text-muted">{{ s.group.name if s.group else '—' }} | {{ s.scheduled_at.strftime('%Y-%m-%d') if s.scheduled_at else '' }}</div>
+                </div>
+                <span class="badge">مكتملة</span>
+            </div>
+            {% else %}
+            <div class="empty-state-inline">لا توجد جلسات سابقة</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/teacher.js') }}"></script>
+{% endblock %}

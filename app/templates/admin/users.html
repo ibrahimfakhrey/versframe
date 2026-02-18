@@ -1,0 +1,78 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}إدارة المستخدمين{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-lg);flex-wrap:wrap;gap:var(--space-md);">
+    <div style="display:flex;gap:var(--space-sm);">
+        <a href="{{ url_for('admin.users') }}" class="btn {{ 'btn-primary' if not role_filter else 'btn-outline' }} btn-sm">الكل</a>
+        <a href="{{ url_for('admin.users', role='student') }}" class="btn {{ 'btn-primary' if role_filter=='student' else 'btn-outline' }} btn-sm">طلاب</a>
+        <a href="{{ url_for('admin.users', role='teacher') }}" class="btn {{ 'btn-primary' if role_filter=='teacher' else 'btn-outline' }} btn-sm">معلمون</a>
+        <a href="{{ url_for('admin.users', role='parent') }}" class="btn {{ 'btn-primary' if role_filter=='parent' else 'btn-outline' }} btn-sm">أولياء أمور</a>
+        <a href="{{ url_for('admin.users', role='assessor') }}" class="btn {{ 'btn-primary' if role_filter=='assessor' else 'btn-outline' }} btn-sm">مقيّمون</a>
+    </div>
+    <a href="{{ url_for('admin.user_create') }}" class="btn btn-primary">+ إضافة مستخدم</a>
+</div>
+
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>الاسم</th>
+                <th>البريد الإلكتروني</th>
+                <th>الدور</th>
+                <th>الحالة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in items %}
+            <tr>
+                <td>{{ u.id }}</td>
+                <td>
+                    <div style="display:flex;align-items:center;gap:var(--space-sm);">
+                        <div class="avatar avatar-sm">{{ u.name_ar[0] if u.name_ar else '?' }}</div>
+                        <div>
+                            <div style="font-weight:600;">{{ u.name_ar }}</div>
+                            <div class="text-xs text-muted">{{ u.name_en }}</div>
+                        </div>
+                    </div>
+                </td>
+                <td class="text-sm" dir="ltr">{{ u.email }}</td>
+                <td><span class="badge">{{ u.role.value }}</span></td>
+                <td>
+                    {% if u.is_active %}
+                    <span class="badge" style="background:var(--status-success-bg);color:var(--status-success);">نشط</span>
+                    {% else %}
+                    <span class="badge" style="background:var(--status-error-bg);color:var(--status-error);">معطل</span>
+                    {% endif %}
+                </td>
+                <td><a href="{{ url_for('admin.user_edit', user_id=u.id) }}" class="btn btn-ghost btn-sm">تعديل</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted" style="padding:var(--space-xl);">لا يوجد مستخدمون</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pages > 1 %}
+<div class="pagination">
+    {% for p in range(1, pages + 1) %}
+    <a href="{{ url_for('admin.users', page=p, role=role_filter) }}" class="pagination-item {{ 'active' if p == page else '' }}">{{ p }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

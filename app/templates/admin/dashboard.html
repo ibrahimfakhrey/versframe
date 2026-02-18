@@ -1,0 +1,107 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}لوحة تحكم المدير{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item active" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-card-value" data-count="{{ stats.total_users }}">{{ stats.total_users }}</div>
+        <div class="stat-card-label">إجمالي المستخدمين</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-value" data-count="{{ stats.students }}">{{ stats.students }}</div>
+        <div class="stat-card-label">الطلاب</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-value" data-count="{{ stats.teachers }}">{{ stats.teachers }}</div>
+        <div class="stat-card-label">المعلمون</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-value" data-count="{{ stats.groups }}">{{ stats.groups }}</div>
+        <div class="stat-card-label">المجموعات النشطة</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-value" data-count="{{ stats.sessions_total }}">{{ stats.sessions_total }}</div>
+        <div class="stat-card-label">إجمالي الجلسات</div>
+    </div>
+    <div class="stat-card" style="border-right-color:var(--status-success);">
+        <div class="stat-card-value" data-count="{{ stats.sessions_live }}">{{ stats.sessions_live }}</div>
+        <div class="stat-card-label">جلسات مباشرة الآن</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-value" data-count="{{ stats.resources }}">{{ stats.resources }}</div>
+        <div class="stat-card-label">الموارد</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-card-value" data-count="{{ stats.parents }}">{{ stats.parents }}</div>
+        <div class="stat-card-label">أولياء الأمور</div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div style="display:flex;gap:var(--space-md);flex-wrap:wrap;margin:var(--space-xl) 0;">
+    <a href="{{ url_for('admin.user_create') }}" class="btn btn-primary">+ إضافة مستخدم</a>
+    <a href="{{ url_for('admin.group_create') }}" class="btn btn-orange">+ إنشاء مجموعة</a>
+    <a href="{{ url_for('admin.resource_create') }}" class="btn btn-outline">+ إضافة مورد</a>
+</div>
+
+<div class="two-col-grid">
+    <!-- Recent Users -->
+    <div class="card">
+        <div class="card-header">
+            <h3>المستخدمون الجدد</h3>
+            <a href="{{ url_for('admin.users') }}" class="btn btn-ghost btn-sm">عرض الكل</a>
+        </div>
+        <div class="card-body">
+            {% for u in recent_users %}
+            <div class="activity-item">
+                <div class="avatar avatar-sm">{{ u.name_ar[0] if u.name_ar else '?' }}</div>
+                <div style="flex:1;">
+                    <div style="font-weight:600;">{{ u.name_ar }}</div>
+                    <div class="text-sm text-muted">{{ u.email }} — {{ u.role.value }}</div>
+                </div>
+            </div>
+            {% else %}
+            <div class="empty-state-inline">لا يوجد مستخدمون بعد</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Upcoming Sessions -->
+    <div class="card">
+        <div class="card-header">
+            <h3>الجلسات القادمة</h3>
+            <a href="{{ url_for('admin.sessions') }}" class="btn btn-ghost btn-sm">عرض الكل</a>
+        </div>
+        <div class="card-body">
+            {% for s in upcoming_sessions %}
+            <div class="activity-item">
+                <div style="flex:1;">
+                    <div style="font-weight:600;">{{ s.title }}</div>
+                    <div class="text-sm text-muted">{{ s.group.name if s.group else '—' }} | {{ s.scheduled_at.strftime('%Y-%m-%d %H:%M') if s.scheduled_at else '—' }}</div>
+                </div>
+                <button onclick="startSession({{ s.id }})" class="btn btn-primary btn-sm">بدء</button>
+            </div>
+            {% else %}
+            <div class="empty-state-inline">لا توجد جلسات قادمة</div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

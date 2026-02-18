@@ -1,0 +1,60 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}إدارة الموارد{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-lg);flex-wrap:wrap;gap:var(--space-md);">
+    <div style="display:flex;gap:var(--space-sm);">
+        <a href="{{ url_for('admin.resources') }}" class="btn {{ 'btn-primary' if not type_filter else 'btn-outline' }} btn-sm">الكل</a>
+        <a href="{{ url_for('admin.resources', type='slides') }}" class="btn {{ 'btn-primary' if type_filter=='slides' else 'btn-outline' }} btn-sm">شرائح</a>
+        <a href="{{ url_for('admin.resources', type='code_exercise') }}" class="btn {{ 'btn-primary' if type_filter=='code_exercise' else 'btn-outline' }} btn-sm">تمارين برمجية</a>
+    </div>
+    <a href="{{ url_for('admin.resource_create') }}" class="btn btn-primary">+ إضافة مورد</a>
+</div>
+
+<div class="card">
+    <table class="table">
+        <thead><tr><th>الاسم</th><th>النوع</th><th>المسار</th><th>إجراءات</th></tr></thead>
+        <tbody>
+            {% for r in items %}
+            <tr>
+                <td>
+                    <div style="font-weight:600;">{{ r.name_ar or r.name }}</div>
+                    <div class="text-xs text-muted">{{ r.name }}</div>
+                </td>
+                <td><span class="badge">{{ r.type.value }}</span></td>
+                <td class="text-sm">{{ r.track.name_ar if r.track else '—' }}</td>
+                <td>
+                    <a href="{{ url_for('admin.resource_edit', resource_id=r.id) }}" class="btn btn-ghost btn-sm">تعديل</a>
+                    <form method="POST" action="{{ url_for('admin.resource_delete', resource_id=r.id) }}" style="display:inline;" onsubmit="return confirm('حذف هذا المورد؟')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--status-error);">حذف</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-muted" style="padding:var(--space-xl);">لا توجد موارد</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pages > 1 %}
+<div class="pagination">
+    {% for p in range(1, pages + 1) %}
+    <a href="{{ url_for('admin.resources', page=p, type=type_filter) }}" class="pagination-item {{ 'active' if p == page else '' }}">{{ p }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

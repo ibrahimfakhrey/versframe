@@ -1,0 +1,287 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}{{ homework.title }} - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+.hw-detail-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+    flex-wrap: wrap;
+}
+.hw-detail-info {
+    flex: 1;
+    min-width: 0;
+}
+.hw-detail-title {
+    font-size: var(--text-2xl);
+    font-weight: var(--fw-extrabold);
+    margin-bottom: var(--space-sm);
+}
+.hw-detail-meta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+    flex-wrap: wrap;
+}
+.hw-detail-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.hw-detail-body {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: var(--space-xl);
+}
+.hw-description {
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    line-height: 1.8;
+    font-size: var(--text-base);
+    color: var(--text-primary);
+}
+.hw-submission-card {
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    position: sticky;
+    top: calc(var(--topbar-height) + var(--space-lg));
+}
+.hw-submission-title {
+    font-size: var(--text-lg);
+    font-weight: var(--fw-bold);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.hw-grade-display {
+    text-align: center;
+    padding: var(--space-xl);
+    background: linear-gradient(135deg, var(--sv-purple-glow), var(--sv-orange-glow));
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--space-md);
+}
+.hw-grade-value {
+    font-size: var(--text-4xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--sv-purple);
+}
+.hw-grade-label {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin-top: var(--space-xs);
+}
+.hw-submitted-info {
+    padding: var(--space-md);
+    background: var(--success-light);
+    border-radius: var(--radius-lg);
+    color: var(--success);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-medium);
+    text-align: center;
+    margin-bottom: var(--space-md);
+}
+.hw-submission-text {
+    padding: var(--space-md);
+    background: var(--bg);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    color: var(--text-primary);
+    margin-top: var(--space-md);
+    border: 1px solid var(--border-light);
+}
+.hw-feedback {
+    margin-top: var(--space-md);
+    padding: var(--space-md);
+    background: var(--info-light);
+    border-radius: var(--radius-lg);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+}
+.hw-feedback-label {
+    font-weight: var(--fw-bold);
+    color: var(--info);
+    margin-bottom: var(--space-xs);
+}
+@media (max-width: 1024px) {
+    .hw-detail-body {
+        grid-template-columns: 1fr;
+    }
+    .hw-submission-card {
+        position: static;
+    }
+}
+</style>
+{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت اليومية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
+    <span>التقويم</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}{{ homework.title }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('student.homework_list') }}" class="btn btn-ghost btn-sm">→ العودة للواجبات</a>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="hw-detail-header">
+    <div class="hw-detail-info">
+        <div class="hw-detail-title">{{ homework.title }}</div>
+        <div class="hw-detail-meta">
+            <span>👥 {{ homework.group.name }}</span>
+            {% if homework.due_date %}
+            <span>📅 الموعد النهائي: {{ homework.due_date.strftime('%d/%m/%Y - %H:%M') }}</span>
+            {% endif %}
+            {% if submission and submission.grade is not none %}
+            <span class="badge badge-success">تم التقييم</span>
+            {% elif submission and submission.submitted_at %}
+            <span class="badge badge-info">تم التسليم</span>
+            {% else %}
+            <span class="badge badge-warning">بانتظار التسليم</span>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Body -->
+<div class="hw-detail-body">
+    <!-- Description -->
+    <div>
+        <div class="hw-description">
+            <h3 style="margin-bottom: var(--space-md); font-size: var(--text-lg);">📋 تفاصيل الواجب</h3>
+            {% if homework.description %}
+                {{ homework.description|safe }}
+            {% else %}
+                <p class="text-muted">لا يوجد وصف إضافي لهذا الواجب.</p>
+            {% endif %}
+        </div>
+
+        {% if homework.attachments %}
+        <div class="card" style="margin-top: var(--space-md);">
+            <div class="card-title" style="margin-bottom: var(--space-md);">📎 المرفقات</div>
+            {% for attachment in homework.attachments %}
+            <a href="{{ attachment.url }}" target="_blank" class="btn btn-ghost btn-sm" style="margin-bottom: var(--space-xs);">
+                📄 {{ attachment.name }}
+            </a>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Submission Sidebar -->
+    <div class="hw-submission-card">
+        {% if submission and submission.grade is not none %}
+            <!-- Graded -->
+            <div class="hw-submission-title">✅ نتيجة التقييم</div>
+            <div class="hw-grade-display">
+                <div class="hw-grade-value">{{ submission.grade }}</div>
+                <div class="hw-grade-label">الدرجة</div>
+            </div>
+            <div class="hw-submitted-info">
+                تم التسليم بتاريخ {{ submission.submitted_at.strftime('%d/%m/%Y - %H:%M') }}
+            </div>
+            {% if submission.content %}
+            <div class="hw-submission-text">
+                <strong style="display:block; margin-bottom: var(--space-sm);">إجابتك:</strong>
+                {{ submission.content }}
+            </div>
+            {% endif %}
+            {% if submission.file_url %}
+            <div style="margin-top: var(--space-md);">
+                <a href="{{ submission.file_url }}" target="_blank" class="btn btn-ghost btn-sm">📎 عرض الملف المرفق</a>
+            </div>
+            {% endif %}
+            {% if submission.feedback %}
+            <div class="hw-feedback">
+                <div class="hw-feedback-label">💬 ملاحظات المعلم:</div>
+                {{ submission.feedback }}
+            </div>
+            {% endif %}
+
+        {% elif submission and submission.submitted_at %}
+            <!-- Submitted, awaiting grade -->
+            <div class="hw-submission-title">📤 تم التسليم</div>
+            <div class="hw-submitted-info">
+                تم التسليم بتاريخ {{ submission.submitted_at.strftime('%d/%m/%Y - %H:%M') }}
+            </div>
+            {% if submission.content %}
+            <div class="hw-submission-text">
+                <strong style="display:block; margin-bottom: var(--space-sm);">إجابتك:</strong>
+                {{ submission.content }}
+            </div>
+            {% endif %}
+            {% if submission.file_url %}
+            <div style="margin-top: var(--space-md);">
+                <a href="{{ submission.file_url }}" target="_blank" class="btn btn-ghost btn-sm">📎 عرض الملف المرفق</a>
+            </div>
+            {% endif %}
+            <p style="text-align: center; color: var(--text-muted); font-size: var(--text-sm); margin-top: var(--space-md);">
+                بانتظار تقييم المعلم...
+            </p>
+
+        {% else %}
+            <!-- Submission Form -->
+            <div class="hw-submission-title">✍️ تسليم الواجب</div>
+            <form method="POST" action="{{ url_for('student.homework_detail', hw_id=homework.id) }}" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                <div class="form-group">
+                    <label class="form-label">الإجابة</label>
+                    <textarea name="content" class="form-textarea" rows="6" placeholder="اكتب إجابتك هنا..."></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">مرفق (اختياري)</label>
+                    <input type="file" name="file" class="form-input" accept=".pdf,.doc,.docx,.pptx,.jpg,.jpeg,.png,.gif,.webp,.zip,.py,.js,.html,.css,.txt">
+                    <div class="form-hint">PDF, Word, صور، كود أو ZIP (حد أقصى 10 ميجا)</div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top: var(--space-md);">
+                    📤 تسليم الواجب
+                </button>
+            </form>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

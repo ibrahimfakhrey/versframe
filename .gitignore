@@ -2,3 +2,31 @@ instance/
 __pycache__/
 *.pyc
 .DS_Store
+.env
+*.db
+migrations/
+venv/
+.venv/
+node_modules/
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Uploaded files (keep .gitkeep)
+app/static/uploads/slides/*
+app/static/uploads/homework/*
+app/static/uploads/avatars/*
+app/static/uploads/resources/*
+!app/static/uploads/**/.gitkeep
+
+# Dev-only / large files
+*.pdf
+test-*.png
+room.jpeg
+_*.py
+write_templates.py
+codeverse_dashboard.html

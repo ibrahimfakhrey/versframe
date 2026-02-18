@@ -1,0 +1,32 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}الإعدادات{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:600px;">
+    <h2 style="margin-bottom:var(--space-lg);">إعدادات المنصة</h2>
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label class="form-label">اسم المنصة</label>
+            <input type="text" class="form-input" value="شلبي فيرس" disabled>
+        </div>
+        <div class="form-group">
+            <label class="form-label">البريد الإلكتروني للتواصل</label>
+            <input type="email" name="contact_email" class="form-input" value="info@shalaby-verse.com" dir="ltr">
+        </div>
+        <button type="submit" class="btn btn-primary">حفظ الإعدادات</button>
+    </form>
+</div>
+{% endblock %}

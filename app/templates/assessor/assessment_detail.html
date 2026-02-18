@@ -1,0 +1,198 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}تفاصيل التقييم{% endblock %}
+{% block topbar_title %}تفاصيل التقييم{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('assessor.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('assessor.assessments') }}" class="sidebar-link active">
+    <span class="sidebar-icon">📋</span>
+    <span>التقييمات</span>
+</a>
+{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('assessor.assessments') }}" class="btn btn-sm btn-ghost">← العودة للتقييمات</a>
+{% endblock %}
+
+{% block content %}
+<!-- رأس التقييم -->
+<div class="card" style="margin-bottom: var(--space-xl);">
+    <div style="display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap; gap: var(--space-lg);">
+        <div style="display: flex; align-items: center; gap: var(--space-lg);">
+            <div class="avatar avatar-xl" style="background: linear-gradient(135deg, var(--sv-purple), var(--sv-orange)); color: white; font-size: var(--text-3xl);">
+                {% if student.avatar_url %}
+                <img src="{{ student.avatar_url }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                {% else %}
+                {{ student.name_ar[0] if student.name_ar else '?' }}
+                {% endif %}
+            </div>
+            <div>
+                <h2 style="font-size: var(--text-2xl); font-weight: var(--fw-extrabold); margin-bottom: var(--space-xs);">{{ student.name_ar }}</h2>
+                <div style="font-size: var(--text-sm); color: var(--text-secondary);">{{ student.name_en or '' }}</div>
+                <div style="display: flex; gap: var(--space-sm); margin-top: var(--space-sm);">
+                    {% if assessment.status.value == 'completed' %}
+                    <span class="badge badge-success">مكتمل</span>
+                    {% elif assessment.status.value == 'in_progress' %}
+                    <span class="badge badge-orange">جاري</span>
+                    {% elif assessment.status.value == 'scheduled' %}
+                    <span class="badge badge-info">مجدول</span>
+                    {% else %}
+                    <span class="badge badge-warning">{{ assessment.status }}</span>
+                    {% endif %}
+                    {% if assessment.scheduled_at %}
+                    <span class="badge badge-purple">{{ assessment.scheduled_at.strftime('%Y-%m-%d %H:%M') }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div style="display: flex; gap: var(--space-sm);">
+            <a href="{{ url_for('assessor.student_profile', student_id=student.id) }}" class="btn btn-sm btn-outline">عرض ملف الطالب</a>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="dashboard-grid-main">
+        {% if report %}
+        <!-- التقرير الحالي -->
+        <div class="card" style="margin-bottom: var(--space-xl);">
+            <div class="card-header">
+                <h3 class="card-title">📊 تقرير التقييم</h3>
+                {% if report.score is not none %}
+                <div style="text-align: center; background: var(--sv-purple-glow); padding: var(--space-sm) var(--space-lg); border-radius: var(--radius-md);">
+                    <div style="font-size: var(--text-2xl); font-weight: var(--fw-extrabold); color: var(--sv-purple);">{{ report.score }}%</div>
+                    <div style="font-size: var(--text-xs); color: var(--text-secondary);">الدرجة الكلية</div>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if report.summary %}
+            <div style="padding: var(--space-md); background: var(--bg); border-radius: var(--radius-md); margin-bottom: var(--space-lg);">
+                <div style="font-weight: var(--fw-bold); margin-bottom: var(--space-sm);">ملخص التقييم</div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.8;">{{ report.summary }}</p>
+            </div>
+            {% endif %}
+
+            <!-- نقاط القوة والتحسين -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md); margin-bottom: var(--space-lg);">
+                <div style="padding: var(--space-md); background: var(--success-light); border-radius: var(--radius-md); border-right: 4px solid var(--success);">
+                    <div style="font-weight: var(--fw-bold); color: var(--success); margin-bottom: var(--space-sm);">نقاط القوة</div>
+                    <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.7;">{{ report.strengths or 'لم يتم تحديدها بعد' }}</p>
+                </div>
+                <div style="padding: var(--space-md); background: var(--warning-light); border-radius: var(--radius-md); border-right: 4px solid var(--warning);">
+                    <div style="font-weight: var(--fw-bold); color: #856404; margin-bottom: var(--space-sm);">نقاط التحسين</div>
+                    <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.7;">{{ report.improvements or 'لم يتم تحديدها بعد' }}</p>
+                </div>
+            </div>
+
+            {% if report.recommendations %}
+            <div style="padding: var(--space-md); background: var(--info-light); border-radius: var(--radius-md); border-right: 4px solid var(--info);">
+                <div style="font-weight: var(--fw-bold); color: var(--info); margin-bottom: var(--space-sm);">التوصيات</div>
+                <p style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.7;">{{ report.recommendations }}</p>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <!-- نموذج كتابة التقرير -->
+        <div class="card" style="margin-bottom: var(--space-xl);">
+            <div class="card-header">
+                <h3 class="card-title">📝 كتابة تقرير التقييم</h3>
+            </div>
+
+            <form method="POST" action="{{ url_for('assessor.submit_report', assessment_id=assessment.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() if csrf_token is defined else '' }}">
+
+                <div class="form-group">
+                    <label class="form-label">الدرجة الكلية (من 100)</label>
+                    <input type="number" name="score" class="form-input" min="0" max="100" placeholder="أدخل الدرجة" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">ملخص التقييم</label>
+                    <textarea name="summary" class="form-textarea" rows="4" placeholder="اكتب ملخصا شاملا عن أداء الطالب..." required></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">نقاط القوة</label>
+                    <textarea name="strengths" class="form-textarea" rows="3" placeholder="ما الذي أبدع فيه الطالب؟"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">نقاط التحسين</label>
+                    <textarea name="improvements" class="form-textarea" rows="3" placeholder="ما الذي يحتاج الطالب للعمل عليه؟"></textarea>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">التوصيات</label>
+                    <textarea name="recommendations" class="form-textarea" rows="3" placeholder="ما التوصيات لتطوير مستوى الطالب؟"></textarea>
+                </div>
+
+                <div style="display: flex; gap: var(--space-sm); justify-content: flex-start; margin-top: var(--space-lg);">
+                    <button type="submit" class="btn btn-primary">حفظ التقرير</button>
+                    <button type="button" class="btn btn-ghost" onclick="history.back()">إلغاء</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="dashboard-grid-aside">
+        <!-- معلومات التقييم -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">معلومات التقييم</h3>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--space-md);">
+                <div>
+                    <div style="font-size: var(--text-xs); color: var(--text-muted); margin-bottom: 2px;">الطالب</div>
+                    <div style="font-weight: var(--fw-bold); font-size: var(--text-sm);">{{ student.name_ar }}</div>
+                </div>
+                <div>
+                    <div style="font-size: var(--text-xs); color: var(--text-muted); margin-bottom: 2px;">نوع التقييم</div>
+                    <div style="font-weight: var(--fw-bold); font-size: var(--text-sm);">تقييم</div>
+                </div>
+                {% if assessment.scheduled_at %}
+                <div>
+                    <div style="font-size: var(--text-xs); color: var(--text-muted); margin-bottom: 2px;">الموعد</div>
+                    <div style="font-weight: var(--fw-bold); font-size: var(--text-sm);">{{ assessment.scheduled_at.strftime('%Y-%m-%d') }}</div>
+                    <div style="font-size: var(--text-xs); color: var(--text-secondary);">{{ assessment.scheduled_at.strftime('%H:%M') }}</div>
+                </div>
+                {% endif %}
+                <div>
+                    <div style="font-size: var(--text-xs); color: var(--text-muted); margin-bottom: 2px;">الحالة</div>
+                    <div>
+                        {% if assessment.status.value == 'completed' %}
+                        <span class="badge badge-success">مكتمل</span>
+                        {% elif assessment.status.value == 'in_progress' %}
+                        <span class="badge badge-orange">جاري</span>
+                        {% elif assessment.status.value == 'scheduled' %}
+                        <span class="badge badge-info">مجدول</span>
+                        {% else %}
+                        <span class="badge badge-warning">{{ assessment.status }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- روابط سريعة -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">روابط سريعة</h3>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                <a href="{{ url_for('assessor.student_profile', student_id=student.id) }}" class="btn btn-block btn-outline" style="justify-content: flex-start;">
+                    👤 ملف الطالب
+                </a>
+                <a href="{{ url_for('assessor.assessments') }}" class="btn btn-block btn-ghost" style="justify-content: flex-start;">
+                    📋 جميع التقييمات
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

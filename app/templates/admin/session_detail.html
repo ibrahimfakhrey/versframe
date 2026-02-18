@@ -1,0 +1,60 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}تفاصيل الجلسة{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="margin-bottom:var(--space-lg);">
+    <h2 style="margin-bottom:var(--space-md);">{{ session.title }}</h2>
+    <div class="stats-grid" style="grid-template-columns:repeat(auto-fill,minmax(160px,1fr));">
+        <div class="stat-card"><div class="stat-card-label">المجموعة</div><div style="font-weight:600;">{{ session.group.name if session.group else '—' }}</div></div>
+        <div class="stat-card"><div class="stat-card-label">المعلم</div><div style="font-weight:600;">{{ session.teacher.name_ar if session.teacher else '—' }}</div></div>
+        <div class="stat-card"><div class="stat-card-label">الموعد</div><div style="font-weight:600;">{{ session.scheduled_at.strftime('%Y-%m-%d %H:%M') if session.scheduled_at else '—' }}</div></div>
+        <div class="stat-card"><div class="stat-card-label">المدة</div><div style="font-weight:600;">{{ session.duration_minutes }} دقيقة</div></div>
+        <div class="stat-card"><div class="stat-card-label">الحالة</div><div style="font-weight:600;">{{ session.status.value }}</div></div>
+    </div>
+</div>
+
+{% if session.teacher_notes %}
+<div class="card" style="margin-bottom:var(--space-lg);">
+    <h3 style="margin-bottom:var(--space-sm);">ملاحظات المعلم</h3>
+    <p>{{ session.teacher_notes }}</p>
+</div>
+{% endif %}
+
+<div class="card">
+    <h3 style="margin-bottom:var(--space-md);">الحضور</h3>
+    {% if session.attendance.all() %}
+    <table class="table">
+        <thead><tr><th>الطالب</th><th>وقت الدخول</th><th>وقت الخروج</th><th>المدة</th><th>الحالة</th></tr></thead>
+        <tbody>
+            {% for a in session.attendance.all() %}
+            <tr>
+                <td>{{ a.student.name_ar if a.student else '—' }}</td>
+                <td class="text-sm">{{ a.joined_at.strftime('%H:%M') if a.joined_at else '—' }}</td>
+                <td class="text-sm">{{ a.left_at.strftime('%H:%M') if a.left_at else '—' }}</td>
+                <td class="text-sm">{{ (a.duration_seconds // 60) }} دقيقة</td>
+                <td><span class="badge">{{ a.status.value }}</span></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state-inline">لا يوجد سجل حضور بعد</div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

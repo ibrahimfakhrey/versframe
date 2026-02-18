@@ -1,0 +1,76 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}المنهج الدراسي - شلبي فيرس{% endblock %}
+{% block topbar_title %}المنهج الدراسي{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('admin.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('admin.users') }}" class="sidebar-link">
+    <span class="sidebar-icon">👥</span>
+    <span>المستخدمون</span>
+</a>
+<a href="{{ url_for('admin.groups') }}" class="sidebar-link">
+    <span class="sidebar-icon">📚</span>
+    <span>المجموعات</span>
+</a>
+<a href="{{ url_for('admin.sessions') }}" class="sidebar-link">
+    <span class="sidebar-icon">🎓</span>
+    <span>الجلسات</span>
+</a>
+<a href="{{ url_for('admin.resources') }}" class="sidebar-link">
+    <span class="sidebar-icon">📦</span>
+    <span>الموارد</span>
+</a>
+<a href="{{ url_for('admin.curriculum') }}" class="sidebar-link active">
+    <span class="sidebar-icon">📖</span>
+    <span>المنهج</span>
+</a>
+<a href="{{ url_for('admin.reports') }}" class="sidebar-link">
+    <span class="sidebar-icon">📊</span>
+    <span>التقارير</span>
+</a>
+<a href="{{ url_for('admin.settings') }}" class="sidebar-link">
+    <span class="sidebar-icon">⚙️</span>
+    <span>الإعدادات</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">📖 المنهج الدراسي</h2>
+    <p class="page-subtitle">إدارة المسارات والمستويات والوحدات</p>
+</div>
+
+{% if tracks %}
+<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: var(--space-lg);">
+    {% for track in tracks %}
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+            <div style="width: 48px; height: 48px; border-radius: var(--radius-md); background: var(--sv-purple-light); color: white; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">
+                {{ track.icon or '📘' }}
+            </div>
+            <div>
+                <h3 style="font-size: 16px; margin: 0;">{{ track.name_ar or track.name }}</h3>
+                <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">{{ track.id }}</p>
+            </div>
+        </div>
+        <div style="font-size: 13px; color: var(--text-secondary);">
+            {{ track.levels.count() }} مستوى
+        </div>
+        <a href="{{ url_for('curriculum.track', track_id=track.id) }}" class="btn btn-sm btn-outline" style="width: 100%; text-align: center; margin-top: var(--space-md);">
+            عرض التفاصيل
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: var(--space-2xl);">
+    <div style="font-size: 3rem; margin-bottom: var(--space-md);">📖</div>
+    <h3>لا توجد مسارات بعد</h3>
+    <p style="color: var(--text-secondary);">قم بتشغيل seed.py لاستيراد بيانات المنهج</p>
+</div>
+{% endif %}
+{% endblock %}

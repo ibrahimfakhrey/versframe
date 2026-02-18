@@ -1,0 +1,22 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}التقارير{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="text-align:center;padding:var(--space-3xl);">
+    <div style="font-size:3rem;margin-bottom:var(--space-md);">📊</div>
+    <h2 style="margin-bottom:var(--space-sm);">التقارير والتحليلات</h2>
+    <p class="text-muted">قريباً — سيتم إضافة تقارير تفصيلية عن أداء الطلاب والمعلمين والجلسات</p>
+</div>
+{% endblock %}

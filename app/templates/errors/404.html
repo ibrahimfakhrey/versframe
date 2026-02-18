@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div style="min-height:100vh;display:flex;align-items:center;justify-content:center;background:var(--bg);text-align:center;padding:var(--space-xl);">
+    <div class="animate-fade">
+        <div style="font-size:8rem;font-weight:800;color:var(--sv-purple);line-height:1;margin-bottom:var(--space-md);font-family:var(--font-en);">404</div>
+        <h2 style="margin-bottom:var(--space-sm);">الصفحة غير موجودة</h2>
+        <p class="text-muted" style="margin-bottom:var(--space-xl);">عذراً، الصفحة التي تبحث عنها غير موجودة أو تم نقلها</p>
+        <a href="/" class="btn btn-primary">العودة للرئيسية</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,1860 @@
+{% extends "base.html" %}
+
+{% block title %}{{ session.title }} - الغرفة المباشرة{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/room.css') }}">
+<style>
+/* ============================================
+   Room Template - Inline Overrides & Additions
+   Light Lavender / Frosted Glass Theme
+   ============================================ */
+
+/* --- Light Lavender Background --- */
+.room-container {
+    position: relative;
+    display: grid;
+    grid-template-rows: auto 1fr auto;
+    height: 100vh;
+    overflow: hidden;
+    background:
+        radial-gradient(ellipse 120% 80% at 20% 10%, rgba(180, 140, 210, 0.35) 0%, transparent 55%),
+        radial-gradient(ellipse 100% 70% at 80% 90%, rgba(160, 120, 200, 0.3) 0%, transparent 50%),
+        linear-gradient(165deg, #D8CCE8 0%, #E4D8F0 30%, #D0C4DE 60%, #DDD2EC 100%);
+    color: #2D3436;
+    font-family: var(--font-ar);
+}
+
+/* Stars hidden in light theme */
+.room-stars {
+    display: none;
+}
+.room-stars .star {
+    display: none;
+}
+
+/* --- Top Bar --- */
+.room-topbar {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 20px;
+    background: rgba(235, 225, 248, 0.85);
+    border-bottom: 1px solid rgba(180, 140, 210, 0.15);
+    backdrop-filter: blur(12px);
+    gap: var(--space-md);
+}
+.room-topbar-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    text-decoration: none;
+    color: #2D3436;
+    font-weight: var(--fw-extrabold);
+    font-size: var(--text-lg);
+    flex-shrink: 0;
+}
+.room-topbar-logo .sv-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--sv-purple), var(--sv-orange));
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 13px;
+    font-weight: 800;
+    font-family: var(--font-en);
+}
+.room-topbar-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(180, 140, 210, 0.15);
+    border-radius: var(--radius-full);
+    padding: 4px;
+}
+.room-topbar-tab {
+    padding: 7px 18px;
+    border-radius: var(--radius-full);
+    border: none;
+    background: none;
+    color: #636E72;
+    font-family: var(--font-ar);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.room-topbar-tab:hover { color: #2D3436; }
+.room-topbar-tab.active {
+    background: var(--sv-orange);
+    color: white;
+    box-shadow: 0 2px 10px rgba(235, 91, 0, 0.35);
+}
+.room-topbar-stats {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-shrink: 0;
+}
+.room-topbar-stats .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    color: #2D3436;
+}
+.stat-item .stat-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+.stat-timer { background: rgba(0, 184, 148, 0.12); color: var(--success); }
+.stat-students { background: rgba(180, 140, 210, 0.15); }
+.stat-xp { background: rgba(235, 91, 0, 0.1); color: #EB5B00; }
+
+/* --- Body 3-Panel Layout --- */
+.room-body {
+    position: relative;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: 220px 1fr 280px;
+    gap: 1px;
+    overflow: hidden;
+    background: transparent;
+}
+
+/* --- Left Panel --- */
+.room-left-panel {
+    background: rgba(235, 225, 248, 0.5);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
+    backdrop-filter: blur(8px);
+}
+.room-teacher-video {
+    position: relative;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: linear-gradient(135deg, #C8B8DC, #B8A8D0);
+    aspect-ratio: 4/3;
+    border: 2px solid rgba(180, 140, 210, 0.4);
+}
+.room-teacher-video video,
+.room-teacher-video .placeholder-cam {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.placeholder-cam {
+    flex-direction: column;
+    color: #8B7BA0;
+    font-size: 2.5rem;
+    gap: 6px;
+}
+.placeholder-cam span { font-size: var(--text-xs); }
+.room-teacher-video .teacher-name-overlay {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    padding: 6px 10px;
+    background: rgba(235, 225, 248, 0.85);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    color: #2D3436;
+}
+.room-teacher-info {
+    background: rgba(240, 230, 250, 0.6);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+}
+.room-teacher-info .info-label {
+    font-size: 11px;
+    color: #636E72;
+    margin-bottom: 3px;
+}
+.room-teacher-info .info-title {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    color: #2D3436;
+}
+.room-student-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    flex: 1;
+    align-content: start;
+}
+.room-student-thumb {
+    position: relative;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    background: linear-gradient(135deg, #C8B8DC, #B8A8D0);
+    aspect-ratio: 1;
+    border: 2.5px solid #E84393;
+    transition: transform var(--transition-fast);
+}
+/* Colorful student avatar borders */
+.room-student-thumb:nth-child(4n+1) { border-color: #E84393; }
+.room-student-thumb:nth-child(4n+2) { border-color: #00B894; }
+.room-student-thumb:nth-child(4n+3) { border-color: #EB5B00; }
+.room-student-thumb:nth-child(4n)   { border-color: #0984E3; }
+.room-student-thumb:hover { transform: scale(1.03); }
+.room-student-thumb video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.room-student-name {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    left: 0;
+    padding: 2px 6px;
+    background: rgba(235, 225, 248, 0.85);
+    font-size: 9px;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: #2D3436;
+}
+
+/* --- Center Panel --- */
+.room-center-panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: rgba(235, 225, 248, 0.6);
+    position: relative;
+    backdrop-filter: blur(12px);
+}
+.room-sub-tabs {
+    display: flex;
+    gap: 0;
+    padding: 8px 14px;
+    background: rgba(235, 225, 248, 0.5);
+    border-bottom: 1px solid rgba(180, 140, 210, 0.15);
+}
+.room-sub-tab {
+    padding: 7px 16px;
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    color: #636E72;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-ar);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+.room-sub-tab:hover { color: #2D3436; background: rgba(180, 140, 210, 0.12); }
+.room-sub-tab.active {
+    background: var(--sv-orange);
+    color: white;
+}
+.center-content-area {
+    flex: 1;
+    overflow: auto;
+    padding: 14px;
+    position: relative;
+}
+.center-pane {
+    display: none;
+    height: 100%;
+    flex-direction: column;
+}
+.center-pane.active {
+    display: flex;
+}
+
+/* Slides pane */
+.slides-viewer {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+.slides-viewer img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: var(--radius-md);
+    box-shadow: 0 8px 32px rgba(100, 13, 95, 0.1);
+}
+.slides-empty {
+    color: #636E72;
+    text-align: center;
+}
+.slides-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: 10px;
+}
+.slides-nav button {
+    padding: 6px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(180, 140, 210, 0.2);
+    background: rgba(240, 230, 250, 0.6);
+    color: #2D3436;
+    font-family: var(--font-ar);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: background var(--transition-fast);
+}
+.slides-nav button:hover { background: rgba(255, 255, 255, 0.95); }
+.slides-nav .counter {
+    font-size: var(--text-sm);
+    color: #636E72;
+}
+
+/* Code pane */
+.room-code-area {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    gap: 10px;
+    position: relative;
+}
+.room-task-card {
+    background: rgba(235, 91, 0, 0.06);
+    border-radius: var(--radius-md);
+    padding: 12px 16px;
+    border-right: 3px solid var(--sv-orange);
+}
+.room-task-card .task-label {
+    font-size: 11px;
+    color: #EB5B00;
+    font-weight: var(--fw-bold);
+    margin-bottom: 4px;
+}
+.room-task-card .task-text {
+    font-size: var(--text-sm);
+    color: #2D3436;
+}
+/* Code editor & output STAY DARK */
+.room-code-editor {
+    flex: 1;
+    min-height: 180px;
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+}
+.room-code-editor textarea {
+    flex: 1;
+    width: 100%;
+    padding: 12px 14px;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    border: none;
+    resize: none;
+    font-family: var(--font-mono);
+    font-size: 14px;
+    line-height: 1.6;
+    outline: none;
+}
+.room-code-editor textarea::placeholder { color: rgba(255, 255, 255, 0.25); }
+.room-code-output {
+    background: #0d0d1a;
+    color: #00ff88;
+    padding: 10px 14px;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    min-height: 70px;
+    max-height: 140px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.code-actions-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.room-run-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 22px;
+    background: linear-gradient(135deg, var(--sv-orange), #ff8a3d);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-ar);
+    font-weight: var(--fw-bold);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    box-shadow: 0 3px 12px rgba(235, 91, 0, 0.3);
+    border-bottom: 3px solid #B84700;
+    transition: all var(--transition-fast);
+}
+.room-run-btn:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(235, 91, 0, 0.4); }
+
+/* Robot mascot */
+.room-mascot {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    width: 52px;
+    height: 52px;
+    z-index: 15;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    filter: drop-shadow(0 2px 8px rgba(100, 13, 95, 0.2));
+    animation: mascot-float 3s ease-in-out infinite;
+}
+@keyframes mascot-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+}
+
+/* Q&A pane */
+.qna-list-container {
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+.qna-item {
+    padding: 10px 14px;
+    background: rgba(240, 230, 250, 0.5);
+    border-radius: var(--radius-sm);
+    border-right: 3px solid var(--sv-purple);
+}
+.qna-item .q-author {
+    font-size: 11px;
+    color: #EB5B00;
+    font-weight: var(--fw-bold);
+    margin-bottom: 3px;
+}
+.qna-item .q-text {
+    font-size: var(--text-sm);
+    color: #2D3436;
+}
+.qna-item .q-time {
+    font-size: 10px;
+    color: #B2BEC3;
+    margin-top: 4px;
+}
+.qna-input-bar {
+    display: flex;
+    gap: 8px;
+    padding-top: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+.qna-input-bar input {
+    flex: 1;
+    padding: 9px 14px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(180, 140, 210, 0.18);
+    border-radius: var(--radius-md);
+    color: #2D3436;
+    font-family: var(--font-ar);
+    font-size: var(--text-sm);
+    outline: none;
+}
+.qna-input-bar input::placeholder { color: #B2BEC3; }
+.qna-input-bar button {
+    padding: 8px 18px;
+    background: var(--sv-purple);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-ar);
+    font-weight: var(--fw-bold);
+    font-size: var(--text-sm);
+    cursor: pointer;
+}
+
+/* Whiteboard pane */
+.whiteboard-placeholder {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #636E72;
+    font-size: var(--text-lg);
+}
+
+/* --- Right Panel --- */
+.room-right-panel {
+    background: rgba(235, 225, 248, 0.5);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+    backdrop-filter: blur(8px);
+}
+
+/* Glass card */
+.glass-card {
+    background: rgba(240, 230, 250, 0.7);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(180, 140, 210, 0.2);
+    border-radius: var(--radius-md);
+    padding: 14px;
+}
+.glass-card .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+.glass-card .card-title {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-extrabold);
+    color: #2D3436;
+}
+
+/* Activity card */
+.room-activity-card { position: relative; }
+.room-activity-live {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: var(--sv-orange);
+    color: white;
+    padding: 2px 10px;
+    border-radius: var(--radius-full);
+    font-size: 10px;
+    font-weight: var(--fw-bold);
+    animation: pulse-live 2s infinite;
+}
+@keyframes pulse-live {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+.room-activity-timer {
+    font-size: var(--text-2xl);
+    font-weight: var(--fw-extrabold);
+    color: #2D3436;
+    text-align: center;
+    margin: 8px 0;
+    font-family: var(--font-en);
+}
+.room-activity-progress {
+    margin-top: 6px;
+}
+.room-activity-progress .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: #636E72;
+    margin-bottom: 4px;
+}
+.progress-bar-track {
+    height: 6px;
+    background: rgba(180, 140, 210, 0.2);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sv-purple), var(--sv-orange));
+    border-radius: var(--radius-full);
+    transition: width 0.4s ease;
+}
+.activity-action-btn {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 8px;
+    background: linear-gradient(135deg, var(--sv-orange), #ff8a3d);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-ar);
+    font-weight: var(--fw-bold);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    text-align: center;
+    border-bottom: 3px solid #B84700;
+}
+.activity-action-btn:hover { filter: brightness(1.1); }
+.activity-drag-title {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #2D3436;
+}
+
+/* Skill snapshot card */
+.room-skill-card {}
+.skill-name {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    margin-bottom: 8px;
+    color: #2D3436;
+}
+
+/* Treasure / gems */
+.treasure-section {
+    text-align: center;
+    padding: 10px;
+    font-size: 48px;
+    filter: drop-shadow(0 4px 12px rgba(235, 180, 0, 0.3));
+}
+.treasure-section div {
+    color: #636E72 !important;
+}
+
+/* --- Bottom Bar --- */
+.room-bottom-bar {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 18px;
+    background: rgba(235, 225, 248, 0.85);
+    border-top: 1px solid rgba(180, 140, 210, 0.15);
+    backdrop-filter: blur(12px);
+    gap: var(--space-md);
+}
+.room-bottom-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+.room-bottom-actions .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: var(--radius-full);
+    border: 1px solid rgba(180, 140, 210, 0.2);
+    background: rgba(240, 230, 250, 0.6);
+    color: #4A3060;
+    font-family: var(--font-ar);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+.room-bottom-actions .action-btn:hover { background: rgba(240, 230, 250, 0.85); color: #2D3436; }
+.room-bottom-actions .action-btn.hand-raised {
+    background: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.3);
+    color: #B8860B;
+}
+.room-bottom-chat {
+    flex: 1;
+    max-width: 480px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.room-bottom-chat input {
+    flex: 1;
+    padding: 9px 18px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(180, 140, 210, 0.18);
+    border-radius: var(--radius-full);
+    color: #2D3436;
+    font-family: var(--font-ar);
+    font-size: var(--text-sm);
+    outline: none;
+}
+.room-bottom-chat input::placeholder { color: #B2BEC3; }
+.room-bottom-chat input:focus {
+    border-color: rgba(139, 26, 133, 0.4);
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 0 0 3px rgba(139, 26, 133, 0.1);
+}
+.room-bottom-chat .chat-send-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: none;
+    background: var(--sv-purple);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: background var(--transition-fast);
+    flex-shrink: 0;
+}
+.room-bottom-chat .chat-send-btn:hover { background: var(--sv-purple-light); }
+.room-bottom-controls {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+}
+.room-control-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(180, 140, 210, 0.18);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    transition: all var(--transition-fast);
+    background: rgba(240, 230, 250, 0.6);
+    color: #4A3060;
+}
+.room-control-btn:hover { background: rgba(240, 230, 250, 0.85); color: #2D3436; }
+.room-control-btn.active { background: rgba(139, 26, 133, 0.2); color: #6C5CE7; }
+.room-control-btn.muted { background: rgba(214, 48, 49, 0.1); color: #d63031; }
+.room-control-btn.danger { background: var(--danger); color: white; }
+.room-control-btn.danger:hover { background: #c0392b; }
+.room-control-btn .btn-label {
+    display: none;
+}
+
+/* Teacher-only session controls */
+.teacher-session-ctrl {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+}
+.teacher-session-ctrl button {
+    flex: 1;
+    padding: 7px 10px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: var(--font-ar);
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: filter var(--transition-fast);
+}
+.teacher-session-ctrl button:hover { filter: brightness(1.1); }
+.btn-start-session { background: var(--success); color: white; }
+.btn-end-session { background: var(--danger); color: white; }
+
+/* --- Responsive --- */
+@media (max-width: 1100px) {
+    .room-body { grid-template-columns: 1fr; }
+    .room-left-panel, .room-right-panel { display: none; }
+    .room-topbar-tabs { overflow-x: auto; }
+}
+@media (max-width: 768px) {
+    .room-topbar { flex-wrap: wrap; padding: 6px 12px; }
+    .room-topbar-stats { gap: 8px; }
+    .room-bottom-bar { flex-wrap: wrap; justify-content: center; }
+    .room-bottom-chat { max-width: 100%; order: 3; }
+}
+
+/* ============================================
+   In-Class Activities Styles
+   Light Lavender / Frosted Glass Theme
+   ============================================ */
+
+/* --- Activity Question Title --- */
+.activity-question {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    color: #2D3436;
+    margin-bottom: 10px;
+    line-height: 1.6;
+    padding: 8px 12px;
+    background: rgba(235, 91, 0, 0.06);
+    border-radius: var(--radius-sm);
+    border-right: 3px solid var(--sv-orange);
+}
+
+/* --- MCQ Styles --- */
+.activity-mcq {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mcq-options {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.mcq-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: rgba(240, 230, 250, 0.5);
+    border: 1.5px solid rgba(180, 140, 210, 0.18);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: var(--text-sm);
+    color: #2D3436;
+}
+
+.mcq-option:hover {
+    background: rgba(240, 230, 250, 0.7);
+    border-color: rgba(235, 91, 0, 0.3);
+}
+
+.mcq-option.selected {
+    background: rgba(235, 91, 0, 0.08);
+    border-color: var(--sv-orange);
+    box-shadow: 0 0 0 3px rgba(235, 91, 0, 0.08);
+}
+
+.mcq-option input[type="radio"] {
+    display: none;
+}
+
+.mcq-radio-custom {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(0, 0, 0, 0.15);
+    flex-shrink: 0;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.mcq-option.selected .mcq-radio-custom {
+    border-color: var(--sv-orange);
+    background: var(--sv-orange);
+    box-shadow: inset 0 0 0 3px rgba(255, 255, 255, 0.9);
+}
+
+.mcq-option-text {
+    flex: 1;
+    line-height: 1.5;
+}
+
+/* --- Drag & Drop Styles --- */
+.activity-dragdrop {
+    display: flex;
+    flex-direction: column;
+}
+
+.dragdrop-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-height: 60px;
+}
+
+.dragdrop-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(240, 230, 250, 0.5);
+    border: 1.5px solid rgba(180, 140, 210, 0.18);
+    border-radius: var(--radius-md);
+    cursor: grab;
+    transition: all 0.15s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+}
+
+.dragdrop-item:hover {
+    background: rgba(240, 230, 250, 0.7);
+    border-color: rgba(139, 26, 133, 0.2);
+}
+
+.dragdrop-item.dragging {
+    opacity: 0.5;
+    background: rgba(235, 91, 0, 0.08);
+    border-color: var(--sv-orange);
+    box-shadow: 0 4px 16px rgba(235, 91, 0, 0.15);
+    cursor: grabbing;
+}
+
+.dragdrop-handle {
+    color: #B2BEC3;
+    font-size: 14px;
+    flex-shrink: 0;
+    cursor: grab;
+}
+
+.dragdrop-item.dragging .dragdrop-handle {
+    color: var(--sv-orange);
+}
+
+.dragdrop-code {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: #2D3436;
+    flex: 1;
+    direction: ltr;
+    text-align: left;
+}
+
+.dragdrop-hint {
+    font-size: 11px;
+    color: #636E72;
+    margin-bottom: 8px;
+}
+
+/* --- Fill-in-the-Blank Styles --- STAYS DARK (code area) */
+.activity-fillblank {
+    display: flex;
+    flex-direction: column;
+}
+
+.fillblank-code {
+    background: rgba(15, 8, 28, 0.85);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    padding: 10px;
+    font-family: var(--font-mono);
+    direction: ltr;
+    text-align: left;
+}
+
+.fillblank-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0;
+    min-height: 32px;
+    line-height: 1.6;
+}
+
+.fillblank-linenum {
+    width: 24px;
+    text-align: right;
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 11px;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.fillblank-content {
+    flex: 1;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.85);
+}
+
+.fillblank-input {
+    display: inline-block;
+    min-width: 60px;
+    max-width: 120px;
+    padding: 3px 8px;
+    margin: 0 4px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1.5px dashed rgba(235, 91, 0, 0.5);
+    border-radius: 6px;
+    color: var(--sv-orange-light);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    outline: none;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.fillblank-input::placeholder {
+    color: rgba(255, 255, 255, 0.2);
+    font-size: 12px;
+}
+
+.fillblank-input:focus {
+    border-color: var(--sv-orange);
+    background: rgba(235, 91, 0, 0.08);
+    box-shadow: 0 0 0 3px rgba(235, 91, 0, 0.15);
+}
+
+/* --- Code Challenge Styles --- STAYS DARK (code area) */
+.activity-code {
+    display: flex;
+    flex-direction: column;
+}
+
+.activity-code-editor {
+    width: 100%;
+    min-height: 100px;
+    max-height: 180px;
+    padding: 10px 12px;
+    background: rgba(15, 8, 28, 0.85);
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    border-radius: var(--radius-md);
+    color: #e0e0e0;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    line-height: 1.6;
+    resize: vertical;
+    outline: none;
+    direction: ltr;
+    text-align: left;
+    tab-size: 4;
+}
+
+.activity-code-editor:focus {
+    border-color: rgba(139, 26, 133, 0.5);
+    box-shadow: 0 0 0 3px rgba(139, 26, 133, 0.12);
+}
+
+.activity-code-editor::placeholder {
+    color: rgba(255, 255, 255, 0.25);
+}
+
+/* --- Submit Button --- 3D game-style */
+.activity-submit-btn {
+    display: block;
+    width: 100%;
+    margin-top: 10px;
+    padding: 10px;
+    background: linear-gradient(135deg, var(--sv-orange), #ff8a3d);
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-family: var(--font-ar);
+    font-weight: var(--fw-bold);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    box-shadow: 0 3px 12px rgba(235, 91, 0, 0.3);
+    border-bottom: 3px solid #B84700;
+}
+
+.activity-submit-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 5px 18px rgba(235, 91, 0, 0.4);
+}
+
+.activity-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* --- Activity Result Styles --- */
+.activity-result {
+    text-align: center;
+    padding: 16px 12px;
+    border-radius: var(--radius-md);
+    animation: result-appear 0.5s ease-out;
+}
+
+@keyframes result-appear {
+    from { opacity: 0; transform: scale(0.85); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+.result-emoji {
+    font-size: 2.5rem;
+    margin-bottom: 8px;
+    animation: result-bounce 0.6s ease;
+}
+
+@keyframes result-bounce {
+    0% { transform: scale(0); }
+    60% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.result-score {
+    font-size: var(--text-xl);
+    font-weight: var(--fw-extrabold);
+    color: #2D3436;
+    font-family: var(--font-en);
+}
+
+.result-pct {
+    font-size: var(--text-2xl);
+    font-weight: var(--fw-extrabold);
+    margin: 4px 0;
+    font-family: var(--font-en);
+}
+
+.result-excellent .result-pct { color: #00b894; }
+.result-good .result-pct { color: #e17055; }
+.result-retry .result-pct { color: #ff6b6b; }
+
+.result-message {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    color: #636E72;
+    margin-bottom: 6px;
+}
+
+.result-xp {
+    display: inline-block;
+    padding: 3px 14px;
+    background: rgba(235, 91, 0, 0.1);
+    border: 1px solid rgba(235, 91, 0, 0.2);
+    border-radius: var(--radius-full);
+    color: #EB5B00;
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    font-family: var(--font-en);
+    margin-bottom: 10px;
+    animation: xp-pop 0.4s 0.3s ease-out both;
+}
+
+@keyframes xp-pop {
+    from { opacity: 0; transform: scale(0.5) translateY(10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.result-bar-track {
+    height: 8px;
+    background: rgba(180, 140, 210, 0.2);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-top: 8px;
+}
+
+.result-bar-fill {
+    height: 100%;
+    border-radius: var(--radius-full);
+    transition: width 0.8s ease-out;
+}
+
+.result-excellent .result-bar-fill {
+    background: linear-gradient(90deg, #00b894, #00cec9);
+    box-shadow: 0 0 10px rgba(0, 184, 148, 0.4);
+}
+
+.result-good .result-bar-fill {
+    background: linear-gradient(90deg, var(--sv-orange), #fdcb6e);
+    box-shadow: 0 0 10px rgba(235, 91, 0, 0.3);
+}
+
+.result-retry .result-bar-fill {
+    background: linear-gradient(90deg, #e17055, #ff6b6b);
+    box-shadow: 0 0 10px rgba(255, 107, 107, 0.3);
+}
+
+/* --- Teacher Activity Launcher --- */
+.teacher-activity-launcher {
+    display: flex;
+    flex-direction: column;
+}
+
+.launcher-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+}
+
+.launcher-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 6px;
+    background: rgba(240, 230, 250, 0.5);
+    border: 1.5px solid rgba(180, 140, 210, 0.15);
+    border-radius: var(--radius-md);
+    color: #636E72;
+    font-family: var(--font-ar);
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.launcher-btn:hover {
+    background: rgba(235, 91, 0, 0.06);
+    border-color: rgba(235, 91, 0, 0.2);
+    color: #2D3436;
+    transform: translateY(-1px);
+}
+
+.launcher-icon {
+    font-size: 1.3rem;
+}
+
+/* --- Skill Snapshot Styles --- */
+.skill-snapshot-item {
+    margin-bottom: 8px;
+}
+
+.skill-snapshot-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.skill-snapshot-name {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    color: #2D3436;
+}
+
+.skill-snapshot-pct {
+    font-size: 11px;
+    font-family: var(--font-en);
+    color: #636E72;
+    font-weight: var(--fw-bold);
+}
+
+.skill-bar-animated {
+    transition: width 0.6s ease-out;
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="room-container">
+    <!-- ====================== -->
+    <!--   Star Particles BG    -->
+    <!-- ====================== -->
+    <div class="room-stars" id="roomStars"></div>
+
+    <!-- ====================== -->
+    <!--        TOP BAR          -->
+    <!-- ====================== -->
+    <header class="room-topbar">
+        <!-- Left: Logo -->
+        <a href="/" class="room-topbar-logo">
+            <div class="sv-icon">SV</div>
+            <span style="font-family:var(--font-en);">Verse</span>
+        </a>
+
+        <!-- Center: Main Tabs -->
+        <div class="room-topbar-tabs" id="topTabs">
+            <button class="room-topbar-tab active" data-top-tab="slides" onclick="switchTopTab('slides')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+                الشرائح
+            </button>
+            <button class="room-topbar-tab" data-top-tab="code" onclick="switchTopTab('code')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                مساحة الكود
+            </button>
+            <button class="room-topbar-tab" data-top-tab="qna" onclick="switchTopTab('qna')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                سؤال وجواب
+            </button>
+            <button class="room-topbar-tab" data-top-tab="resources" onclick="switchTopTab('resources')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+                الموارد
+            </button>
+        </div>
+
+        <!-- Right: Timer, Students, XP -->
+        <div class="room-topbar-stats">
+            <div class="stat-item">
+                <span class="stat-icon stat-timer">&#9200;</span>
+                <span id="topTimer">00:00</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon stat-students">&#128101;</span>
+                <span id="studentCount">0</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-icon stat-xp">&#11088;</span>
+                <span id="xpDisplay">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- ====================== -->
+    <!--      MAIN BODY          -->
+    <!-- ====================== -->
+    <div class="room-body">
+        <!-- ======================== -->
+        <!--  LEFT PANEL - Videos     -->
+        <!-- ======================== -->
+        <aside class="room-left-panel">
+            <!-- Teacher Video -->
+            <div class="room-teacher-video" id="teacherVideo">
+                <div class="placeholder-cam">
+                    <span style="font-size:2.5rem;">&#127909;</span>
+                    <span>{{ session.teacher.name_ar }}</span>
+                </div>
+                <div class="teacher-name-overlay">{{ session.teacher.name_ar }}</div>
+            </div>
+
+            <!-- Now Teaching -->
+            <div class="room-teacher-info">
+                <div class="info-label">&#128218; يُدرّس الآن</div>
+                <div class="info-title">{{ session.title }}</div>
+            </div>
+
+            <!-- Teacher controls -->
+            {% if is_teacher %}
+            <div class="teacher-session-ctrl">
+                <button class="btn-start-session" id="btnStartSession" onclick="handleStartSession()">&#9654; بدء الجلسة</button>
+                <button class="btn-end-session" id="btnEndSession" onclick="handleEndSession()">&#9632; إنهاء</button>
+            </div>
+            {% endif %}
+
+            <!-- Student Video Grid (populated by 100ms) -->
+            <div class="room-student-grid" id="studentVideoGrid">
+                <!-- Dynamic student video thumbnails will be injected here -->
+            </div>
+        </aside>
+
+        <!-- ======================== -->
+        <!--  CENTER PANEL - Content  -->
+        <!-- ======================== -->
+        <section class="room-center-panel">
+            <!-- Sub-tabs -->
+            <div class="room-sub-tabs" id="subTabs">
+                <button class="room-sub-tab" data-sub-tab="audio" onclick="switchSubTab('audio')">
+                    &#127911; الصوت
+                </button>
+                <button class="room-sub-tab active" data-sub-tab="slides" onclick="switchSubTab('slides')">
+                    &#128202; الشرائح
+                </button>
+                <button class="room-sub-tab" data-sub-tab="code" onclick="switchSubTab('code')">
+                    &#128187; مساحة الكود
+                </button>
+                <button class="room-sub-tab" data-sub-tab="qna" onclick="switchSubTab('qna')">
+                    &#10067; سؤال وجواب
+                </button>
+            </div>
+
+            <!-- Content Area -->
+            <div class="center-content-area">
+                <!-- === Audio Pane === -->
+                <div class="center-pane" id="pane-audio">
+                    <div style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#636E72;">
+                        <span style="font-size:3rem;">&#127911;</span>
+                        <p>الصوت المباشر متصل عبر 100ms</p>
+                        <p style="font-size:var(--text-xs);">يمكنك التحكم من أزرار الميكروفون في الأسفل</p>
+                    </div>
+                </div>
+
+                <!-- === Slides Pane === -->
+                <div class="center-pane active" id="pane-slides">
+                    <div class="slides-viewer" id="slidesViewer">
+                        {% if resources %}
+                        <div class="slides-empty" id="slidesPlaceholder">
+                            <p>&#128196; اختر شريحة لعرضها</p>
+                        </div>
+                        {% else %}
+                        <div class="slides-empty">
+                            <p>&#128196; لا توجد شرائح محملة بعد</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="slides-nav" id="slidesNav">
+                        {% if is_teacher %}
+                        <button onclick="prevSlide()">&#8594; السابقة</button>
+                        {% endif %}
+                        <span class="counter" id="slideCounter">0 / 0</span>
+                        {% if is_teacher %}
+                        <button onclick="nextSlide()">التالية &#8592;</button>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- === Coding Space Pane === -->
+                <div class="center-pane" id="pane-code">
+                    <div class="room-code-area">
+                        <!-- Task Card -->
+                        <div class="room-task-card" id="codeTaskCard">
+                            <div class="task-label">&#128203; المهمة</div>
+                            <div class="task-text" id="codeTaskText">اكتب الكود المطلوب في المحرر أدناه</div>
+                        </div>
+
+                        <!-- Code Editor -->
+                        <div class="room-code-editor">
+                            <textarea id="codeEditor" dir="ltr" placeholder="# اكتب الكود هنا...&#10;print('مرحباً بالعالم!')"></textarea>
+                            <div class="room-code-output" id="codeOutput">
+                                <span style="color:rgba(255,255,255,0.25);"># المخرجات ستظهر هنا</span>
+                            </div>
+                        </div>
+
+                        <!-- Code Actions -->
+                        <div class="code-actions-bar">
+                            <button class="room-run-btn" onclick="runCode()">
+                                &#9654; تشغيل الكود
+                            </button>
+                            {% if is_teacher %}
+                            <button class="room-run-btn" style="background:var(--sv-purple);" onclick="broadcastCode()">
+                                &#128228; إرسال للطلاب
+                            </button>
+                            {% else %}
+                            <button class="room-run-btn" style="background:var(--success);" onclick="submitCode()">
+                                &#128228; تسليم الكود
+                            </button>
+                            {% endif %}
+                        </div>
+
+                        <!-- Robot Mascot -->
+                        <div class="room-mascot" id="robotMascot">&#129302;</div>
+                    </div>
+                </div>
+
+                <!-- === Q&A Pane === -->
+                <div class="center-pane" id="pane-qna">
+                    <div class="qna-list-container" id="qnaList">
+                        <div style="text-align:center;padding:var(--space-2xl);color:#636E72;">
+                            <span style="font-size:2rem;">&#10067;</span>
+                            <p>لا توجد أسئلة بعد. كن أول من يسأل!</p>
+                        </div>
+                    </div>
+                    <div class="qna-input-bar">
+                        <input type="text" id="questionInput" placeholder="اكتب سؤالك هنا..." onkeypress="if(event.key==='Enter') submitQuestion()">
+                        <button onclick="submitQuestion()">إرسال</button>
+                    </div>
+                </div>
+
+                <!-- === Resources Pane === -->
+                <div class="center-pane" id="pane-resources">
+                    <div style="display:flex;flex-direction:column;gap:10px;">
+                        <h3 style="font-size:var(--text-lg);font-weight:var(--fw-bold);margin-bottom:8px;">&#128218; موارد الجلسة</h3>
+                        {% if resources %}
+                        {% for res in resources %}
+                        <div class="glass-card" style="cursor:pointer;" onclick="loadResource({{ res.id }}, '{{ res.resource.type.value if res.resource else '' }}')">
+                            <div style="display:flex;align-items:center;gap:10px;">
+                                <span style="font-size:1.5rem;">
+                                    {% if res.resource and res.resource.type.value == 'slides' %}&#128202;{% elif res.resource and res.resource.type.value == 'code_exercise' %}&#128187;{% else %}&#128196;{% endif %}
+                                </span>
+                                <div>
+                                    <div style="font-weight:var(--fw-bold);font-size:var(--text-sm);">{{ res.resource.name_ar if res.resource else 'مورد' }}</div>
+                                    <div style="font-size:11px;color:#636E72;">{{ res.resource.type.value if res.resource else '' }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        {% else %}
+                        <div style="text-align:center;padding:var(--space-2xl);color:#636E72;">
+                            <p>لا توجد موارد لهذه الجلسة</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- === Whiteboard Pane (placeholder) === -->
+                <div class="center-pane" id="pane-whiteboard">
+                    <div class="whiteboard-placeholder">
+                        &#128396; السبورة التفاعلية &mdash; قريباً
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ======================== -->
+        <!--  RIGHT PANEL - Activity  -->
+        <!-- ======================== -->
+        <aside class="room-right-panel">
+            <!-- In-Class Activity Card -->
+            <div class="glass-card room-activity-card" id="activityCard">
+                <div class="card-header">
+                    <span class="card-title">&#127919; <span id="activityTitle">نشاط داخل الحصة</span></span>
+                    <span class="room-activity-live" style="display:none;">LIVE</span>
+                </div>
+
+                <!-- Activity Timer -->
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+                    <div class="room-activity-timer" id="activityTimer" style="font-size:var(--text-2xl);font-weight:800;font-family:var(--font-en);color:white;">00:00</div>
+                    {% if is_teacher %}
+                    <button class="activity-action-btn" style="margin:0;padding:5px 12px;font-size:11px;background:var(--danger);width:auto;" onclick="endActivity()" id="endActivityBtn" title="إنهاء النشاط">&#9632; إنهاء</button>
+                    {% endif %}
+                </div>
+
+                <!-- Activity Progress -->
+                <div class="room-activity-progress" id="activityProgress">
+                    <div class="progress-label">
+                        <span>الإكمال</span>
+                        <span id="activityProgressText">0 / 0</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" id="activityProgressBar" style="width: 0%;"></div>
+                    </div>
+                </div>
+
+                <!-- Dynamic Activity Content Area -->
+                <div id="activityContent" style="margin-top:10px;">
+                    <div style="text-align:center;padding:20px 10px;color:#636E72;">
+                        <div style="font-size:2rem;margin-bottom:8px;">&#127919;</div>
+                        <p style="font-size:13px;">لا يوجد نشاط حالياً</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Skill Snapshot Card -->
+            <div class="glass-card room-skill-card" id="skillCard">
+                <div class="card-header">
+                    <span class="card-title">&#128200; لقطة المهارة</span>
+                </div>
+                <div class="skill-snapshot-item">
+                    <div class="skill-snapshot-header">
+                        <span class="skill-snapshot-name">المتغيرات</span>
+                        <span class="skill-snapshot-pct">0%</span>
+                    </div>
+                    <div class="progress-bar-track">
+                        <div class="progress-bar-fill" id="skillProgressBar" style="width: 0%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Treasure Chest / Gems -->
+            <div class="treasure-section">
+                &#129520;
+                <div style="font-size:var(--text-sm);color:#636E72;margin-top:4px;">صندوق الكنز</div>
+            </div>
+
+            <!-- Teacher: Timer Controls -->
+            {% if is_teacher %}
+            <div class="glass-card">
+                <div class="card-title" style="margin-bottom:8px;">&#9201; التحكم بالمؤقت</div>
+                <div style="display:flex;gap:6px;">
+                    <button class="activity-action-btn" style="margin:0;" onclick="startCountdownTimer(60)">1 دقيقة</button>
+                    <button class="activity-action-btn" style="margin:0;" onclick="startCountdownTimer(180)">3 دقائق</button>
+                    <button class="activity-action-btn" style="margin:0;" onclick="startCountdownTimer(300)">5 دقائق</button>
+                </div>
+                <div style="display:flex;gap:6px;margin-top:6px;">
+                    <input type="number" id="customTimerInput" min="10" max="3600" value="120" style="flex:1;padding:6px 10px;background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,0.08);border-radius:var(--radius-sm);color:#2D3436;font-size:var(--text-sm);text-align:center;">
+                    <button class="activity-action-btn" style="margin:0;flex:1;" onclick="startCountdownTimer(parseInt(document.getElementById('customTimerInput').value)||120)">تشغيل</button>
+                </div>
+            </div>
+            {% endif %}
+        </aside>
+    </div>
+
+    <!-- ====================== -->
+    <!--      BOTTOM BAR         -->
+    <!-- ====================== -->
+    <footer class="room-bottom-bar">
+        <!-- Left: Action buttons -->
+        <div class="room-bottom-actions">
+            <button class="action-btn" onclick="toggleActivitiesPanel()">
+                &#127922; الأنشطة
+            </button>
+            {% if not is_teacher %}
+            <button class="action-btn" id="handBtn" onclick="toggleHand()">
+                &#9995; رفع اليد
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- Center: Chat input -->
+        <div class="room-bottom-chat">
+            <input type="text" id="chatInput" placeholder="اكتب سؤالاً أو أرسل رسالة..." onkeypress="if(event.key==='Enter') sendChat()">
+            <button class="chat-send-btn" onclick="sendChat()" title="إرسال">
+                &#8592;
+            </button>
+        </div>
+
+        <!-- Right: Media controls -->
+        <div class="room-bottom-controls">
+            <button class="room-control-btn active" id="micBtn" onclick="toggleMic()" title="الميكروفون">
+                &#127908;
+            </button>
+            <button class="room-control-btn active" id="camBtn" onclick="toggleCamera()" title="الكاميرا">
+                &#127909;
+            </button>
+            {% if is_teacher %}
+            <button class="room-control-btn" id="screenBtn" onclick="toggleScreenShare()" title="مشاركة الشاشة">
+                &#128187;
+            </button>
+            {% endif %}
+            <button class="room-control-btn" id="moreBtn" onclick="toggleMoreOptions()" title="المزيد">
+                &#8943;
+            </button>
+            <button class="room-control-btn danger" id="leaveBtn" onclick="leaveRoom()" title="مغادرة">
+                &#128308;
+            </button>
+        </div>
+    </footer>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- SocketIO Client -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js" crossorigin="anonymous"></script>
+<!-- 100ms SDK loaded dynamically in init script below -->
+<!-- SocketIO helpers -->
+<script src="{{ url_for('static', filename='js/socketio.js') }}"></script>
+<!-- Room logic -->
+<script src="{{ url_for('static', filename='js/room.js') }}"></script>
+<!-- In-Class Activities -->
+<script src="{{ url_for('static', filename='js/activities.js') }}"></script>
+
+<script>
+(function() {
+    "use strict";
+
+    /* ============================
+       1. Global Config Variables
+       (Jinja-templated, needed by room.js & socketio.js)
+       ============================ */
+    window.SESSION_ID = {{ session.id }};
+    window.IS_TEACHER = {{ 'true' if is_teacher else 'false' }};
+    window.HMS_ROLE = '{{ hms_role }}';
+    window.USER_NAME = '{{ current_user.name_ar }}';
+    window.USER_ID = {{ current_user.id }};
+    window.currentUserId = window.USER_ID;
+    window.currentUserName = window.USER_NAME;
+
+    /* ============================
+       2. Star Particles Background
+       ============================ */
+    function generateStars() {
+        var container = document.getElementById('roomStars');
+        if (!container) return;
+        for (var i = 0; i < 80; i++) {
+            var star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.setProperty('--dur', (2 + Math.random() * 4) + 's');
+            star.style.setProperty('--max-opacity', (0.4 + Math.random() * 0.6).toFixed(2));
+            star.style.animationDelay = (Math.random() * 5) + 's';
+            var size = 1 + Math.random() * 2;
+            star.style.width = size + 'px';
+            star.style.height = size + 'px';
+            container.appendChild(star);
+        }
+    }
+
+    /* ============================
+       3. Tab Switching
+       ============================ */
+    window.switchTopTab = function(tabName) {
+        document.querySelectorAll('.room-topbar-tab').forEach(function(t) { t.classList.remove('active'); });
+        var active = document.querySelector('.room-topbar-tab[data-top-tab="' + tabName + '"]');
+        if (active) active.classList.add('active');
+        var map = { 'slides': 'slides', 'code': 'code', 'qna': 'qna', 'resources': 'resources' };
+        if (map[tabName]) switchSubTab(map[tabName]);
+    };
+
+    window.switchSubTab = function(tabName) {
+        document.querySelectorAll('.room-sub-tab').forEach(function(t) { t.classList.remove('active'); });
+        var btn = document.querySelector('.room-sub-tab[data-sub-tab="' + tabName + '"]');
+        if (btn) btn.classList.add('active');
+        document.querySelectorAll('.center-pane').forEach(function(p) { p.classList.remove('active'); });
+        var pane = document.getElementById('pane-' + tabName);
+        if (pane) pane.classList.add('active');
+    };
+
+    /* ============================
+       4. Chat Send
+       ============================ */
+    window.sendChat = function() {
+        var input = document.getElementById('chatInput');
+        if (!input) return;
+        var msg = input.value.trim();
+        if (!msg) return;
+        if (typeof emitChat === 'function') emitChat(SESSION_ID, USER_ID, msg);
+        input.value = '';
+    };
+
+    /* ============================
+       5. Q&A Submit
+       ============================ */
+    window.submitQuestion = function() {
+        var input = document.getElementById('questionInput');
+        if (!input) return;
+        var q = input.value.trim();
+        if (!q) return;
+        if (typeof emitQuestion === 'function') emitQuestion(SESSION_ID, q);
+        input.value = '';
+    };
+
+    /* ============================
+       6. Code Editor (Pyodide)
+       ============================ */
+    var pyodideReady = false;
+    var pyodideInstance = null;
+
+    window.runCode = function() {
+        var editor = document.getElementById('codeEditor');
+        var output = document.getElementById('codeOutput');
+        if (!editor || !output) return;
+        var code = editor.value;
+        output.textContent = 'جاري التشغيل...';
+
+        if (pyodideReady && pyodideInstance) {
+            try {
+                pyodideInstance.runPython('import sys; from io import StringIO; sys.stdout = StringIO()');
+                pyodideInstance.runPython(code);
+                var stdout = pyodideInstance.runPython('sys.stdout.getvalue()');
+                output.textContent = stdout || '(لا يوجد مخرجات)';
+            } catch(e) {
+                output.textContent = 'خطأ: ' + e.message;
+            }
+        } else {
+            output.textContent = 'جاري تحميل محرك Python...';
+            loadPyodideLazy(function() { window.runCode(); });
+        }
+    };
+
+    function loadPyodideLazy(callback) {
+        if (pyodideReady) { callback(); return; }
+        var script = document.createElement('script');
+        script.src = 'https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js';
+        script.onload = function() {
+            if (typeof loadPyodide === 'function') {
+                loadPyodide().then(function(pyodide) {
+                    pyodideInstance = pyodide;
+                    pyodideReady = true;
+                    showToast('تم تحميل محرك Python بنجاح', 'success');
+                    if (callback) callback();
+                }).catch(function(err) {
+                    var output = document.getElementById('codeOutput');
+                    if (output) output.textContent = 'خطأ في تحميل Pyodide: ' + err.message;
+                });
+            }
+        };
+        document.head.appendChild(script);
+    }
+
+    window.broadcastCode = function() {
+        var editor = document.getElementById('codeEditor');
+        if (!editor) return;
+        if (typeof emitCodeBroadcast === 'function') emitCodeBroadcast(SESSION_ID, editor.value);
+        showToast('تم إرسال الكود للطلاب', 'success');
+    };
+
+    window.submitCode = function() {
+        var editor = document.getElementById('codeEditor');
+        if (!editor) return;
+        if (typeof emitCodeSubmit === 'function') emitCodeSubmit(SESSION_ID, USER_ID, editor.value);
+        showToast('تم تسليم الكود بنجاح', 'success');
+    };
+
+    window.setEditorCode = function(code) {
+        var editor = document.getElementById('codeEditor');
+        if (editor) {
+            editor.value = code;
+            showToast('تم استلام كود جديد من المعلم', 'info');
+            switchSubTab('code');
+        }
+    };
+
+    /* ============================
+       7. Jinja-dependent functions
+       (use url_for which only works in template)
+       ============================ */
+    window.leaveRoom = function() {
+        if (!confirm('هل تريد مغادرة الجلسة؟')) return;
+        if (typeof leaveSession === 'function') leaveSession(SESSION_ID);
+        {% if is_teacher %}
+        window.location.href = '{{ url_for("teacher.dashboard") }}';
+        {% else %}
+        window.location.href = '{{ url_for("student.dashboard") }}';
+        {% endif %}
+    };
+
+    window.handleEndSession = function() {
+        if (!confirm('هل تريد إنهاء الجلسة لجميع المشاركين؟')) return;
+
+        // 1. Emit session_ended to all users via SocketIO
+        if (socket && socketConnected) {
+            socket.emit('end_session_broadcast', { session_id: SESSION_ID });
+        }
+
+        // 2. Leave 100ms locally
+        if (typeof hmsActions !== 'undefined' && hmsActions) {
+            try { hmsActions.leave(); } catch(e) {}
+        }
+        if (typeof leaveSession === 'function') leaveSession(SESSION_ID);
+
+        // 3. POST to server to end 100ms room + mark completed (via hidden form)
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ url_for("teacher.session_end", session_id=session.id) }}';
+        var csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrf_token';
+        csrf.value = document.querySelector('meta[name="csrf-token"]').content;
+        form.appendChild(csrf);
+        document.body.appendChild(form);
+        form.submit();
+    };
+
+    /* ============================
+       8. UI Helpers
+       ============================ */
+    window.toggleMoreOptions = function() { showToast('المزيد من الخيارات قريباً', 'info'); };
+    window.handleStartSession = function() { showToast('تم بدء الجلسة', 'success'); };
+
+    window.startCountdownTimer = function(seconds) {
+        if (typeof emitTimerStart === 'function') emitTimerStart(SESSION_ID, seconds);
+        if (typeof startTimer === 'function') startTimer(seconds);
+    };
+
+    window.loadResource = function(resourceId, resourceType) {
+        if (IS_TEACHER && typeof activateResource === 'function') activateResource(resourceId);
+        if (typeof switchResource === 'function') switchResource(resourceId, resourceType);
+    };
+
+    /* ============================
+       INIT: Stars + SocketIO + 100ms
+       ============================ */
+    document.addEventListener('DOMContentLoaded', async function() {
+        generateStars();
+
+        // Initialize SocketIO connection
+        if (typeof initSocketIO === 'function') {
+            initSocketIO(SESSION_ID);
+        }
+
+        // 1. Load 100ms SDK via dynamic import
+        try {
+            console.log('Loading 100ms SDK...');
+            var sdk = await import('https://esm.sh/@100mslive/hms-video-store?bundle');
+            window.HMSReactiveStore = sdk.HMSReactiveStore;
+            window.selectPeers = sdk.selectPeers;
+            window.selectIsLocalAudioEnabled = sdk.selectIsLocalAudioEnabled;
+            window.selectIsLocalVideoEnabled = sdk.selectIsLocalVideoEnabled;
+            console.log('100ms SDK loaded successfully');
+        } catch (e) {
+            console.error('Failed to load 100ms SDK:', e);
+        }
+
+        // 2. Fetch token and initialize room
+        if (typeof initRoom === 'function') {
+            try {
+                var resp = await fetch('/room/' + SESSION_ID + '/token');
+                var data = await resp.json();
+                console.log('Token fetched, initializing room...');
+                initRoom({
+                    sessionId: SESSION_ID,
+                    isTeacher: IS_TEACHER,
+                    authToken: data.token || null,
+                    userName: USER_NAME
+                });
+            } catch (e) {
+                console.error('Token fetch failed, init without video:', e);
+                initRoom({
+                    sessionId: SESSION_ID,
+                    isTeacher: IS_TEACHER,
+                    authToken: null,
+                    userName: USER_NAME
+                });
+            }
+        }
+    });
+
+})();
+</script>
+{% endblock %}

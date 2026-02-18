@@ -1,0 +1,6 @@
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+{% endblock %}
+

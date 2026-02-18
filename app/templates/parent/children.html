@@ -1,0 +1,90 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}أبنائي{% endblock %}
+{% block topbar_title %}أبنائي{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('parent.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('parent.children') }}" class="sidebar-link active">
+    <span class="sidebar-icon">👨‍👧‍👦</span>
+    <span>أبنائي</span>
+</a>
+<a href="{{ url_for('parent.messages') }}" class="sidebar-link">
+    <span class="sidebar-icon">✉️</span>
+    <span>الرسائل</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">أبنائي</h2>
+    <p class="page-subtitle">قائمة الأبناء المسجلين في شلبي فيرس</p>
+</div>
+
+{% if children %}
+<div class="card">
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>الطالب</th>
+                    <th>البريد الإلكتروني</th>
+                    <th>تاريخ التسجيل</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for child in children %}
+                <tr>
+                    <td>
+                        <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                            <div class="avatar">
+                                {% if child.avatar_url %}
+                                <img src="{{ child.avatar_url }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                                {% else %}
+                                {{ child.name_ar[0] if child.name_ar else '?' }}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div style="font-weight: var(--fw-bold);">{{ child.name_ar }}</div>
+                                <div style="font-size: var(--text-xs); color: var(--text-secondary);">{{ child.name_en or '' }}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td style="direction: ltr; text-align: right;">{{ child.email }}</td>
+                    <td>{{ child.created_at.strftime('%Y-%m-%d') if child.created_at else '-' }}</td>
+                    <td>
+                        {% if child.is_active %}
+                        <span class="badge badge-success">نشط</span>
+                        {% else %}
+                        <span class="badge badge-danger">غير نشط</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: var(--space-xs);">
+                            <a href="{{ url_for('parent.child_detail', child_id=child.id) }}" class="btn btn-sm btn-primary">
+                                التفاصيل
+                            </a>
+                            <a href="{{ url_for('parent.child_reports', child_id=child.id) }}" class="btn btn-sm btn-outline">
+                                التقارير
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card empty-state">
+    <div class="empty-state-icon">👨‍👧‍👦</div>
+    <div class="empty-state-text">لا يوجد أبناء مسجلين حاليا</div>
+    <p style="color: var(--text-muted); font-size: var(--text-sm);">تواصل مع إدارة شلبي فيرس لربط حسابات أبنائك بحسابك</p>
+</div>
+{% endif %}
+{% endblock %}

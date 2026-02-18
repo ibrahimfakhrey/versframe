@@ -1,0 +1,39 @@
+{% extends "base_auth.html" %}
+
+{% block auth_title %}تسجيل الدخول{% endblock %}
+{% block auth_subtitle %}مرحباً بك مجدداً في شلبي فيرس{% endblock %}
+
+{% block auth_content %}
+<form method="POST" action="{{ url_for('auth.login') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="form-group">
+        <label class="form-label">البريد الإلكتروني</label>
+        <input type="email" name="email" class="form-input" placeholder="example@email.com" required autofocus dir="ltr">
+    </div>
+
+    <div class="form-group">
+        <label class="form-label">كلمة المرور</label>
+        <input type="password" name="password" class="form-input" placeholder="••••••••" required dir="ltr">
+    </div>
+
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-lg);">
+        <label style="display:flex;align-items:center;gap:var(--space-xs);font-size:var(--text-sm);cursor:pointer;">
+            <input type="checkbox" name="remember" style="accent-color:var(--sv-purple);">
+            تذكرني
+        </label>
+        <a href="{{ url_for('auth.forgot_password') }}" class="text-sm" style="color:var(--sv-purple);">نسيت كلمة المرور؟</a>
+    </div>
+
+    <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;">
+        دخول
+    </button>
+</form>
+
+<div style="text-align:center;margin-top:var(--space-lg);padding-top:var(--space-lg);border-top:1px solid var(--border);">
+    <p class="text-sm text-muted">
+        ليس لديك حساب؟
+        <a href="{{ url_for('auth.register') }}" style="color:var(--sv-purple);font-weight:600;">سجل الآن</a>
+    </p>
+</div>
+{% endblock %}

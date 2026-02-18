@@ -1,0 +1,1680 @@
+/* === Shalaby Verse - Student Dashboard (Gamified Galaxy Theme) === */
+
+/* ── Hero Banner ─────────────────────────────────────────────────── */
+.hero-banner {
+    position: relative;
+    background: linear-gradient(135deg, #640D5F 0%, #8B1A85 30%, #4a0945 60%, #1a0a2e 100%);
+    border-radius: var(--radius-xl, 20px);
+    padding: 2rem 2.5rem;
+    margin-bottom: 1.5rem;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-height: 180px;
+    color: white;
+}
+.hero-stars {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+.hero-star {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    animation: heroTwinkle 3s ease-in-out infinite;
+}
+.hero-star::after {
+    content: '';
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    width: 6px;
+    height: 6px;
+    background: radial-gradient(circle, rgba(255,255,255,0.6), transparent 70%);
+    border-radius: 50%;
+}
+@keyframes heroTwinkle {
+    0%, 100% { opacity: 0.3; transform: scale(0.8); }
+    50% { opacity: 1; transform: scale(1.2); }
+}
+.hero-content {
+    position: relative;
+    z-index: 2;
+    flex: 1;
+}
+.hero-title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    color: white;
+}
+.hero-subtitle {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 1.25rem;
+}
+.hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #EB5B00, #FF7A2E);
+    color: white;
+    padding: 0.7rem 1.75rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(235,91,0,0.4);
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+}
+.hero-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(235,91,0,0.5);
+    color: white;
+}
+.hero-btn-outline {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: none;
+}
+.hero-btn-outline:hover {
+    background: rgba(255,255,255,0.25);
+    box-shadow: none;
+}
+.hero-btn-arrow {
+    font-size: 1.25rem;
+    transition: transform 0.2s;
+}
+.hero-btn:hover .hero-btn-arrow { transform: translateX(-4px); }
+
+.hero-illustration {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+.hero-level-badge {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border-radius: 16px;
+    padding: 0.75rem 1rem;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(255,215,0,0.4);
+    animation: heroBadgeFloat 3s ease-in-out infinite;
+}
+.hero-level-label {
+    display: block;
+    font-size: 0.6rem;
+    font-weight: 800;
+    color: #333;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.hero-level-num {
+    display: block;
+    font-size: 2rem;
+    font-weight: 900;
+    color: #333;
+    line-height: 1;
+}
+.hero-treasure {
+    font-size: 2.5rem;
+    animation: heroFloat 4s ease-in-out infinite;
+}
+.hero-rocket {
+    font-size: 2rem;
+    animation: heroFloat 3s ease-in-out infinite reverse;
+}
+@keyframes heroFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+@keyframes heroBadgeFloat {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+/* ── Stats Cards ─────────────────────────────────────────────────── */
+.student-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+.student-stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    text-align: center;
+    box-shadow: 0 2px 12px rgba(100,13,95,0.06);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.student-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(100,13,95,0.1);
+}
+.student-stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin: 0 auto 0.75rem;
+    font-weight: 800;
+}
+.student-stat-value {
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+}
+.student-stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #636E72);
+}
+
+/* ── XP Progress Card ────────────────────────────────────────────── */
+.xp-progress-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px rgba(100,13,95,0.06);
+}
+.xp-progress-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+.xp-progress-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 0.95rem;
+}
+.xp-level-badge-sm {
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, var(--sv-purple, #640D5F), var(--sv-orange, #EB5B00));
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+.xp-progress-numbers {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #636E72);
+}
+.xp-level-bar {
+    height: 10px;
+    background: #f0eef5;
+    border-radius: 20px;
+    overflow: hidden;
+}
+.xp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #640D5F, #EB5B00, #FFD700);
+    border-radius: 20px;
+    transition: width 1.2s cubic-bezier(0.4,0,0.2,1);
+    position: relative;
+}
+.xp-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+}
+@keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* ── Section Headers ─────────────────────────────────────────────── */
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    margin-top: 0.5rem;
+}
+.section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary, #2D3436);
+}
+.section-link {
+    font-size: 0.8rem;
+    color: var(--sv-purple, #640D5F);
+    text-decoration: none;
+    font-weight: 600;
+}
+.section-link:hover {
+    text-decoration: underline;
+}
+
+/* ── Universe Cards (Tracks) ─────────────────────────────────────── */
+.universes-scroll {
+    margin-bottom: 1.5rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.5rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100,13,95,0.2) transparent;
+}
+.universes-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+.universes-scroll::-webkit-scrollbar-thumb {
+    background: rgba(100,13,95,0.2);
+    border-radius: 3px;
+}
+.universes-track {
+    display: flex;
+    gap: 1rem;
+    padding: 0.25rem 0;
+}
+.universe-card {
+    position: relative;
+    min-width: 180px;
+    max-width: 200px;
+    border-radius: 20px;
+    overflow: hidden;
+    text-decoration: none;
+    color: white;
+    transition: transform 0.3s, box-shadow 0.3s;
+    flex-shrink: 0;
+}
+.universe-card:hover {
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    color: white;
+}
+.universe-card-bg {
+    position: absolute;
+    inset: 0;
+    border-radius: 20px;
+}
+.universe-card-content {
+    position: relative;
+    z-index: 1;
+    padding: 1.25rem 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.4rem;
+}
+.universe-icon {
+    font-size: 2.5rem;
+    margin-bottom: 0.25rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+.universe-name {
+    font-size: 0.95rem;
+    font-weight: 800;
+    line-height: 1.2;
+}
+.universe-name-en {
+    font-size: 0.7rem;
+    opacity: 0.8;
+    font-family: var(--font-en, 'Nunito', sans-serif);
+}
+.universe-progress {
+    width: 100%;
+    margin: 0.5rem 0;
+}
+.universe-progress-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.universe-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #FFD700, #FFA500);
+    border-radius: 10px;
+}
+.universe-continue {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: rgba(255,255,255,0.2);
+    padding: 0.35rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    margin-top: 0.25rem;
+    transition: background 0.2s;
+}
+.universe-card:hover .universe-continue {
+    background: rgba(255,255,255,0.35);
+}
+.universe-arrow {
+    font-size: 1rem;
+    transition: transform 0.2s;
+}
+.universe-card:hover .universe-arrow { transform: translateX(-3px); }
+
+/* ── Two Column Layout ───────────────────────────────────────────── */
+.dashboard-two-col {
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.dashboard-col-main {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+.dashboard-col-aside {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* ── Glass Card ──────────────────────────────────────────────────── */
+.glass-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    box-shadow: 0 2px 12px rgba(100,13,95,0.06);
+}
+.glass-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.glass-card-header h3 {
+    font-size: 1rem;
+    font-weight: 800;
+    margin: 0;
+}
+
+/* ── Activity Cards ──────────────────────────────────────────────── */
+.activity-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    background: white;
+    border-radius: 14px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 0.75rem;
+    box-shadow: 0 2px 10px rgba(100,13,95,0.05);
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+.activity-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(100,13,95,0.1);
+}
+.activity-card-live {
+    border: 2px solid #EB5B00;
+    background: linear-gradient(135deg, rgba(235,91,0,0.03), rgba(235,91,0,0.08));
+}
+.activity-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--sv-purple-glow, rgba(100,13,95,0.08));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
+}
+.activity-card-live .activity-card-icon {
+    background: var(--sv-orange-glow, rgba(235,91,0,0.12));
+    animation: pulse 2s infinite;
+}
+.activity-card-body {
+    flex: 1;
+    min-width: 0;
+}
+.activity-card-title {
+    font-size: 0.9rem;
+    font-weight: 700;
+    margin-bottom: 0.15rem;
+    color: var(--text-primary, #2D3436);
+}
+.activity-card-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #636E72);
+}
+.activity-card-btn {
+    background: linear-gradient(135deg, #EB5B00, #FF7A2E);
+    color: white;
+    padding: 0.45rem 1.1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+}
+.activity-card-btn:hover {
+    transform: scale(1.05);
+    color: white;
+}
+.activity-card-btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--sv-purple, #640D5F);
+    color: var(--sv-purple, #640D5F);
+}
+.activity-card-btn-outline:hover {
+    background: var(--sv-purple, #640D5F);
+    color: white;
+}
+.activity-card-badge {
+    background: rgba(100,13,95,0.08);
+    color: var(--sv-purple, #640D5F);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(235,91,0,0.3); }
+    50% { box-shadow: 0 0 0 8px rgba(235,91,0,0); }
+}
+
+/* ── XP Activity List ────────────────────────────────────────────── */
+.xp-activity-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f5f3f8;
+}
+.xp-activity-item:last-child { border-bottom: none; }
+.xp-activity-badge {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(235,91,0,0.1), rgba(235,91,0,0.05));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.8rem;
+    color: var(--sv-orange, #EB5B00);
+    flex-shrink: 0;
+}
+.xp-activity-info { flex: 1; }
+.xp-activity-reason {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+.xp-activity-date {
+    font-size: 0.7rem;
+    color: var(--text-secondary, #636E72);
+}
+
+/* ── Leaderboard Items ───────────────────────────────────────────── */
+.lb-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.55rem 0.5rem;
+    border-radius: 10px;
+    transition: background 0.2s;
+}
+.lb-item:hover { background: #f9f7fc; }
+.lb-item-me {
+    background: rgba(100,13,95,0.06);
+    border: 1px solid rgba(100,13,95,0.15);
+}
+.lb-rank {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 800;
+    background: #f0eef5;
+    color: var(--text-secondary, #636E72);
+    flex-shrink: 0;
+}
+.lb-rank-gold { background: #FFD700; color: #333; }
+.lb-rank-silver { background: #C0C0C0; color: #333; }
+.lb-rank-bronze { background: #CD7F32; color: white; }
+.lb-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--sv-purple, #640D5F), var(--sv-orange, #EB5B00));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+.lb-name {
+    flex: 1;
+    font-size: 0.85rem;
+    font-weight: 600;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.lb-xp {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--sv-purple, #640D5F);
+    white-space: nowrap;
+}
+
+/* ── Badges Mini Grid ────────────────────────────────────────────── */
+.badges-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+}
+.badge-mini {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.6rem 0.25rem;
+    border-radius: 12px;
+    background: #f9f7fc;
+    transition: transform 0.2s;
+}
+.badge-mini:hover { transform: translateY(-2px); }
+.badge-mini-icon { font-size: 1.5rem; }
+.badge-mini-name {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-align: center;
+    color: var(--text-secondary, #636E72);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
+}
+
+/* ── Streak Card ─────────────────────────────────────────────────── */
+.streak-card {
+    background: linear-gradient(135deg, #FFF5EB, #FFF0E0);
+    border: 1px solid rgba(235,91,0,0.15);
+}
+.streak-display {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    justify-content: center;
+}
+.streak-flame-lg {
+    font-size: 2.5rem;
+    animation: flamePulse 2s ease-in-out infinite;
+}
+@keyframes flamePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+.streak-number {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--sv-orange, #EB5B00);
+    line-height: 1;
+}
+.streak-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #636E72);
+}
+
+/* ── Topbar Streak ───────────────────────────────────────────────── */
+.topbar-streak {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(235,91,0,0.08);
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--sv-orange, #EB5B00);
+}
+.streak-flame-icon { font-size: 1.1rem; }
+.streak-count-inline { font-weight: 800; }
+
+/* ── Empty States ────────────────────────────────────────────────── */
+.empty-state-sm {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    color: var(--text-secondary, #636E72);
+}
+.empty-state-sm div {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+}
+.empty-state-sm p {
+    font-size: 0.8rem;
+    margin: 0;
+}
+
+/* ── Animations ──────────────────────────────────────────────────── */
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Badge Styles (kept from original for other pages) */
+.badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+}
+.badge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    border-radius: 16px;
+    text-align: center;
+    transition: all 0.2s;
+    cursor: default;
+}
+.badge-item:hover { transform: translateY(-2px); }
+.badge-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    background: linear-gradient(135deg, var(--sv-purple, #640D5F), var(--sv-orange, #EB5B00));
+    color: white;
+}
+.badge-item.locked .badge-icon {
+    background: #ddd;
+    color: #999;
+    filter: grayscale(1);
+}
+.badge-name {
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+
+/* Enter Verse Button */
+.enter-verse-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--sv-purple, #640D5F), var(--sv-orange, #EB5B00));
+    color: white;
+    border: none;
+    border-radius: 16px;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+}
+.enter-verse-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(100,13,95,0.3);
+    color: white;
+}
+
+/* XP Popup */
+.xp-popup {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9999;
+    font-weight: 900;
+    font-size: 1.25rem;
+    color: var(--sv-orange, #EB5B00);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    animation: xpFloat 1.5s ease forwards;
+}
+@keyframes xpFloat {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    50% { opacity: 1; transform: translateY(-40px) scale(1.2); }
+    100% { opacity: 0; transform: translateY(-80px) scale(0.8); }
+}
+
+/* Leaderboard & Quest styles (shared with other pages) */
+.leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 10px 1rem;
+    border-radius: 10px;
+    transition: background 0.2s;
+}
+.leaderboard-item:hover { background: #f9f7fc; }
+.leaderboard-rank {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    background: #f0eef5;
+    color: var(--text-secondary, #636E72);
+    flex-shrink: 0;
+}
+.leaderboard-item:nth-child(1) .leaderboard-rank { background: #FFD700; color: #333; }
+.leaderboard-item:nth-child(2) .leaderboard-rank { background: #C0C0C0; color: #333; }
+.leaderboard-item:nth-child(3) .leaderboard-rank { background: #CD7F32; color: white; }
+.leaderboard-name { flex: 1; font-size: 0.85rem; font-weight: 600; }
+.leaderboard-xp { font-size: 0.85rem; font-weight: 700; color: var(--sv-purple, #640D5F); }
+.leaderboard-self { background: rgba(100,13,95,0.06); border: 1px solid rgba(100,13,95,0.15); }
+
+/* Skill Item */
+.skill-item { margin-bottom: 0.75rem; }
+.skill-header { display: flex; justify-content: space-between; margin-bottom: 0.35rem; }
+.skill-name { font-size: 0.85rem; font-weight: 600; }
+.skill-pct { font-size: 0.75rem; color: var(--text-secondary, #636E72); }
+
+/* Two-col grid for other pages */
+.two-col-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+}
+
+/* ── Responsive ──────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .dashboard-two-col {
+        grid-template-columns: 1fr;
+    }
+    .dashboard-col-aside {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+    }
+    .student-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+@media (max-width: 768px) {
+    .hero-banner {
+        flex-direction: column;
+        text-align: center;
+        padding: 1.5rem;
+        min-height: auto;
+    }
+    .hero-content { margin-bottom: 1rem; }
+    .hero-title { font-size: 1.35rem; }
+    .student-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 0.75rem;
+    }
+    .dashboard-col-aside {
+        grid-template-columns: 1fr;
+    }
+    .two-col-grid {
+        grid-template-columns: 1fr;
+    }
+    .universe-card {
+        min-width: 150px;
+    }
+}
+
+
+/* ========================================================================
+   Shalaby Verse - Student Dashboard NEW sv- prefixed styles
+   (Reference Design Match - Galaxy / Game UI)
+   ======================================================================== */
+
+/* -- CSS Custom Properties (sv- namespace) ------------------------------ */
+:root {
+    --sv-purple: #640D5F;
+    --sv-orange: #EB5B00;
+    --sv-bg: #F8F9FE;
+}
+
+/* -- Hero Welcome Banner ------------------------------------------------ */
+.sv-hero {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    min-height: 210px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+    background: linear-gradient(135deg, #640D5F 0%, #8B1A85 30%, #4a0945 70%, #1a0a2e 100%);
+}
+.sv-hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+}
+.sv-hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 2.25rem 2.5rem;
+    flex: 1;
+}
+.sv-hero-title {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 0.3rem 0;
+    line-height: 1.3;
+}
+.sv-hero-subtitle {
+    font-size: 0.92rem;
+    color: rgba(255, 255, 255, 0.72);
+    margin: 0 0 1.25rem 0;
+}
+.sv-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #EB5B00, #FF7A2E);
+    color: #fff;
+    padding: 0.65rem 1.7rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-decoration: none;
+    box-shadow: 0 4px 18px rgba(235, 91, 0, 0.45);
+    transition: all 0.3s ease;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    border: none;
+    cursor: pointer;
+}
+.sv-hero-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(235, 91, 0, 0.55);
+    color: #fff;
+}
+.sv-hero-btn-arrow {
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+.sv-hero-btn:hover .sv-hero-btn-arrow {
+    transform: translateX(-4px);
+}
+
+/* Hero illustration area (treasure chest + level badge) */
+.sv-hero-illustration {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 1rem 2rem 0 0;
+    min-width: 220px;
+}
+.sv-hero-treasure {
+    width: 180px;
+    height: auto;
+    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.35));
+    animation: sv-float 4s ease-in-out infinite;
+}
+.sv-hero-level-badge {
+    position: absolute;
+    top: 8px;
+    left: 10px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border-radius: 14px;
+    padding: 0.4rem 0.7rem;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(255, 215, 0, 0.45);
+    z-index: 3;
+    animation: sv-bounce 3s ease-in-out infinite;
+}
+.sv-hero-level-label {
+    display: block;
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: #4a3600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.sv-hero-level-num {
+    display: block;
+    font-size: 1.65rem;
+    font-weight: 900;
+    color: #4a3600;
+    line-height: 1;
+}
+
+/* -- Section Headers ---------------------------------------------------- */
+.sv-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.sv-section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--text-primary, #2D3436);
+    margin: 0;
+}
+.sv-section-link {
+    font-size: 0.8rem;
+    color: var(--sv-purple, #640D5F);
+    text-decoration: none;
+    font-weight: 600;
+}
+.sv-section-link:hover {
+    text-decoration: underline;
+}
+
+/* -- Verse Cards (Your Universes) - Horizontal Scroll ------------------- */
+.sv-verses-scroll {
+    margin-bottom: 1.75rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.75rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100, 13, 95, 0.15) transparent;
+}
+.sv-verses-scroll::-webkit-scrollbar {
+    height: 5px;
+}
+.sv-verses-scroll::-webkit-scrollbar-thumb {
+    background: rgba(100, 13, 95, 0.15);
+    border-radius: 3px;
+}
+.sv-verses-track {
+    display: flex;
+    gap: 1rem;
+    padding: 0.25rem 0.15rem;
+}
+
+/* Individual verse card */
+.sv-verse-card {
+    position: relative;
+    min-width: 185px;
+    max-width: 210px;
+    background: #fff;
+    border-radius: 20px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text-primary, #2D3436);
+    box-shadow: 0 3px 16px rgba(100, 13, 95, 0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+}
+.sv-verse-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 32px rgba(100, 13, 95, 0.16);
+    color: var(--text-primary, #2D3436);
+}
+.sv-verse-card-img-wrap {
+    position: relative;
+    width: 100%;
+    height: 110px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #f8f0ff, #fff0f5);
+}
+.sv-verse-card-img-wrap img {
+    width: 90%;
+    height: 90%;
+    object-fit: contain;
+}
+.sv-verse-card-body {
+    padding: 0.75rem 0.9rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 1;
+}
+.sv-verse-card-name {
+    font-size: 0.88rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.2;
+}
+.sv-verse-card-level {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #636E72);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.sv-verse-card-level-bar {
+    flex: 1;
+    height: 5px;
+    background: #f0eef5;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.sv-verse-card-level-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #EB5B00, #FFD700);
+    border-radius: 10px;
+    position: relative;
+}
+.sv-verse-card-level-fill::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+    background-size: 200% 100%;
+    animation: sv-shimmer 2.5s infinite;
+}
+.sv-verse-card-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: linear-gradient(135deg, #EB5B00, #FF7A2E);
+    color: #fff;
+    padding: 0.35rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    margin-top: 0.2rem;
+    align-self: flex-start;
+    transition: all 0.2s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+}
+.sv-verse-card-btn:hover {
+    transform: scale(1.05);
+    color: #fff;
+}
+
+/* Locked verse card state */
+.sv-verse-card-lock {
+    position: absolute;
+    top: 6px;
+    left: 6px;
+    width: 28px;
+    height: 28px;
+}
+.sv-verse-card.locked .sv-verse-card-img-wrap {
+    filter: grayscale(0.6) opacity(0.6);
+}
+.sv-verse-card.locked .sv-verse-card-btn {
+    background: #ccc;
+    pointer-events: none;
+}
+
+/* -- Bottom Three-Column Grid ------------------------------------------- */
+.sv-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+/* -- Generic Card (used for each bottom column) ------------------------- */
+.sv-card {
+    background: #fff;
+    border-radius: 18px;
+    padding: 1.25rem;
+    box-shadow: 0 3px 16px rgba(100, 13, 95, 0.07);
+}
+.sv-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+}
+.sv-card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary, #2D3436);
+    margin: 0;
+}
+
+/* -- Today's Activity Column -------------------------------------------- */
+.sv-today-activity-hero {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    padding: 1.1rem;
+    margin-bottom: 0.85rem;
+    background: linear-gradient(135deg, #fff8f0, #fff3e6);
+    border: 1px solid rgba(235, 91, 0, 0.1);
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+.sv-today-activity-img {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    flex-shrink: 0;
+    animation: sv-float 5s ease-in-out infinite;
+}
+.sv-today-activity-info {
+    flex: 1;
+}
+.sv-today-activity-name {
+    font-size: 0.92rem;
+    font-weight: 700;
+    margin: 0 0 0.2rem 0;
+    color: var(--text-primary, #2D3436);
+}
+.sv-today-activity-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #636E72);
+    margin: 0 0 0.6rem 0;
+}
+.sv-today-rewards {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    margin-bottom: 0.6rem;
+}
+.sv-reward-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--text-primary, #2D3436);
+}
+.sv-reward-icon {
+    width: 18px;
+    height: 18px;
+}
+
+/* Continue Module sub-card */
+.sv-continue-module {
+    background: #f9f6ff;
+    border-radius: 14px;
+    padding: 1rem;
+    border: 1px solid rgba(100, 13, 95, 0.08);
+}
+.sv-continue-module-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--sv-purple, #640D5F);
+    margin: 0 0 0.3rem 0;
+}
+.sv-continue-module-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary, #2D3436);
+    margin: 0;
+}
+
+/* -- Your Activities Column --------------------------------------------- */
+.sv-activity-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f5f3f8;
+}
+.sv-activity-list-item:last-child {
+    border-bottom: none;
+}
+.sv-activity-list-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--sv-orange, #EB5B00);
+    flex-shrink: 0;
+}
+.sv-activity-list-body {
+    flex: 1;
+}
+.sv-activity-list-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary, #2D3436);
+}
+.sv-activity-list-tag {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--sv-purple, #640D5F);
+    background: rgba(100, 13, 95, 0.08);
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    margin-top: 0.15rem;
+}
+.sv-activity-list-count {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #636E72);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* -- Quest Progress Bars ------------------------------------------------ */
+.sv-quest-section {
+    margin-top: 1rem;
+}
+.sv-quest-title {
+    font-size: 0.88rem;
+    font-weight: 800;
+    margin: 0 0 0.75rem 0;
+    color: var(--text-primary, #2D3436);
+}
+.sv-quest-bar {
+    margin-bottom: 0.65rem;
+}
+.sv-quest-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+.sv-quest-bar-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-primary, #2D3436);
+}
+.sv-quest-bar-pct {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #636E72);
+    font-weight: 700;
+}
+.sv-quest-bar-track {
+    height: 8px;
+    background: #f0eef5;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.sv-quest-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease;
+}
+.sv-quest-bar-fill.purple {
+    background: linear-gradient(90deg, #640D5F, #8B1A85);
+}
+.sv-quest-bar-fill.blue {
+    background: linear-gradient(90deg, #3B82F6, #60A5FA);
+}
+.sv-quest-bar-fill.green {
+    background: linear-gradient(90deg, #10B981, #34D399);
+}
+.sv-quest-bar-fill.orange {
+    background: linear-gradient(90deg, #EB5B00, #FF7A2E);
+}
+
+/* -- Skill Snapshot Column ---------------------------------------------- */
+.sv-skill-snapshot {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+.sv-skill-module {
+    background: #f9f6ff;
+    border-radius: 14px;
+    padding: 1rem;
+    border: 1px solid rgba(100, 13, 95, 0.08);
+}
+.sv-skill-module-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--sv-purple, #640D5F);
+    margin: 0 0 0.2rem 0;
+}
+.sv-skill-module-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary, #2D3436);
+    margin: 0 0 0.65rem 0;
+}
+.sv-skill-search-link {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--sv-purple, #640D5F);
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 0.65rem;
+}
+.sv-skill-search-link:hover {
+    text-decoration: underline;
+}
+.sv-skill-wizard-wrap {
+    text-align: center;
+    margin-top: 0.5rem;
+}
+.sv-skill-wizard-wrap img {
+    width: 120px;
+    height: auto;
+    filter: drop-shadow(0 4px 12px rgba(100, 13, 95, 0.15));
+    animation: sv-float 4s ease-in-out infinite;
+}
+
+/* -- Small Orange Button ------------------------------------------------ */
+.sv-btn-orange-sm {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: linear-gradient(135deg, #EB5B00, #FF7A2E);
+    color: #fff;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    box-shadow: 0 2px 10px rgba(235, 91, 0, 0.3);
+}
+.sv-btn-orange-sm:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 16px rgba(235, 91, 0, 0.45);
+    color: #fff;
+}
+
+/* -- Large Orange Button (pill shape, for generic use) ------------------ */
+.sv-btn-orange {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(135deg, #EB5B00, #FF7A2E);
+    color: #fff;
+    padding: 0.65rem 1.7rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-decoration: none;
+    box-shadow: 0 4px 18px rgba(235, 91, 0, 0.45);
+    transition: all 0.3s ease;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    border: none;
+    cursor: pointer;
+}
+.sv-btn-orange:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(235, 91, 0, 0.55);
+    color: #fff;
+}
+.sv-btn-orange .sv-btn-arrow {
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+.sv-btn-orange:hover .sv-btn-arrow {
+    transform: translateX(-4px);
+}
+
+/* -- Topbar Streak (sv- scoped override) -------------------------------- */
+.topbar-streak {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(235, 91, 0, 0.08);
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--sv-orange, #EB5B00);
+}
+.streak-flame-icon {
+    font-size: 1.1rem;
+}
+.streak-count-inline {
+    font-weight: 800;
+}
+
+/* Sidebar link with PNG icon */
+.sidebar-link .sidebar-icon-img {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    flex-shrink: 0;
+}
+
+/* ========================================================================
+   sv- Keyframe Animations
+   ======================================================================== */
+
+/* Floating animation (treasure chest, wizard, book) */
+@keyframes sv-float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Bounce animation (level badge) */
+@keyframes sv-bounce {
+    0%, 100% {
+        transform: translateY(0) rotate(-2deg);
+    }
+    50% {
+        transform: translateY(-6px) rotate(2deg);
+    }
+}
+
+/* Shimmer / glow animation (XP bars, progress fills) */
+@keyframes sv-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* ========================================================================
+   sv- Responsive Breakpoints
+   ======================================================================== */
+
+/* 3 columns -> 2 columns */
+@media (max-width: 1200px) {
+    .sv-bottom-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* 2 columns -> 1 column */
+@media (max-width: 900px) {
+    .sv-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+    .sv-hero {
+        flex-direction: column;
+        text-align: center;
+        min-height: auto;
+    }
+    .sv-hero-content {
+        padding: 1.5rem 1.25rem 0.5rem;
+    }
+    .sv-hero-illustration {
+        padding: 0 0 0.5rem 0;
+        min-width: unset;
+    }
+    .sv-hero-treasure {
+        width: 130px;
+    }
+    .sv-hero-title {
+        font-size: 1.3rem;
+    }
+    .sv-verse-card {
+        min-width: 155px;
+    }
+}
+
+/* Small screens */
+@media (max-width: 600px) {
+    .sv-hero-content {
+        padding: 1.25rem 1rem 0.5rem;
+    }
+    .sv-hero-title {
+        font-size: 1.15rem;
+    }
+    .sv-verse-card {
+        min-width: 140px;
+    }
+    .sv-bottom-grid {
+        gap: 1rem;
+    }
+    .sv-card {
+        padding: 1rem;
+        border-radius: 14px;
+    }
+    .sv-today-activity-hero {
+        flex-direction: column;
+        text-align: center;
+    }
+    .sv-today-activity-img {
+        width: 60px;
+        height: 60px;
+    }
+}
+
+/* ============================================================
+   SHARED STUDENT DESIGN SYSTEM
+   Galaxy background, frosted glass, PNG sidebar, game buttons
+   Applied to ALL student pages (profile, timetable, badges, etc.)
+   ============================================================ */
+
+/* Galaxy background on main content area */
+.dashboard-main {
+    background: #1a0a2e;
+    background-image: url('../img/home/dashboard-bg.png');
+    background-size: cover;
+    background-position: top center;
+    background-attachment: fixed;
+    background-repeat: no-repeat;
+}
+
+/* Frosted glass topbar */
+.dashboard-main .topbar {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+/* Section titles on galaxy bg */
+.page-header .page-title,
+.sv-section-title {
+    color: #fff;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.page-header .page-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+}
+
+/* Frosted glass card base — applies to common card patterns */
+.profile-card,
+.badge-stat-card,
+.badge-detail-item,
+.timetable-day-body,
+.session-item,
+.homework-item,
+.homework-detail-card,
+.progress-card,
+.leaderboard-list-card,
+.leaderboard-item,
+.quick-link-card {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Hero sections already have purple gradient — add depth */
+.profile-hero,
+.leaderboard-header-card {
+    box-shadow: 0 6px 30px rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* Card titles on glass cards */
+.profile-card-title,
+.badges-section-title {
+    color: var(--text-primary, #2D3436);
+}
+
+/* Timetable day header — keep purple gradient, add shadow */
+.timetable-day-header {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Leaderboard list items on glass */
+.leaderboard-item {
+    border-radius: var(--radius-md, 12px);
+    margin-bottom: 4px;
+}
+
+/* PNG sidebar icon styling (shared across all student pages) */
+.sidebar-link .sidebar-icon-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+    filter: brightness(2);
+}
+.sidebar-link:hover .sidebar-icon-img {
+    filter: brightness(2.5);
+}
+.sidebar-link.active .sidebar-icon-img {
+    filter: brightness(3);
+}
+
+/* Game-style buttons for all student pages */
+.btn-primary,
+.sv-btn-game {
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%) !important;
+    border: none !important;
+    border-bottom: 3px solid #B84700 !important;
+    color: #fff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 3px 12px rgba(235, 91, 0, 0.35);
+    border-radius: 22px;
+    font-weight: 700;
+    transition: all 0.2s;
+}
+.btn-primary:hover,
+.sv-btn-game:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 18px rgba(235, 91, 0, 0.45);
+    color: #fff !important;
+}
+
+/* Ghost buttons on glass cards */
+.btn-ghost {
+    color: var(--text-primary, #2D3436);
+    border: 1px solid rgba(100, 13, 95, 0.15);
+    border-radius: var(--radius-md, 12px);
+    transition: all 0.2s;
+}
+.btn-ghost:hover {
+    background: rgba(100, 13, 95, 0.06);
+    border-color: rgba(100, 13, 95, 0.25);
+}

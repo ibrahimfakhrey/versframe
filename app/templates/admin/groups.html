@@ -1,0 +1,56 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}إدارة المجموعات{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-lg);">
+    <a href="{{ url_for('admin.group_create') }}" class="btn btn-primary">+ إنشاء مجموعة</a>
+</div>
+
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr><th>الاسم</th><th>المسار</th><th>المعلم</th><th>الطلاب</th><th>الحالة</th><th>إجراءات</th></tr>
+        </thead>
+        <tbody>
+            {% for g in items %}
+            <tr>
+                <td style="font-weight:600;">{{ g.name }}</td>
+                <td class="text-sm">{{ g.track.name_ar if g.track else '—' }}</td>
+                <td class="text-sm">{{ g.teacher.name_ar if g.teacher else '—' }}</td>
+                <td>{{ g.students.count() }} / {{ g.max_students }}</td>
+                <td>
+                    {% if g.is_active %}
+                    <span class="badge" style="background:var(--status-success-bg);color:var(--status-success);">نشطة</span>
+                    {% else %}
+                    <span class="badge" style="background:var(--status-error-bg);color:var(--status-error);">معطلة</span>
+                    {% endif %}
+                </td>
+                <td><a href="{{ url_for('admin.group_edit', group_id=g.id) }}" class="btn btn-ghost btn-sm">تعديل</a></td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted" style="padding:var(--space-xl);">لا توجد مجموعات</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pages > 1 %}
+<div class="pagination">
+    {% for p in range(1, pages + 1) %}
+    <a href="{{ url_for('admin.groups', page=p) }}" class="pagination-item {{ 'active' if p == page else '' }}">{{ p }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% block dashboard_css %}{% endblock %}
+{% endblock %}
+
+{% block body %}
+<div class="dashboard-layout">
+    <!-- Mobile toggle -->
+    <button class="sidebar-toggle" onclick="document.querySelector('.sidebar').classList.toggle('open'); document.querySelector('.sidebar-overlay').classList.toggle('show');">
+        ☰
+    </button>
+
+    <!-- Mobile overlay -->
+    <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open'); this.classList.remove('show');"></div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <!-- Logo -->
+        <div class="sidebar-logo">
+            <img src="{{ url_for('static', filename='img/sidebar/logo.png') }}" alt="Shalaby Verse" class="sidebar-logo-img">
+        </div>
+
+        <!-- Student Profile Area -->
+        <div class="sidebar-student-profile">
+            <div class="sidebar-student-avatar">
+                {% if current_user.avatar_url %}
+                <img src="{{ current_user.avatar_url }}" alt="">
+                {% else %}
+                {{ current_user.name_ar[0] if current_user.name_ar else '?' }}
+                {% endif %}
+            </div>
+            <div class="sidebar-student-name">{{ current_user.name_ar }}</div>
+            <div class="sidebar-student-role">
+                {% if current_user.is_admin %}مدير{% elif current_user.is_teacher %}معلم{% elif current_user.is_student %}طالب{% elif current_user.is_parent %}ولي أمر{% elif current_user.is_assessor %}مقيّم{% endif %}
+            </div>
+        </div>
+
+        {% if current_user.is_student %}
+        <div class="sidebar-xp">
+            <div class="sidebar-xp-label">
+                <span>المستوى {{ level|default(1) }}</span>
+                <span>{{ total_xp|default(0) }} XP</span>
+            </div>
+            <div class="sidebar-xp-bar">
+                <div class="sidebar-xp-fill" style="width: {{ xp_progress|default(0) }}%"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="sidebar-divider"></div>
+
+        <!-- Navigation -->
+        <nav class="sidebar-nav">
+            {% block sidebar_nav %}{% endblock %}
+        </nav>
+
+        <!-- Bottom Profile / Logout -->
+        <div class="sidebar-profile">
+            <div class="sidebar-avatar">
+                {% if current_user.avatar_url %}
+                <img src="{{ current_user.avatar_url }}" alt="">
+                {% else %}
+                {{ current_user.name_ar[0] if current_user.name_ar else '?' }}
+                {% endif %}
+            </div>
+            <div class="sidebar-profile-info">
+                <div class="sidebar-profile-name">{{ current_user.name_ar }}</div>
+                <div class="sidebar-profile-role">
+                    {% if current_user.is_admin %}مدير{% elif current_user.is_teacher %}معلم{% elif current_user.is_student %}طالب{% elif current_user.is_parent %}ولي أمر{% elif current_user.is_assessor %}مقيّم{% endif %}
+                </div>
+            </div>
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-logout-btn" title="تسجيل الخروج">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                    <polyline points="16 17 21 12 16 7"/>
+                    <line x1="21" y1="12" x2="9" y2="12"/>
+                </svg>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="dashboard-main">
+        <header class="topbar">
+            <div class="topbar-right">
+                <!-- Student name with dropdown chevron -->
+                <div class="topbar-user-info">
+                    <span class="topbar-user-name">{{ current_user.name_ar }}</span>
+                    <svg class="topbar-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="6 9 12 15 18 9"/>
+                    </svg>
+                </div>
+                <h1 class="topbar-title">{% block topbar_title %}لوحة التحكم{% endblock %}</h1>
+            </div>
+            <div class="topbar-left">
+                {% block topbar_actions %}{% endblock %}
+
+                <!-- News / Notification bell -->
+                <div class="topbar-notification" id="notifBell" onclick="toggleNotifications()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                    <span class="topbar-notification-count" id="notifCount" style="display:none;">0</span>
+                </div>
+
+                {% if current_user.is_student %}
+                <!-- XP display with bolt icon -->
+                <div class="topbar-xp">
+                    <img src="{{ url_for('static', filename='img/icons/xp-bolt.png') }}" alt="" class="topbar-stat-icon">
+                    <span>{{ total_xp|default(0) }}</span>
+                </div>
+
+                <!-- Coins display -->
+                <div class="topbar-coins">
+                    <img src="{{ url_for('static', filename='img/icons/coin.png') }}" alt="" class="topbar-stat-icon">
+                    <span>{{ coins|default(0) }}</span>
+                </div>
+                {% endif %}
+
+                <!-- Profile avatar in topbar -->
+                <div class="topbar-avatar">
+                    {% if current_user.avatar_url %}
+                    <img src="{{ current_user.avatar_url }}" alt="">
+                    {% else %}
+                    {{ current_user.name_ar[0] if current_user.name_ar else '?' }}
+                    {% endif %}
+                </div>
+            </div>
+        </header>
+
+        <div class="dashboard-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% block dashboard_js %}{% endblock %}
+{% endblock %}

@@ -1,0 +1,26 @@
+{% block sidebar_nav %}
+<div class="sidebar-section">
+    <div class="sidebar-section-title">الطالب</div>
+    <a href="{{ url_for('student.dashboard') }}" class="sidebar-item {% if request.endpoint == 'student.dashboard' %}active{% endif %}">
+        <span class="sidebar-item-icon">🏠</span> الرئيسية
+    </a>
+    <a href="{{ url_for('student.timetable') }}" class="sidebar-item {% if request.endpoint == 'student.timetable' %}active{% endif %}">
+        <span class="sidebar-item-icon">📅</span> جدولي
+    </a>
+    <a href="{{ url_for('student.progress') }}" class="sidebar-item {% if request.endpoint == 'student.progress' %}active{% endif %}">
+        <span class="sidebar-item-icon">📈</span> تقدمي
+    </a>
+    <a href="{{ url_for('student.badges') }}" class="sidebar-item {% if request.endpoint == 'student.badges' %}active{% endif %}">
+        <span class="sidebar-item-icon">🏅</span> الشارات
+    </a>
+    <a href="{{ url_for('student.leaderboard') }}" class="sidebar-item {% if request.endpoint == 'student.leaderboard' %}active{% endif %}">
+        <span class="sidebar-item-icon">🏆</span> المتصدرين
+    </a>
+    <a href="{{ url_for('student.homework_list') }}" class="sidebar-item {% if 'homework' in request.endpoint %}active{% endif %}">
+        <span class="sidebar-item-icon">📝</span> واجباتي
+    </a>
+    <a href="{{ url_for('student.profile') }}" class="sidebar-item {% if request.endpoint == 'student.profile' %}active{% endif %}">
+        <span class="sidebar-item-icon">👤</span> ملفي
+    </a>
+</div>
+{% endblock %}

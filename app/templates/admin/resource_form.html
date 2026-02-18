@@ -1,0 +1,71 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}{{ 'تعديل المورد' if resource is defined and resource else 'إضافة مورد جديد' }}{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:600px;">
+    <form method="POST" enctype="multipart/form-data">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label class="form-label">الاسم (English)</label>
+            <input type="text" name="name" class="form-input" value="{{ resource.name if resource is defined and resource else '' }}" dir="ltr" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">الاسم (عربي)</label>
+            <input type="text" name="name_ar" class="form-input" value="{{ resource.name_ar if resource is defined and resource else '' }}" required>
+        </div>
+        {% if not (resource is defined and resource) %}
+        <div class="form-group">
+            <label class="form-label">النوع</label>
+            <select name="type" class="form-select">
+                <option value="slides">شرائح (Slides)</option>
+                <option value="code_exercise">تمرين برمجي (Code Exercise)</option>
+                <option value="qna">أسئلة وأجوبة (Q&A)</option>
+                <option value="whiteboard">سبورة (Whiteboard)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">المسار</label>
+            <select name="track_id" class="form-select">
+                <option value="">— بدون مسار —</option>
+                {% for t in tracks %}
+                <option value="{{ t.id }}">{{ t.name_ar }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% endif %}
+        <div class="form-group">
+            <label class="form-label">رفع ملف</label>
+            <input type="file" name="file" class="form-input" accept=".pdf,.doc,.docx,.pptx,.png,.jpg,.jpeg,.gif,.webp">
+            <div class="form-hint">PDF, Word, PowerPoint أو صور (حد أقصى 50 ميجا للشرائح، 10 ميجا لغيرها)</div>
+            {% if resource is defined and resource and resource.config_json %}
+                {% set config_data = resource.config_json | default('{}', true) %}
+                {% if '"file_url"' in config_data %}
+                <div style="margin-top: var(--space-sm); padding: var(--space-sm); background: var(--success-light); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--success);">
+                    ملف مرفوع حالياً (سيتم استبداله عند رفع ملف جديد)
+                </div>
+                {% endif %}
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label class="form-label">إعدادات (JSON)</label>
+            <textarea name="config_json" class="form-textarea" rows="4" dir="ltr" placeholder='{"slides_count": 10}'>{{ resource.config_json if resource is defined and resource and resource.config_json else '' }}</textarea>
+        </div>
+        <div style="display:flex;gap:var(--space-md);">
+            <button type="submit" class="btn btn-primary">{{ 'حفظ التعديلات' if resource is defined and resource else 'إنشاء المورد' }}</button>
+            <a href="{{ url_for('admin.resources') }}" class="btn btn-outline">إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}المنهج{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/curriculum.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- Curriculum Navbar -->
+<nav class="curriculum-nav">
+    <a href="{{ url_for('curriculum.home') }}" class="curriculum-nav-brand">SV المنهج</a>
+</nav>
+
+<!-- Hero Section -->
+<section class="curriculum-hero">
+    <div class="curriculum-hero-content">
+        <h1>منهج شلبي فيرس</h1>
+        <p>رحلة تعليمية متكاملة لبناء مهارات المستقبل</p>
+        <div class="hero-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ tracks | length }}</span>
+                <span class="stat-label-text">مسار تعليمي</span>
+            </div>
+            <div class="stat-item">
+                {% set total_objectives = [] %}
+                {% for t in tracks %}
+                    {% for lvl in t.levels %}
+                        {% for u in lvl.units %}
+                            {% for _ in u.objectives %}
+                                {% if total_objectives.append(1) %}{% endif %}
+                            {% endfor %}
+                        {% endfor %}
+                    {% endfor %}
+                {% endfor %}
+                <span class="stat-number">{{ total_objectives | length }}</span>
+                <span class="stat-label-text">هدف تعليمي</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Tracks Grid -->
+<h2 class="section-title">المسارات التعليمية</h2>
+<div class="tracks-grid">
+    {% for t in tracks %}
+    <a href="{{ url_for('curriculum.track', track_id=t.id) }}" class="track-card" style="--track-color: {{ t.color }}">
+        <div class="track-icon">{{ t.icon }}</div>
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_track', track_id=t.id) }}" data-field-name="name_ar">
+            <div class="track-name editable-text">{{ t.name_ar }}</div>
+            <button class="edit-btn" onclick="event.preventDefault(); startInlineEdit(this)">&#9998;</button>
+        </div>
+        <div class="track-name-en">{{ t.name }}</div>
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_track', track_id=t.id) }}" data-field-name="description_ar">
+            <div class="track-description editable-text">{{ t.description_ar }}</div>
+            <button class="edit-btn" onclick="event.preventDefault(); startInlineEdit(this)">&#9998;</button>
+        </div>
+        <div>
+            <span class="meta-badge">{{ t.levels | length }} مستوى</span>
+            {% set unit_count = [] %}
+            {% for lvl in t.levels %}
+                {% for _ in lvl.units %}
+                    {% if unit_count.append(1) %}{% endif %}
+                {% endfor %}
+            {% endfor %}
+            <span class="meta-badge">{{ unit_count | length }} وحدة</span>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Edit Toggle Button -->
+<button class="edit-toggle-btn" id="edit-toggle">&#9998; وضع التعديل</button>
+
+<!-- Modal Overlay -->
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal-content card">
+        <div class="modal-header">
+            <h3 id="modal-title"></h3>
+            <button id="modal-close" class="btn btn-ghost">&cross;</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+        <div class="modal-footer">
+            <button id="modal-cancel" class="btn btn-outline">إلغاء</button>
+            <button id="modal-save" class="btn btn-primary">حفظ</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/edit.js') }}"></script>
+{% endblock %}

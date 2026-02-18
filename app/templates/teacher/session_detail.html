@@ -1,0 +1,332 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}{{ session.title|default('تفاصيل الجلسة') }} - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('teacher.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('teacher.groups') }}" class="sidebar-link">
+    <span class="sidebar-icon">👥</span>
+    <span>المجموعات</span>
+</a>
+<a href="{{ url_for('teacher.sessions') }}" class="sidebar-link active">
+    <span class="sidebar-icon">📅</span>
+    <span>الجلسات</span>
+</a>
+<a href="{{ url_for('teacher.homework') }}" class="sidebar-link">
+    <span class="sidebar-icon">📝</span>
+    <span>الواجبات</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}تفاصيل الجلسة{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('teacher.sessions') }}" class="btn btn-sm btn-ghost">
+    ← العودة للجلسات
+</a>
+{% if session.status.value == 'scheduled' %}
+<form action="{{ url_for('teacher.session_start', session_id=session.id) }}" method="POST" style="display:inline;margin:0;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-sm btn-orange">بدء الجلسة</button>
+</form>
+{% elif session.status.value == 'live' %}
+<a href="{{ url_for('room.room', session_id=session.id) }}" class="btn btn-sm btn-orange">
+    دخول الغرفة
+</a>
+<form action="{{ url_for('teacher.session_end', session_id=session.id) }}" method="POST" style="display:inline;margin:0;">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من إنهاء الجلسة؟')">إنهاء الجلسة</button>
+</form>
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<!-- Session Info Stats -->
+<div class="stats-grid">
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-purple-glow); color: var(--sv-purple);">📅</div>
+        <div>
+            <div class="stat-value text-sm" style="font-size: var(--text-base);">{{ session.scheduled_at|default('غير محدد', true) }}</div>
+            <div class="stat-label">موعد الجلسة</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-orange-glow); color: var(--sv-orange);">🕐</div>
+        <div>
+            <div class="stat-value">{{ session.duration_minutes|default(60) }}</div>
+            <div class="stat-label">دقيقة</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--info-light); color: var(--info);">👥</div>
+        <div>
+            <div class="stat-value">{{ session.attendance.count() }}</div>
+            <div class="stat-label">سجل الحضور</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background:
+            {% if session.status.value == 'scheduled' %}var(--info-light){% elif session.status.value == 'live' %}var(--sv-orange-glow){% elif session.status.value == 'completed' %}var(--success-light){% else %}var(--danger-light){% endif %};
+            color:
+            {% if session.status.value == 'scheduled' %}var(--info){% elif session.status.value == 'live' %}var(--sv-orange){% elif session.status.value == 'completed' %}var(--success){% else %}var(--danger){% endif %};">
+            {% if session.status.value == 'scheduled' %}🕐{% elif session.status.value == 'live' %}🔴{% elif session.status.value == 'completed' %}✅{% else %}❌{% endif %}
+        </div>
+        <div>
+            <div class="stat-value text-sm" style="font-size: var(--text-base);">
+                {% if session.status.value == 'scheduled' %}مجدولة{% elif session.status.value == 'live' %}مباشرة{% elif session.status.value == 'completed' %}مكتملة{% elif session.status.value == 'cancelled' %}ملغية{% endif %}
+            </div>
+            <div class="stat-label">الحالة</div>
+        </div>
+    </div>
+</div>
+
+<div class="dashboard-grid">
+    <div class="dashboard-grid-main">
+        <!-- Attendance Table -->
+        <div class="card" style="margin-bottom: var(--space-xl);">
+            <div class="card-header">
+                <h2 class="card-title">سجل الحضور</h2>
+            </div>
+
+            {% set attendance_list = session.attendance.all() %}
+            {% if attendance_list %}
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>الطالب</th>
+                            <th>الحالة</th>
+                            <th>وقت الدخول</th>
+                            <th>وقت الخروج</th>
+                            <th>مدة الحضور</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for att in attendance_list %}
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                                    <div class="avatar avatar-sm">
+                                        {% if att.student.avatar_url %}
+                                        <img src="{{ att.student.avatar_url }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                                        {% else %}
+                                        {{ att.student.name_ar[0] if att.student.name_ar else '?' }}
+                                        {% endif %}
+                                    </div>
+                                    <a href="{{ url_for('teacher.student_profile', student_id=att.student.id) }}" style="font-weight: 700; color: var(--text-primary); text-decoration: none;">
+                                        {{ att.student.name_ar }}
+                                    </a>
+                                </div>
+                            </td>
+                            <td>
+                                {% if att.status.value == 'present' %}
+                                    <span class="badge badge-success">حاضر</span>
+                                {% elif att.status.value == 'absent' %}
+                                    <span class="badge badge-danger">غائب</span>
+                                {% elif att.status.value == 'late' %}
+                                    <span class="badge badge-warning">متأخر</span>
+                                {% elif att.status.value == 'excused' %}
+                                    <span class="badge badge-info">معتذر</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-sm text-muted">{{ att.joined_at|default('--', true) }}</td>
+                            <td class="text-sm text-muted">{{ att.left_at|default('--', true) }}</td>
+                            <td class="text-sm">
+                                {% if att.duration_seconds %}
+                                    {{ (att.duration_seconds // 60) }} دقيقة
+                                {% else %}
+                                    --
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <div class="empty-state-text">لا يوجد سجل حضور بعد</div>
+                <p class="text-muted text-sm">سيتم تسجيل الحضور تلقائياً عند بدء الجلسة</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Session Resources -->
+        <div class="card" style="margin-bottom: var(--space-xl);">
+            <div class="card-header">
+                <h2 class="card-title">موارد الجلسة</h2>
+            </div>
+
+            {% set resources_list = session.resources.all() %}
+            {% if resources_list %}
+            <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                {% for sr in resources_list %}
+                <div style="display: flex; align-items: center; justify-content: space-between; padding: var(--space-md); background: var(--bg); border-radius: var(--radius-md);">
+                    <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                        <span style="font-size: 1.25rem;">
+                            {% if sr.resource.type.value == 'slides' %}📊
+                            {% elif sr.resource.type.value == 'code_exercise' %}💻
+                            {% elif sr.resource.type.value == 'qna' %}❓
+                            {% elif sr.resource.type.value == 'whiteboard' %}🎨
+                            {% else %}📄{% endif %}
+                        </span>
+                        <div>
+                            <div style="font-weight: 700; font-size: var(--text-sm);">{{ sr.resource.name_ar|default(sr.resource.name, true) }}</div>
+                            <div class="text-muted text-sm">{{ sr.resource.type.value }}</div>
+                        </div>
+                    </div>
+                    {% if sr.is_active %}
+                    <span class="badge badge-success">نشط</span>
+                    {% else %}
+                    <span class="badge badge-info">جاهز</span>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📦</div>
+                <div class="empty-state-text">لا توجد موارد لهذه الجلسة</div>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if session.status.value == 'live' %}
+        <!-- End Session Card -->
+        <div class="card" style="margin-bottom: var(--space-xl); border: 2px solid var(--danger);">
+            <div class="card-header">
+                <h2 class="card-title" style="color: var(--danger);">إنهاء الجلسة</h2>
+            </div>
+            <div style="padding: var(--space-lg);">
+                <p class="text-sm text-muted" style="margin-bottom: var(--space-md);">سيتم إنهاء الجلسة المباشرة وتحديث سجل الحضور ومنح نقاط XP للطلاب الحاضرين.</p>
+                <form action="{{ url_for('teacher.session_end', session_id=session.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('هل أنت متأكد من إنهاء الجلسة؟ سيتم منح 50 XP لكل طالب حاضر.')">إنهاء الجلسة الآن</button>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Session Report Form -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">تقرير الجلسة</h2>
+            </div>
+
+            <form action="{{ url_for('teacher.session_report', session_id=session.id) }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <div class="form-group">
+                    <label class="form-label" for="notes">ملاحظات المعلم</label>
+                    <textarea
+                        class="form-textarea"
+                        id="notes"
+                        name="notes"
+                        rows="5"
+                        placeholder="اكتب ملاحظاتك عن الجلسة هنا..."
+                    >{{ session.teacher_notes|default('', true) }}</textarea>
+                    <div class="form-hint">يمكنك كتابة ملاحظات عن أداء الطلاب والمواضيع التي تمت تغطيتها</div>
+                </div>
+
+                <div style="display: flex; gap: var(--space-sm);">
+                    <button type="submit" class="btn btn-primary">حفظ التقرير</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="dashboard-grid-aside">
+        <div class="card">
+            <h3 class="card-title" style="margin-bottom: var(--space-md);">معلومات الجلسة</h3>
+            <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                <div>
+                    <div class="text-muted text-sm">عنوان الجلسة</div>
+                    <div style="font-weight: 700;">{{ session.title }}</div>
+                </div>
+                <div>
+                    <div class="text-muted text-sm">المجموعة</div>
+                    <div style="font-weight: 700;">
+                        {% if session.group %}
+                        <a href="{{ url_for('teacher.group_detail', group_id=session.group.id) }}" style="color: var(--sv-purple); text-decoration: none;">
+                            {{ session.group.name }}
+                        </a>
+                        {% else %}
+                        --
+                        {% endif %}
+                    </div>
+                </div>
+                <div>
+                    <div class="text-muted text-sm">الموعد</div>
+                    <div style="font-weight: 700;">{{ session.scheduled_at|default('غير محدد', true) }}</div>
+                </div>
+                <div>
+                    <div class="text-muted text-sm">المدة</div>
+                    <div style="font-weight: 700;">{{ session.duration_minutes|default(60) }} دقيقة</div>
+                </div>
+                {% if session.recording_url %}
+                <div>
+                    <div class="text-muted text-sm">التسجيل</div>
+                    <a href="{{ session.recording_url }}" target="_blank" class="btn btn-sm btn-outline" style="margin-top: var(--space-xs);">
+                        مشاهدة التسجيل
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        {% if session.group %}
+        <div class="card">
+            <h3 class="card-title" style="margin-bottom: var(--space-md);">ملخص الحضور</h3>
+            {% set att_all = session.attendance.all() %}
+            {% set present_count = att_all|selectattr('status.value', 'equalto', 'present')|list|length %}
+            {% set late_count = att_all|selectattr('status.value', 'equalto', 'late')|list|length %}
+            {% set absent_count = att_all|selectattr('status.value', 'equalto', 'absent')|list|length %}
+            {% set excused_count = att_all|selectattr('status.value', 'equalto', 'excused')|list|length %}
+            <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="text-sm">حاضر</span>
+                    <span class="badge badge-success">{{ present_count }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="text-sm">متأخر</span>
+                    <span class="badge badge-warning">{{ late_count }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="text-sm">غائب</span>
+                    <span class="badge badge-danger">{{ absent_count }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span class="text-sm">معتذر</span>
+                    <span class="badge badge-info">{{ excused_count }}</span>
+                </div>
+            </div>
+            {% if att_all %}
+            <div style="margin-top: var(--space-md);">
+                {% set total_att = att_all|length %}
+                {% set attend_rate = ((present_count + late_count) / total_att * 100)|round|int if total_att > 0 else 0 %}
+                <div style="display: flex; justify-content: space-between; margin-bottom: var(--space-xs);">
+                    <span class="text-sm text-muted">نسبة الحضور</span>
+                    <span class="text-sm" style="font-weight: 700;">{{ attend_rate }}%</span>
+                </div>
+                <div class="progress">
+                    <div class="progress-bar" style="width: {{ attend_rate }}%;"></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/teacher.js') }}"></script>
+{% endblock %}

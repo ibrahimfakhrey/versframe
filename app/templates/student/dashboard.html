@@ -1,0 +1,1093 @@
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+/* ========================================================
+   Shalaby Verse - Student Dashboard (Reference Design Match)
+   ======================================================== */
+
+/* -- Hero Welcome Banner --------------------------------- */
+.sv-hero {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    min-height: 210px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.75rem;
+    background: linear-gradient(135deg, #640D5F 0%, #8B1A85 30%, #4a0945 70%, #1a0a2e 100%);
+    box-shadow: 0 6px 30px rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.12);
+}
+.sv-hero-bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    z-index: 0;
+    opacity: 0.45;
+}
+.sv-hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 2.25rem 2.5rem;
+    flex: 1;
+}
+.sv-hero-title {
+    font-size: 1.65rem;
+    font-weight: 800;
+    color: #FFD700;
+    margin: 0 0 0.3rem 0;
+    line-height: 1.3;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.sv-hero-subtitle {
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.9);
+    margin: 0 0 1.25rem 0;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.25);
+}
+.sv-hero-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    padding: 0.65rem 1.7rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.92rem;
+    text-decoration: none;
+    box-shadow: 0 4px 16px rgba(235,91,0,0.4);
+    border-bottom: 3px solid #B84700;
+    transition: all 0.3s ease;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    border-top: none;
+    border-left: none;
+    border-right: none;
+    cursor: pointer;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+.sv-hero-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(235,91,0,0.5);
+    color: #fff;
+}
+.sv-hero-btn-arrow {
+    font-size: 1.1rem;
+    transition: transform 0.2s;
+}
+.sv-hero-btn:hover .sv-hero-btn-arrow {
+    transform: translateX(4px);
+}
+.sv-hero-illustration {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 1rem 0 0 2rem;
+    min-width: 220px;
+}
+.sv-hero-treasure {
+    width: 180px;
+    height: auto;
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.35));
+    animation: heroChestFloat 4s ease-in-out infinite;
+}
+@keyframes heroChestFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+.sv-hero-level-badge {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border-radius: 14px;
+    padding: 0.4rem 0.7rem;
+    text-align: center;
+    box-shadow: 0 4px 16px rgba(255,215,0,0.45);
+    z-index: 3;
+    animation: heroBadgeFloat 3s ease-in-out infinite;
+}
+.sv-hero-level-label {
+    display: block;
+    font-size: 0.55rem;
+    font-weight: 800;
+    color: #4a3600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.sv-hero-level-num {
+    display: block;
+    font-size: 1.65rem;
+    font-weight: 900;
+    color: #4a3600;
+    line-height: 1;
+}
+@keyframes heroBadgeFloat {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-6px) rotate(2deg); }
+}
+
+/* -- Section Headers ------------------------------------- */
+.sv-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+.sv-section-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+.sv-section-link {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    font-weight: 600;
+}
+.sv-section-link:hover { text-decoration: underline; }
+
+/* -- Verse Cards (Your Universes) - FULL BLEED STYLE ----- */
+.sv-verses-scroll {
+    margin-bottom: 1.75rem;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding-bottom: 0.75rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100,13,95,0.15) transparent;
+}
+.sv-verses-scroll::-webkit-scrollbar { height: 5px; }
+.sv-verses-scroll::-webkit-scrollbar-thumb {
+    background: rgba(100,13,95,0.15);
+    border-radius: 3px;
+}
+.sv-verses-track {
+    display: flex;
+    gap: 1rem;
+    padding: 0.25rem 0.15rem;
+}
+.sv-verse-card {
+    position: relative;
+    min-width: 185px;
+    max-width: 210px;
+    background: rgba(255,255,255,0.9);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 20px;
+    overflow: hidden;
+    text-decoration: none;
+    color: var(--text-primary, #2D3436);
+    box-shadow: 0 3px 16px rgba(0,0,0,0.12);
+    transition: transform 0.3s, box-shadow 0.3s;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    border: 1px solid rgba(255,255,255,0.5);
+}
+.sv-verse-card:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 32px rgba(100,13,95,0.16);
+    color: var(--text-primary, #2D3436);
+}
+.sv-verse-card-img-wrap {
+    position: relative;
+    width: 100%;
+    height: 140px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.sv-verse-card-img-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.sv-verse-card-body {
+    padding: 0.75rem 0.9rem 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    flex: 1;
+}
+.sv-verse-card-name {
+    font-size: 0.88rem;
+    font-weight: 800;
+    margin: 0;
+    line-height: 1.2;
+}
+.sv-verse-card-level {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #636E72);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+.sv-verse-card-level-bar {
+    flex: 1;
+    height: 5px;
+    background: #f0eef5;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.sv-verse-card-level-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #EB5B00, #FFD700);
+    border-radius: 10px;
+}
+.sv-verse-card-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    padding: 0.35rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    border-bottom: 2px solid #B84700;
+    cursor: pointer;
+    margin-top: 0.2rem;
+    align-self: flex-start;
+    transition: all 0.2s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    text-shadow: 0 1px 1px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(235,91,0,0.3);
+}
+.sv-verse-card-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(235,91,0,0.4);
+    color: #fff;
+}
+.sv-verse-card-lock {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 28px;
+    height: 28px;
+}
+.sv-verse-card.locked .sv-verse-card-img-wrap {
+    filter: grayscale(0.6) opacity(0.6);
+}
+.sv-verse-card.locked .sv-verse-card-btn {
+    background: #aaa;
+    border-bottom-color: #888;
+    pointer-events: none;
+    box-shadow: none;
+}
+
+/* Verse button color variants */
+.sv-verse-card-btn.verse-btn-orange {
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    border-bottom-color: #B84700;
+    box-shadow: 0 2px 8px rgba(235,91,0,0.3);
+}
+.sv-verse-card-btn.verse-btn-pink {
+    background: linear-gradient(180deg, #F472B6 0%, #DB2777 55%, #BE185D 100%);
+    border-bottom-color: #9D174D;
+    box-shadow: 0 2px 8px rgba(219,39,119,0.3);
+}
+.sv-verse-card-btn.verse-btn-purple {
+    background: linear-gradient(180deg, #A78BFA 0%, #7C3AED 55%, #6D28D9 100%);
+    border-bottom-color: #5B21B6;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.3);
+}
+.sv-verse-card-btn.verse-btn-green {
+    background: linear-gradient(180deg, #34D399 0%, #10B981 55%, #059669 100%);
+    border-bottom-color: #047857;
+    box-shadow: 0 2px 8px rgba(16,185,129,0.3);
+}
+.sv-verse-card-btn.verse-btn-teal {
+    background: linear-gradient(180deg, #5EEAD4 0%, #14B8A6 55%, #0D9488 100%);
+    border-bottom-color: #0F766E;
+    box-shadow: 0 2px 8px rgba(20,184,166,0.3);
+}
+
+/* -- Bottom Three-Column Section ------------------------- */
+.sv-bottom-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.25rem;
+    align-items: start;
+}
+
+/* -- Generic Card Style ---------------------------------- */
+.sv-card {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 18px;
+    padding: 1.25rem;
+    box-shadow: 0 3px 16px rgba(100,13,95,0.07);
+    border: 1px solid rgba(255,255,255,0.5);
+}
+.sv-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+}
+.sv-card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary, #2D3436);
+    margin: 0;
+}
+
+/* -- Today's Activity Column -------------------------------- */
+.sv-today-activity-hero {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    padding: 1.2rem;
+    margin-bottom: 0.85rem;
+    background: linear-gradient(135deg, #fff8f0 0%, #fff3e6 50%, #f5eeff 100%);
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+.sv-today-activity-img {
+    width: 85px;
+    height: 85px;
+    object-fit: contain;
+    flex-shrink: 0;
+    filter: drop-shadow(0 4px 10px rgba(100,13,95,0.15));
+    animation: wizardFloat 4s ease-in-out infinite;
+}
+.sv-today-activity-info {
+    flex: 1;
+}
+.sv-today-activity-name {
+    font-size: 0.92rem;
+    font-weight: 800;
+    margin: 0 0 0.2rem 0;
+    color: var(--text-primary, #2D3436);
+}
+.sv-today-activity-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #636E72);
+    margin: 0 0 0.5rem 0;
+}
+.sv-today-rewards {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.6rem;
+}
+.sv-reward-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: var(--sv-orange, #EB5B00);
+}
+.sv-reward-icon {
+    width: 20px;
+    height: 20px;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.12));
+}
+
+/* -- Continue Module (Purple Galaxy) ----------------------- */
+.sv-continue-module {
+    position: relative;
+    background: linear-gradient(135deg, #4a0945 0%, #640D5F 50%, #8B1A85 100%);
+    border-radius: 16px;
+    padding: 1.2rem;
+    padding-left: 110px;
+    color: #fff;
+    overflow: hidden;
+    min-height: 90px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+.sv-continue-module-illustration {
+    position: absolute;
+    bottom: -5px;
+    left: 5px;
+    width: 95px;
+    height: auto;
+    opacity: 0.85;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.35));
+    z-index: 1;
+}
+[dir="rtl"] .sv-continue-module { padding-left: 1.2rem; padding-right: 110px; }
+[dir="rtl"] .sv-continue-module-illustration { left: auto; right: 5px; }
+.sv-continue-module-content {
+    position: relative;
+    z-index: 2;
+}
+.sv-continue-module-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: #FFD700;
+    margin: 0 0 0.3rem 0;
+}
+.sv-continue-module-name {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+/* -- Your Activities Column ------------------------------ */
+.sv-activity-list-item {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid #f5f3f8;
+}
+.sv-activity-list-item:last-child { border-bottom: none; }
+.sv-activity-list-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--sv-orange, #EB5B00);
+    flex-shrink: 0;
+}
+.sv-activity-list-body { flex: 1; }
+.sv-activity-list-name {
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--text-primary, #2D3436);
+}
+.sv-activity-list-tag {
+    display: inline-block;
+    font-size: 0.62rem;
+    font-weight: 700;
+    color: var(--sv-purple, #640D5F);
+    background: rgba(100,13,95,0.08);
+    padding: 0.15rem 0.5rem;
+    border-radius: 10px;
+    margin-top: 0.15rem;
+}
+.sv-activity-list-count {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #636E72);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* -- Quest Progress Bars --------------------------------- */
+.sv-quest-section {
+    margin-top: 1rem;
+}
+.sv-quest-title {
+    font-size: 0.88rem;
+    font-weight: 800;
+    margin: 0 0 0.75rem 0;
+    color: var(--text-primary, #2D3436);
+}
+.sv-quest-bar {
+    margin-bottom: 0.65rem;
+}
+.sv-quest-bar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.25rem;
+}
+.sv-quest-bar-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-primary, #2D3436);
+}
+.sv-quest-bar-pct {
+    font-size: 0.72rem;
+    color: var(--text-secondary, #636E72);
+    font-weight: 700;
+}
+.sv-quest-bar-track {
+    height: 8px;
+    background: #f0eef5;
+    border-radius: 10px;
+    overflow: hidden;
+}
+.sv-quest-bar-fill {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease;
+}
+.sv-quest-bar-fill.purple { background: linear-gradient(90deg, #640D5F, #8B1A85); }
+.sv-quest-bar-fill.blue { background: linear-gradient(90deg, #3B82F6, #60A5FA); }
+.sv-quest-bar-fill.green { background: linear-gradient(90deg, #10B981, #34D399); }
+.sv-quest-bar-fill.orange { background: linear-gradient(90deg, #EB5B00, #FF7A2E); }
+
+/* -- Skill Snapshot Column ------------------------------- */
+.sv-skill-snapshot { display: flex; flex-direction: column; gap: 0.85rem; }
+.sv-skill-module {
+    background: #f9f6ff;
+    border-radius: 14px;
+    padding: 1rem;
+    border: 1px solid rgba(100,13,95,0.08);
+}
+.sv-skill-module-label {
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--sv-purple, #640D5F);
+    margin: 0 0 0.2rem 0;
+}
+.sv-skill-module-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary, #2D3436);
+    margin: 0 0 0.65rem 0;
+}
+.sv-skill-search-link {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--sv-purple, #640D5F);
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 0.85rem;
+}
+.sv-skill-search-link:hover { text-decoration: underline; }
+.sv-skill-wizard-wrap {
+    text-align: center;
+    margin-top: -0.5rem;
+    position: relative;
+}
+.sv-skill-wizard-wrap img {
+    width: 140px;
+    height: auto;
+    filter: drop-shadow(0 6px 20px rgba(100,13,95,0.25));
+    animation: wizardFloat 4s ease-in-out infinite;
+    margin-bottom: -10px;
+}
+@keyframes wizardFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+/* -- Game-style Buttons ---------------------------------- */
+.sv-btn-orange-sm {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 60%, #D04E00 100%);
+    color: #fff;
+    padding: 0.45rem 1.1rem;
+    border-radius: 22px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    border-bottom: 3px solid #B84700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 3px 10px rgba(235,91,0,0.35);
+}
+.sv-btn-orange-sm:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 16px rgba(235,91,0,0.45);
+    color: #fff;
+}
+/* Large game-style button (Skill Snapshot) */
+.sv-btn-orange-lg {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    padding: 0.7rem 1.5rem;
+    border-radius: 26px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-decoration: none;
+    border: none;
+    border-bottom: 4px solid #B84700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 16px rgba(235,91,0,0.4);
+}
+.sv-btn-orange-lg:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(235,91,0,0.5);
+    color: #fff;
+}
+
+/* -- Topbar Streak --------------------------------------- */
+.topbar-streak {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(235,91,0,0.08);
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: var(--sv-orange, #EB5B00);
+}
+.streak-flame-icon { font-size: 1.1rem; }
+.streak-count-inline { font-weight: 800; }
+
+/* -- Sidebar link with PNG icon -------------------------- */
+.sidebar-link .sidebar-icon-img {
+    width: 24px;
+    height: 24px;
+    object-fit: contain;
+    flex-shrink: 0;
+    filter: brightness(2);
+}
+.sidebar-link:hover .sidebar-icon-img {
+    filter: brightness(2.5);
+}
+.sidebar-link.active .sidebar-icon-img {
+    filter: brightness(3);
+}
+
+/* -- Responsive ------------------------------------------ */
+@media (max-width: 1200px) {
+    .sv-bottom-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+@media (max-width: 900px) {
+    .sv-bottom-grid {
+        grid-template-columns: 1fr;
+    }
+    .sv-hero {
+        flex-direction: column-reverse;
+        text-align: center;
+        min-height: auto;
+    }
+    .sv-hero-content {
+        padding: 1.5rem 1.25rem 0.5rem;
+    }
+    .sv-hero-illustration {
+        padding: 0.5rem 0 0 0;
+        min-width: unset;
+    }
+    .sv-hero-treasure { width: 130px; }
+    .sv-hero-title { font-size: 1.3rem; }
+    .sv-verse-card { min-width: 155px; }
+}
+@media (max-width: 600px) {
+    .sv-hero-content { padding: 1.25rem 1rem 0.5rem; }
+    .sv-hero-title { font-size: 1.15rem; }
+    .sv-verse-card { min-width: 140px; }
+}
+</style>
+{% endblock %}
+
+{% block topbar_title %}الرئيسية{% endblock %}
+
+{% block topbar_actions %}
+<div class="topbar-streak" title="أيام متتالية">
+    <span class="streak-flame-icon">
+        <img src="{{ url_for('static', filename='img/icons/star.png') }}" alt="" style="width:18px;height:18px;">
+    </span>
+    <span class="streak-count-inline">{{ current_streak }}</span>
+</div>
+{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت اليومية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
+    <span>التقويم</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+{# ── Verse image mapping ──────────────────────────────── #}
+{% set verse_images = {
+    'CodeVerse': 'coding-verse.png',
+    'Coding Verse': 'coding-verse.png',
+    'coding-verse': 'coding-verse.png',
+    'CreativeVerse': 'creative-verse.png',
+    'Creative Verse': 'creative-verse.png',
+    'creative-verse': 'creative-verse.png',
+    'DataVerse': 'data-verse.png',
+    'Data Verse': 'data-verse.png',
+    'data-verse': 'data-verse.png',
+    'ComputeVerse': 'compute-verse.png',
+    'Compute Verse': 'compute-verse.png',
+    'compute-verse': 'compute-verse.png',
+    'Computer Basics Verse': 'compute-verse.png',
+    'computer-basics': 'compute-verse.png',
+    'SecurityVerse': 'security-verse.png',
+    'Security Verse': 'security-verse.png',
+    'security-verse': 'security-verse.png',
+    'Digital Safety Verse': 'security-verse.png',
+    'digital-safety': 'security-verse.png'
+} %}
+
+{# ── Arabic verse names ──────────────────────────────── #}
+{% set verse_names_ar = {
+    'CodeVerse': 'عالم البرمجة',
+    'Coding Verse': 'عالم البرمجة',
+    'coding-verse': 'عالم البرمجة',
+    'CreativeVerse': 'العالم الإبداعي',
+    'Creative Verse': 'العالم الإبداعي',
+    'creative-verse': 'العالم الإبداعي',
+    'DataVerse': 'عالم البيانات',
+    'Data Verse': 'عالم البيانات',
+    'data-verse': 'عالم البيانات',
+    'ComputeVerse': 'عالم الحاسوب',
+    'Compute Verse': 'عالم الحاسوب',
+    'compute-verse': 'عالم الحاسوب',
+    'Computer Basics Verse': 'عالم الحاسوب',
+    'computer-basics': 'عالم الحاسوب',
+    'SecurityVerse': 'عالم الأمان',
+    'Security Verse': 'عالم الأمان',
+    'security-verse': 'عالم الأمان',
+    'Digital Safety Verse': 'عالم الأمان الرقمي',
+    'digital-safety': 'عالم الأمان الرقمي'
+} %}
+
+{# ── Verse button color classes ─────────────────────────── #}
+{% set verse_btn_colors = {
+    'coding-verse': 'verse-btn-orange',
+    'CodeVerse': 'verse-btn-orange',
+    'Coding Verse': 'verse-btn-orange',
+    'creative-verse': 'verse-btn-pink',
+    'CreativeVerse': 'verse-btn-pink',
+    'Creative Verse': 'verse-btn-pink',
+    'data-verse': 'verse-btn-purple',
+    'DataVerse': 'verse-btn-purple',
+    'Data Verse': 'verse-btn-purple',
+    'computer-basics': 'verse-btn-green',
+    'compute-verse': 'verse-btn-green',
+    'ComputeVerse': 'verse-btn-green',
+    'Compute Verse': 'verse-btn-green',
+    'Computer Basics Verse': 'verse-btn-green',
+    'digital-safety': 'verse-btn-teal',
+    'security-verse': 'verse-btn-teal',
+    'SecurityVerse': 'verse-btn-teal',
+    'Security Verse': 'verse-btn-teal',
+    'Digital Safety Verse': 'verse-btn-teal'
+} %}
+
+{# ── Quest bar colors rotation ─────────────────────────── #}
+{% set bar_colors = ['purple', 'blue', 'green', 'orange'] %}
+
+<!-- ============================================================
+     1. HERO WELCOME BANNER
+     ============================================================ -->
+<div class="sv-hero">
+    <img src="{{ url_for('static', filename='img/home/hero-bg.png') }}" alt="" class="sv-hero-bg">
+
+    <!-- Text side (right in RTL) -->
+    <div class="sv-hero-content">
+        <h1 class="sv-hero-title">أهلاً بعودتك، {{ current_user.name_ar }}!</h1>
+        <p class="sv-hero-subtitle">أكمل من حيث توقفت</p>
+
+        {% if live_sessions %}
+        <a href="{{ url_for('room.room', session_id=live_sessions[0].id) }}" class="sv-hero-btn">
+            <span>استمر</span>
+            <span class="sv-hero-btn-arrow">&gt;</span>
+        </a>
+        {% elif upcoming_sessions %}
+        <a href="{{ url_for('student.timetable') }}" class="sv-hero-btn">
+            <span>استمر</span>
+            <span class="sv-hero-btn-arrow">&gt;</span>
+        </a>
+        {% else %}
+        <a href="{{ url_for('curriculum.home') }}" class="sv-hero-btn">
+            <span>استمر</span>
+            <span class="sv-hero-btn-arrow">&gt;</span>
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Treasure chest illustration with level badge -->
+    <div class="sv-hero-illustration">
+        <div class="sv-hero-level-badge">
+            <span class="sv-hero-level-label">LEVEL</span>
+            <span class="sv-hero-level-num">{{ level }}</span>
+        </div>
+        <img src="{{ url_for('static', filename='img/home/treasure-chest.png') }}" alt="" class="sv-hero-treasure">
+    </div>
+</div>
+
+<!-- ============================================================
+     2. YOUR UNIVERSES (Horizontal Scrolling Track Cards)
+     ============================================================ -->
+{% if tracks %}
+<div class="sv-section-header">
+    <h2 class="sv-section-title">عوالمك</h2>
+    <a href="{{ url_for('curriculum.home') }}" class="sv-section-link">عرض الكل</a>
+</div>
+<div class="sv-verses-scroll">
+    <div class="sv-verses-track">
+        {% for track in tracks %}
+        {% set img_file = verse_images.get(track.name, verse_images.get(track.id, 'coding-verse.png')) %}
+        {% set name_ar = verse_names_ar.get(track.name, verse_names_ar.get(track.id, track.name_ar if track.name_ar else track.name)) %}
+        {% set is_locked = false %}
+        <a href="{{ url_for('curriculum.track', track_id=track.id) }}"
+           class="sv-verse-card {{ 'locked' if is_locked else '' }}">
+
+            <div class="sv-verse-card-img-wrap">
+                <img src="{{ url_for('static', filename='img/verses/' ~ img_file) }}" alt="{{ name_ar }}">
+                {% if is_locked %}
+                <img src="{{ url_for('static', filename='img/verses/lock.png') }}" alt="" class="sv-verse-card-lock">
+                {% endif %}
+            </div>
+
+            <div class="sv-verse-card-body">
+                <h3 class="sv-verse-card-name">{{ name_ar }}</h3>
+                <div class="sv-verse-card-level">
+                    {% if is_locked %}
+                    <img src="{{ url_for('static', filename='img/verses/lock.png') }}" alt="" style="width:14px;height:14px;">
+                    <span>مقفل</span>
+                    {% else %}
+                    <span>{{ xp_progress|int }}%</span>
+                    <div class="sv-verse-card-level-bar">
+                        <div class="sv-verse-card-level-fill" style="width: {{ xp_progress }}%;"></div>
+                    </div>
+                    <span>م{{ level }}</span>
+                    {% endif %}
+                </div>
+                <div class="sv-verse-card-btn {{ verse_btn_colors.get(track.name, verse_btn_colors.get(track.id, 'verse-btn-orange')) }}">
+                    استمر <span>&gt;</span>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- ============================================================
+     3. BOTTOM THREE-COLUMN SECTION
+     ============================================================ -->
+<div class="sv-bottom-grid">
+
+    <!-- ─── Column 1 (RIGHT in RTL): Today's Activity ──── -->
+    <div class="sv-card">
+        <div class="sv-card-header">
+            <h3 class="sv-card-title">نشاط اليوم</h3>
+        </div>
+
+        <div class="sv-today-activity-hero">
+            <img src="{{ url_for('static', filename='img/home/activities-clipboard.png') }}" alt="" class="sv-today-activity-img">
+            <div class="sv-today-activity-info">
+                {% if live_sessions %}
+                <p class="sv-today-activity-name">{{ live_sessions[0].title }}</p>
+                <p class="sv-today-activity-meta">مباشر الآن</p>
+                {% elif upcoming_sessions %}
+                <p class="sv-today-activity-name">{{ upcoming_sessions[0].title }}</p>
+                <p class="sv-today-activity-meta">
+                    {% if upcoming_sessions[0].scheduled_at %}
+                    {{ upcoming_sessions[0].scheduled_at.strftime('%H:%M') }} دقيقة
+                    {% endif %}
+                </p>
+                {% else %}
+                <p class="sv-today-activity-name">أكمل: أساسيات الحلقات</p>
+                <p class="sv-today-activity-meta">12 دقيقة</p>
+                {% endif %}
+
+                <div class="sv-today-rewards">
+                    <div class="sv-reward-item">
+                        <span>XP 20</span>
+                        <img src="{{ url_for('static', filename='img/icons/xp-bolt.png') }}" alt="" class="sv-reward-icon">
+                    </div>
+                    <div class="sv-reward-item">
+                        <img src="{{ url_for('static', filename='img/icons/coin.png') }}" alt="" class="sv-reward-icon">
+                        <span>50</span>
+                    </div>
+                </div>
+
+                {% if live_sessions %}
+                <a href="{{ url_for('room.room', session_id=live_sessions[0].id) }}" class="sv-btn-orange-sm">
+                    استمر <span>&gt;</span>
+                </a>
+                {% elif upcoming_sessions %}
+                <a href="{{ url_for('student.timetable') }}" class="sv-btn-orange-sm">
+                    استمر <span>&gt;</span>
+                </a>
+                {% else %}
+                <a href="{{ url_for('curriculum.home') }}" class="sv-btn-orange-sm">
+                    استمر <span>&gt;</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Continue Module sub-card (purple galaxy with book illustration) -->
+        <div class="sv-continue-module">
+            <img src="{{ url_for('static', filename='img/home/open-book.png') }}" alt="" class="sv-continue-module-illustration">
+            <div class="sv-continue-module-content">
+                <p class="sv-continue-module-label">أكمل الوحدة</p>
+                {% if upcoming_sessions %}
+                <p class="sv-continue-module-name">{{ upcoming_sessions[0].title }}</p>
+                {% else %}
+                <p class="sv-continue-module-name">الفصل 3: الحلقات</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- ─── Column 2 (MIDDLE): Your Activities ─────────── -->
+    <div class="sv-card">
+        <div class="sv-card-header">
+            <h3 class="sv-card-title">أنشطتك</h3>
+            <a href="{{ url_for('student.sessions') }}" class="sv-section-link">فتح</a>
+        </div>
+
+        <!-- Activity list -->
+        {% if recent_xp %}
+        {% for xp in recent_xp[:3] %}
+        <div class="sv-activity-list-item">
+            <div class="sv-activity-list-dot"></div>
+            <div class="sv-activity-list-body">
+                <p class="sv-activity-list-name">{{ xp.reason }}</p>
+                <span class="sv-activity-list-tag">من الفصل المباشر</span>
+            </div>
+            <span class="sv-activity-list-count">+{{ xp.amount }} XP</span>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="sv-activity-list-item">
+            <div class="sv-activity-list-dot"></div>
+            <div class="sv-activity-list-body">
+                <p class="sv-activity-list-name">سحب وإفلات المتغيرات</p>
+                <span class="sv-activity-list-tag">من الفصل المباشر</span>
+            </div>
+            <span class="sv-activity-list-count">متبقي 4</span>
+        </div>
+        {% endif %}
+
+        <!-- Your Quest Progress -->
+        <div class="sv-quest-section">
+            <h4 class="sv-quest-title">تقدم مهمتك</h4>
+
+            {% if tracks %}
+            {% for track in tracks[:4] %}
+            {% set track_name_ar = verse_names_ar.get(track.name, verse_names_ar.get(track.id, track.name_ar if track.name_ar else track.name)) %}
+            <div class="sv-quest-bar">
+                <div class="sv-quest-bar-header">
+                    <span class="sv-quest-bar-name">{{ track_name_ar }}</span>
+                    <span class="sv-quest-bar-pct">{{ (xp_progress * (loop.index * 0.25))|int }}%</span>
+                </div>
+                <div class="sv-quest-bar-track">
+                    <div class="sv-quest-bar-fill {{ bar_colors[(loop.index0) % 4] }}" style="width: {{ (xp_progress * (loop.index * 0.25))|int }}%;"></div>
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div class="sv-quest-bar">
+                <div class="sv-quest-bar-header">
+                    <span class="sv-quest-bar-name">عالم البرمجة</span>
+                    <span class="sv-quest-bar-pct">70%</span>
+                </div>
+                <div class="sv-quest-bar-track">
+                    <div class="sv-quest-bar-fill purple" style="width:70%;"></div>
+                </div>
+            </div>
+            <div class="sv-quest-bar">
+                <div class="sv-quest-bar-header">
+                    <span class="sv-quest-bar-name">بايثون</span>
+                    <span class="sv-quest-bar-pct">85%</span>
+                </div>
+                <div class="sv-quest-bar-track">
+                    <div class="sv-quest-bar-fill blue" style="width:85%;"></div>
+                </div>
+            </div>
+            <div class="sv-quest-bar">
+                <div class="sv-quest-bar-header">
+                    <span class="sv-quest-bar-name">حل المشكلات</span>
+                    <span class="sv-quest-bar-pct">55%</span>
+                </div>
+                <div class="sv-quest-bar-track">
+                    <div class="sv-quest-bar-fill green" style="width:55%;"></div>
+                </div>
+            </div>
+            <div class="sv-quest-bar">
+                <div class="sv-quest-bar-header">
+                    <span class="sv-quest-bar-name">الخوارزميات</span>
+                    <span class="sv-quest-bar-pct">30%</span>
+                </div>
+                <div class="sv-quest-bar-track">
+                    <div class="sv-quest-bar-fill orange" style="width:30%;"></div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ─── Column 3 (LEFT in RTL): Skill Snapshot ─────── -->
+    <div class="sv-card sv-skill-snapshot">
+        <div class="sv-card-header">
+            <h3 class="sv-card-title">لقطة المهارات</h3>
+        </div>
+
+        <!-- Continue Module -->
+        <div class="sv-skill-module">
+            <p class="sv-skill-module-label">أكمل الوحدة</p>
+            {% if upcoming_sessions %}
+            <p class="sv-skill-module-name">{{ upcoming_sessions[0].title }}</p>
+            {% else %}
+            <p class="sv-skill-module-name">الوحدة 2: الحلقات</p>
+            {% endif %}
+
+            <a href="{{ url_for('curriculum.home') }}" class="sv-skill-search-link">ابحث في المكتبة</a>
+
+            {% if live_sessions %}
+            <a href="{{ url_for('room.room', session_id=live_sessions[0].id) }}" class="sv-btn-orange-lg">
+                استمر <span>&gt;</span>
+            </a>
+            {% else %}
+            <a href="{{ url_for('curriculum.home') }}" class="sv-btn-orange-lg">
+                استمر <span>&gt;</span>
+            </a>
+            {% endif %}
+        </div>
+
+        <!-- Wizard character -->
+        <div class="sv-skill-wizard-wrap">
+            <img src="{{ url_for('static', filename='img/home/skill-wizard.png') }}" alt="">
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/gamification.js') }}"></script>
+{% endblock %}

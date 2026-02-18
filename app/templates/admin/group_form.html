@@ -1,0 +1,71 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}{{ 'تعديل المجموعة' if group is defined and group else 'إنشاء مجموعة جديدة' }}{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:700px;">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="form-group">
+            <label class="form-label">اسم المجموعة *</label>
+            <input type="text" name="name" class="form-input" value="{{ group.name if group is defined and group else '' }}" required>
+        </div>
+        <div class="form-group">
+            <label class="form-label">المسار</label>
+            <select name="track_id" class="form-select">
+                <option value="">— اختر المسار —</option>
+                {% for t in tracks %}
+                <option value="{{ t.id }}" {{ 'selected' if group is defined and group and group.track_id == t.id }}>{{ t.name_ar }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">المعلم</label>
+            <select name="teacher_id" class="form-select">
+                <option value="">— اختر المعلم —</option>
+                {% for t in teachers %}
+                <option value="{{ t.id }}" {{ 'selected' if group is defined and group and group.teacher_id == t.id }}>{{ t.name_ar }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="form-label">الحد الأقصى للطلاب</label>
+            <input type="number" name="max_students" class="form-input" value="{{ group.max_students if group is defined and group else 12 }}" min="1" max="50">
+        </div>
+        <div class="form-group">
+            <label class="form-label">الطلاب</label>
+            <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-md);padding:var(--space-sm);">
+                {% for s in students %}
+                <label style="display:flex;align-items:center;gap:var(--space-sm);padding:var(--space-xs) var(--space-sm);cursor:pointer;">
+                    <input type="checkbox" name="student_ids" value="{{ s.id }}" {{ 'checked' if current_student_ids is defined and s.id in current_student_ids }} style="accent-color:var(--sv-purple);">
+                    {{ s.name_ar }} <span class="text-xs text-muted">({{ s.email }})</span>
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+        {% if group is defined and group %}
+        <div class="form-group">
+            <label style="display:flex;align-items:center;gap:var(--space-sm);cursor:pointer;">
+                <input type="checkbox" name="is_active" {{ 'checked' if group.is_active }} style="accent-color:var(--sv-purple);">
+                <span>المجموعة نشطة</span>
+            </label>
+        </div>
+        {% endif %}
+        <div style="display:flex;gap:var(--space-md);">
+            <button type="submit" class="btn btn-primary">{{ 'حفظ التعديلات' if group is defined and group else 'إنشاء المجموعة' }}</button>
+            <a href="{{ url_for('admin.groups') }}" class="btn btn-outline">إلغاء</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

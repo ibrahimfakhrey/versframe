@@ -1,0 +1,174 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}الجدول الأسبوعي - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+.timetable-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: var(--space-md);
+}
+.timetable-day {
+    min-width: 0;
+}
+.timetable-day-header {
+    text-align: center;
+    padding: var(--space-md);
+    background: linear-gradient(135deg, var(--sv-purple), var(--sv-purple-dark));
+    color: var(--text-on-dark);
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    font-weight: var(--fw-bold);
+    font-size: var(--text-base);
+}
+.timetable-day-body {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-top: none;
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    padding: var(--space-sm);
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+.timetable-session {
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    background: var(--bg);
+    border-right: 4px solid var(--sv-purple);
+    transition: all var(--transition-fast);
+}
+.timetable-session:hover {
+    background: var(--sv-purple-glow);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-sm);
+}
+.timetable-session-time {
+    font-size: var(--text-xs);
+    color: var(--sv-orange);
+    font-weight: var(--fw-bold);
+    margin-bottom: 4px;
+}
+.timetable-session-title {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    margin-bottom: 2px;
+}
+.timetable-session-group {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+.timetable-session-live {
+    border-right-color: var(--sv-orange);
+    background: rgba(235,91,0,0.06);
+}
+.timetable-join-btn {
+    display: inline-block;
+    margin-top: 6px;
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    padding: 0.3rem 0.8rem;
+    border-radius: 16px;
+    font-size: var(--text-xs);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 2px solid #B84700;
+    box-shadow: 0 2px 8px rgba(235,91,0,0.3);
+    transition: all 0.2s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+}
+.timetable-join-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(235,91,0,0.45);
+    color: #fff;
+}
+.timetable-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    padding: var(--space-xl) 0;
+}
+@media (max-width: 1024px) {
+    .timetable-grid {
+        grid-template-columns: 1fr;
+    }
+    .timetable-day-header {
+        border-radius: var(--radius-lg);
+    }
+    .timetable-day-body {
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-light);
+    }
+}
+</style>
+{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت اليومية</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.timetable') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
+    <span>التقويم</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}الجدول الأسبوعي{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">📅 الجدول الأسبوعي</div>
+    <div class="page-subtitle">مواعيد جلساتك خلال الأسبوع</div>
+</div>
+
+<div class="timetable-grid">
+    {% for day in days %}
+    <div class="timetable-day">
+        <div class="timetable-day-header">{{ day }}</div>
+        <div class="timetable-day-body">
+            {% set day_sessions = timetable.get(day, []) %}
+            {% if day_sessions %}
+                {% for session in day_sessions %}
+                <div class="timetable-session{% if session.status.value == 'live' %} timetable-session-live{% endif %}">
+                    <div class="timetable-session-time">{{ session.scheduled_at.strftime('%H:%M') }}</div>
+                    <div class="timetable-session-title">{{ session.title }}</div>
+                    <div class="timetable-session-group">{{ session.group.name }}</div>
+                    {% if session.status.value == 'live' %}
+                    <a href="{{ url_for('room.room', session_id=session.id) }}" class="timetable-join-btn">دخول</a>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+            <div class="timetable-empty">لا توجد جلسات</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

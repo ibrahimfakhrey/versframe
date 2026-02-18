@@ -1,0 +1,222 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}جلساتي - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('teacher.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('teacher.groups') }}" class="sidebar-link">
+    <span class="sidebar-icon">👥</span>
+    <span>المجموعات</span>
+</a>
+<a href="{{ url_for('teacher.sessions') }}" class="sidebar-link active">
+    <span class="sidebar-icon">📅</span>
+    <span>الجلسات</span>
+</a>
+<a href="{{ url_for('teacher.homework') }}" class="sidebar-link">
+    <span class="sidebar-icon">📝</span>
+    <span>الواجبات</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}الجلسات{% endblock %}
+
+{% block topbar_actions %}
+<button class="btn btn-sm btn-primary" onclick="document.getElementById('newSessionModal').classList.add('active')">
+    + جلسة جديدة
+</button>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Overview -->
+<div class="stats-grid">
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-purple-glow); color: var(--sv-purple);">📅</div>
+        <div>
+            <div class="stat-value">{{ total|default(0) }}</div>
+            <div class="stat-label">إجمالي الجلسات</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--info-light); color: var(--info);">🕐</div>
+        <div>
+            <div class="stat-value">{{ items|selectattr('status.value', 'equalto', 'scheduled')|list|length }}</div>
+            <div class="stat-label">جلسات مجدولة</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-orange-glow); color: var(--sv-orange);">🔴</div>
+        <div>
+            <div class="stat-value">{{ items|selectattr('status.value', 'equalto', 'live')|list|length }}</div>
+            <div class="stat-label">جلسات مباشرة</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--success-light); color: var(--success);">✅</div>
+        <div>
+            <div class="stat-value">{{ items|selectattr('status.value', 'equalto', 'completed')|list|length }}</div>
+            <div class="stat-label">جلسات مكتملة</div>
+        </div>
+    </div>
+</div>
+
+<!-- Sessions Table -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">جميع الجلسات</h2>
+    </div>
+
+    {% if items %}
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>عنوان الجلسة</th>
+                    <th>المجموعة</th>
+                    <th>الموعد</th>
+                    <th>المدة</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for session in items %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('teacher.session_detail', session_id=session.id) }}" style="font-weight: 700; color: var(--sv-purple); text-decoration: none;">
+                            {{ session.title }}
+                        </a>
+                    </td>
+                    <td>
+                        {% if session.group %}
+                        <a href="{{ url_for('teacher.group_detail', group_id=session.group.id) }}" class="text-sm" style="color: var(--text-secondary); text-decoration: none;">
+                            {{ session.group.name }}
+                        </a>
+                        {% else %}
+                        <span class="text-muted">--</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-sm">{{ session.scheduled_at|default('', true) }}</td>
+                    <td class="text-sm">{{ session.duration_minutes|default(60) }} دقيقة</td>
+                    <td>
+                        {% if session.status.value == 'scheduled' %}
+                            <span class="badge badge-info">مجدولة</span>
+                        {% elif session.status.value == 'live' %}
+                            <span class="badge badge-orange">مباشرة</span>
+                        {% elif session.status.value == 'completed' %}
+                            <span class="badge badge-success">مكتملة</span>
+                        {% elif session.status.value == 'cancelled' %}
+                            <span class="badge badge-danger">ملغية</span>
+                        {% endif %}
+                    </td>
+                    <td style="display: flex; gap: var(--space-xs); align-items: center;">
+                        <a href="{{ url_for('teacher.session_detail', session_id=session.id) }}" class="btn btn-sm btn-primary">
+                            تفاصيل
+                        </a>
+                        {% if session.status.value == 'scheduled' %}
+                        <form action="{{ url_for('teacher.session_start', session_id=session.id) }}" method="POST" style="margin:0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-orange">بدء الجلسة</button>
+                        </form>
+                        {% elif session.status.value == 'live' %}
+                        <a href="{{ url_for('room.room', session_id=session.id) }}" class="btn btn-sm btn-orange">
+                            دخول الغرفة
+                        </a>
+                        <form action="{{ url_for('teacher.session_end', session_id=session.id) }}" method="POST" style="margin:0;">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('هل أنت متأكد من إنهاء الجلسة؟')">إنهاء</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    {% if pages > 1 %}
+    <div class="pagination">
+        {% if page > 1 %}
+        <a href="{{ url_for('teacher.sessions', page=page-1) }}">السابق</a>
+        {% endif %}
+        {% for p in range(1, pages + 1) %}
+            {% if p == page %}
+            <span class="active">{{ p }}</span>
+            {% else %}
+            <a href="{{ url_for('teacher.sessions', page=p) }}">{{ p }}</a>
+            {% endif %}
+        {% endfor %}
+        {% if page < pages %}
+        <a href="{{ url_for('teacher.sessions', page=page+1) }}">التالي</a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">📅</div>
+        <div class="empty-state-text">لا توجد جلسات حالياً</div>
+        <p class="text-muted text-sm">أنشئ جلسة جديدة لطلابك</p>
+        <button class="btn btn-primary" onclick="document.getElementById('newSessionModal').classList.add('active')" style="margin-top: var(--space-md);">
+            + إنشاء جلسة جديدة
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<!-- New Session Modal -->
+<div class="modal-overlay" id="newSessionModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h2 class="modal-title">جلسة جديدة</h2>
+            <button class="modal-close" onclick="document.getElementById('newSessionModal').classList.remove('active')">×</button>
+        </div>
+
+        <form action="{{ url_for('teacher.session_create') }}" method="POST">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <div class="form-group">
+                <label class="form-label" for="session_title">عنوان الجلسة</label>
+                <input type="text" class="form-input" id="session_title" name="title" placeholder="مثال: مقدمة في البرمجة" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="session_group">المجموعة</label>
+                <select class="form-select" id="session_group" name="group_id" required>
+                    <option value="">اختر المجموعة...</option>
+                    {% for group in groups %}
+                    <option value="{{ group.id }}">{{ group.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="session_scheduled_at">موعد الجلسة</label>
+                <input type="datetime-local" class="form-input" id="session_scheduled_at" name="scheduled_at" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="session_duration">المدة (بالدقائق)</label>
+                <input type="number" class="form-input" id="session_duration" name="duration_minutes" value="60" min="15" max="180" required>
+                <div class="form-hint">المدة الافتراضية 60 دقيقة</div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="submit" class="btn btn-primary">إنشاء الجلسة</button>
+                <button type="button" class="btn btn-ghost" onclick="document.getElementById('newSessionModal').classList.remove('active')">إلغاء</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/teacher.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,56 @@
+/* === Teacher Specific === */
+.today-sessions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-xl);
+}
+.today-session-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-lg);
+  padding: var(--space-lg);
+  border-radius: var(--radius-lg);
+  background: var(--bg-card);
+  border: 1px solid var(--border-light);
+}
+.today-session-card.live {
+  border-color: var(--sv-orange);
+  background: linear-gradient(135deg, rgba(235, 91, 0, 0.05), rgba(100, 13, 95, 0.05));
+}
+
+.student-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-md);
+}
+
+/* Homework grading */
+.submission-card {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  margin-bottom: var(--space-md);
+}
+.submission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+.submission-content {
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  padding: var(--space-md);
+  background: var(--bg);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-sm);
+}
+.grade-input {
+  display: flex;
+  gap: var(--space-md);
+  align-items: center;
+}
+.grade-input input {
+  width: 80px;
+}

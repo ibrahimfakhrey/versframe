@@ -1,0 +1,188 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}الواجبات - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+.homework-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+.homework-card {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    transition: all var(--transition-fast);
+    text-decoration: none;
+    color: inherit;
+}
+.homework-card:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--sv-purple);
+    transform: translateY(-2px);
+}
+.homework-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+.homework-icon.pending {
+    background: var(--sv-orange-glow);
+    color: var(--sv-orange);
+}
+.homework-icon.submitted {
+    background: var(--info-light);
+    color: var(--info);
+}
+.homework-icon.graded {
+    background: var(--success-light);
+    color: var(--success);
+}
+.homework-icon.overdue {
+    background: var(--danger-light);
+    color: var(--danger);
+}
+.homework-details {
+    flex: 1;
+    min-width: 0;
+}
+.homework-title {
+    font-size: var(--text-base);
+    font-weight: var(--fw-bold);
+    margin-bottom: 4px;
+}
+.homework-meta {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+.homework-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.homework-status {
+    flex-shrink: 0;
+    text-align: left;
+}
+.homework-grade {
+    font-size: var(--text-xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--sv-purple);
+}
+.homework-filters {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    flex-wrap: wrap;
+}
+</style>
+{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت اليومية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
+    <span>التقويم</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}الواجبات{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">📝 الواجبات</div>
+    <div class="page-subtitle">تابع واجباتك وقدّمها في الوقت المناسب</div>
+</div>
+
+{% if homeworks %}
+<div class="homework-list">
+    {% for hw in homeworks %}
+    {% set is_submitted = hw.submitted_at is not none %}
+    {% set is_graded = hw.grade is not none %}
+    {% set is_overdue = not is_submitted and hw.homework.due_date < now() if hw.homework.due_date else false %}
+    <a href="{{ url_for('student.homework_detail', hw_id=hw.homework.id) }}" class="homework-card">
+        <div class="homework-icon {% if is_graded %}graded{% elif is_submitted %}submitted{% elif is_overdue %}overdue{% else %}pending{% endif %}">
+            {% if is_graded %}
+                ✅
+            {% elif is_submitted %}
+                📤
+            {% elif is_overdue %}
+                ⏰
+            {% else %}
+                📝
+            {% endif %}
+        </div>
+        <div class="homework-details">
+            <div class="homework-title">{{ hw.homework.title }}</div>
+            <div class="homework-meta">
+                <span>👥 {{ hw.homework.group.name }}</span>
+                {% if hw.homework.due_date %}
+                <span>📅 {{ hw.homework.due_date.strftime('%d/%m/%Y') }}</span>
+                {% endif %}
+                {% if is_submitted %}
+                <span>✅ تم التسليم {{ hw.submitted_at.strftime('%d/%m') }}</span>
+                {% endif %}
+            </div>
+        </div>
+        <div class="homework-status">
+            {% if is_graded %}
+                <div class="homework-grade">{{ hw.grade }}</div>
+                <span class="badge badge-success">تم التقييم</span>
+            {% elif is_submitted %}
+                <span class="badge badge-info">تم التسليم</span>
+            {% elif is_overdue %}
+                <span class="badge badge-danger">متأخر</span>
+            {% else %}
+                <span class="badge badge-warning">بانتظار التسليم</span>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon">📝</div>
+        <div class="empty-state-text">لا توجد واجبات مطلوبة حاليًا</div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

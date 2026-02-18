@@ -1,0 +1,268 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}الجلسات - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+.sessions-section {
+    margin-bottom: var(--space-xl);
+}
+.sessions-section-title {
+    font-size: var(--text-lg);
+    font-weight: var(--fw-extrabold);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.sessions-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+.session-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    transition: all var(--transition-fast);
+}
+.session-row:hover {
+    box-shadow: var(--shadow-md);
+    border-color: var(--sv-purple);
+}
+.session-row.live-row {
+    border-color: var(--sv-orange);
+    background: linear-gradient(135deg, rgba(235,91,0,0.05), rgba(255,140,46,0.08));
+}
+.session-row.live-row:hover {
+    border-color: var(--sv-orange);
+    box-shadow: 0 4px 20px rgba(235,91,0,0.15);
+}
+.session-date-box {
+    text-align: center;
+    padding: var(--space-md) var(--space-lg);
+    background: linear-gradient(135deg, var(--sv-purple), var(--sv-purple-dark));
+    border-radius: var(--radius-lg);
+    color: var(--text-on-dark);
+    min-width: 80px;
+    flex-shrink: 0;
+}
+.session-date-box.live-date {
+    background: linear-gradient(135deg, #EB5B00, #FF8C2E);
+}
+.session-date-day {
+    font-size: var(--text-2xl);
+    font-weight: var(--fw-extrabold);
+    line-height: 1;
+}
+.session-date-month {
+    font-size: var(--text-xs);
+    opacity: 0.8;
+    margin-top: 4px;
+}
+.session-details {
+    flex: 1;
+    min-width: 0;
+}
+.session-details-title {
+    font-size: var(--text-lg);
+    font-weight: var(--fw-bold);
+    margin-bottom: 4px;
+}
+.session-details-meta {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+}
+.session-details-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.session-actions {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+.btn-join-room {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    padding: 0.6rem 1.4rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 0.88rem;
+    text-decoration: none;
+    border: none;
+    border-bottom: 3px solid #B84700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 3px 12px rgba(235,91,0,0.35);
+}
+.btn-join-room:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 18px rgba(235,91,0,0.5);
+    color: #fff;
+}
+.live-pulse {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    background: #EB5B00;
+    border-radius: 50%;
+    animation: livePulse 1.5s ease-in-out infinite;
+}
+@keyframes livePulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.3); }
+}
+</style>
+{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت اليومية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
+    <span>التقويم</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}الجلسات{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">🎓 الجلسات التعليمية</div>
+    <div class="page-subtitle">جلساتك المباشرة والقادمة وسجل الجلسات السابقة</div>
+</div>
+
+{% if live_sessions %}
+<div class="sessions-section">
+    <div class="sessions-section-title">
+        <span class="live-pulse"></span>
+        جلسات مباشرة الآن
+    </div>
+    <div class="sessions-list">
+        {% for session in live_sessions %}
+        <div class="session-row live-row">
+            <div class="session-date-box live-date">
+                <div class="session-date-day">{{ session.scheduled_at.strftime('%d') }}</div>
+                <div class="session-date-month">{{ session.scheduled_at.strftime('%m/%Y') }}</div>
+            </div>
+            <div class="session-details">
+                <div class="session-details-title">{{ session.title }}</div>
+                <div class="session-details-meta">
+                    <span>🕐 {{ session.scheduled_at.strftime('%H:%M') }}</span>
+                    <span>👥 {{ session.group.name }}</span>
+                    <span>⏱️ {{ session.duration_minutes }} دقيقة</span>
+                </div>
+            </div>
+            <div class="session-actions">
+                <a href="{{ url_for('room.room', session_id=session.id) }}" class="btn-join-room">
+                    دخول الغرفة
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if upcoming_sessions %}
+<div class="sessions-section">
+    <div class="sessions-section-title">📅 جلسات قادمة</div>
+    <div class="sessions-list">
+        {% for session in upcoming_sessions %}
+        <div class="session-row">
+            <div class="session-date-box">
+                <div class="session-date-day">{{ session.scheduled_at.strftime('%d') }}</div>
+                <div class="session-date-month">{{ session.scheduled_at.strftime('%m/%Y') }}</div>
+            </div>
+            <div class="session-details">
+                <div class="session-details-title">{{ session.title }}</div>
+                <div class="session-details-meta">
+                    <span>🕐 {{ session.scheduled_at.strftime('%H:%M') }}</span>
+                    <span>👥 {{ session.group.name }}</span>
+                    <span>⏱️ {{ session.duration_minutes }} دقيقة</span>
+                </div>
+            </div>
+            <div class="session-actions">
+                <span class="badge badge-purple">قادمة</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if completed_sessions %}
+<div class="sessions-section">
+    <div class="sessions-section-title">✅ جلسات مكتملة</div>
+    <div class="sessions-list">
+        {% for session in completed_sessions %}
+        <div class="session-row">
+            <div class="session-date-box">
+                <div class="session-date-day">{{ session.scheduled_at.strftime('%d') }}</div>
+                <div class="session-date-month">{{ session.scheduled_at.strftime('%m/%Y') }}</div>
+            </div>
+            <div class="session-details">
+                <div class="session-details-title">{{ session.title }}</div>
+                <div class="session-details-meta">
+                    <span>🕐 {{ session.scheduled_at.strftime('%H:%M') }}</span>
+                    <span>👥 {{ session.group.name }}</span>
+                    <span>⏱️ {{ session.duration_minutes }} دقيقة</span>
+                </div>
+            </div>
+            <div class="session-actions">
+                <span class="badge badge-success">مكتملة</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% if not live_sessions and not upcoming_sessions and not completed_sessions %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon">🌌</div>
+        <div class="empty-state-text">لا توجد جلسات مسجلة بعد</div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

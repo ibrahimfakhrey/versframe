@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}{{ track.name_ar }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/curriculum.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- Curriculum Navbar -->
+<nav class="curriculum-nav">
+    <a href="{{ url_for('curriculum.home') }}" class="curriculum-nav-brand">SV المنهج</a>
+</nav>
+
+<!-- Hero Section -->
+<section class="curriculum-hero" style="--track-color: {{ track.color }}">
+    <div class="curriculum-hero-content">
+        <div class="breadcrumbs">
+            <a href="{{ url_for('curriculum.home') }}">المنهج</a>
+            <span>/</span>
+            <span>{{ track.name_ar }}</span>
+        </div>
+        <div class="track-icon" style="font-size: 3rem; margin-bottom: 0.5rem;">{{ track.icon }}</div>
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_track', track_id=track.id) }}" data-field-name="name_ar">
+            <h1 class="editable-text">{{ track.name_ar }}</h1>
+            <button class="edit-btn" onclick="startInlineEdit(this)">&#9998;</button>
+        </div>
+        <p>{{ track.name }}</p>
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_track', track_id=track.id) }}" data-field-name="description_ar">
+            <p class="editable-text">{{ track.description_ar }}</p>
+            <button class="edit-btn" onclick="startInlineEdit(this)">&#9998;</button>
+        </div>
+        <div class="hero-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ track.levels | length }}</span>
+                <span class="stat-label-text">مستوى</span>
+            </div>
+            <div class="stat-item">
+                {% set unit_count = [] %}
+                {% for lvl in track.levels %}
+                    {% for _ in lvl.units %}
+                        {% if unit_count.append(1) %}{% endif %}
+                    {% endfor %}
+                {% endfor %}
+                <span class="stat-number">{{ unit_count | length }}</span>
+                <span class="stat-label-text">وحدة تعليمية</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Level Timeline (Visual Progression) -->
+<h2 class="section-title">المستويات</h2>
+<div class="levels-row">
+    {% for lvl in track.levels %}
+        <a href="{{ url_for('curriculum.level', track_id=track.id, level_id=lvl.id) }}" class="level-preview-card" style="text-decoration: none; color: inherit;">
+            <div class="level-icon">{{ lvl.icon }}</div>
+            <div style="font-weight: 700; margin-top: 0.5rem;">{{ lvl.name_ar }}</div>
+            <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ lvl.units | length }} وحدة</div>
+        </a>
+        {% if not loop.last %}
+        <span class="level-arrow-connector">&larr;</span>
+        {% endif %}
+    {% endfor %}
+</div>
+
+<!-- Detailed Level List -->
+<div style="max-width: var(--content-max); margin: 0 auto; padding: 0 var(--space-lg) var(--space-2xl);">
+    {% for lvl in track.levels %}
+    <div class="track-card" style="--track-color: {{ track.color }}; margin-bottom: var(--space-lg); display: block;">
+        <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+            <div class="track-icon">{{ lvl.icon }}</div>
+            <div>
+                <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_level', track_id=track.id, level_id=lvl.id) }}" data-field-name="name_ar">
+                    <div class="track-name editable-text">{{ lvl.name_ar }}</div>
+                    <button class="edit-btn" onclick="startInlineEdit(this)">&#9998;</button>
+                </div>
+                <div class="track-name-en">{{ lvl.name }}</div>
+            </div>
+        </div>
+        {% if lvl.slogan %}
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_level', track_id=track.id, level_id=lvl.id) }}" data-field-name="slogan">
+            <p class="track-description editable-text" style="font-style: italic;">{{ lvl.slogan }}</p>
+            <button class="edit-btn" onclick="startInlineEdit(this)">&#9998;</button>
+        </div>
+        {% endif %}
+        {% if lvl.goal %}
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_level', track_id=track.id, level_id=lvl.id) }}" data-field-name="goal">
+            <p class="track-description editable-text">{{ lvl.goal }}</p>
+            <button class="edit-btn" onclick="startInlineEdit(this)">&#9998;</button>
+        </div>
+        {% endif %}
+        <div style="display: flex; align-items: center; gap: var(--space-sm); margin-top: var(--space-md);">
+            <span class="meta-badge">{{ lvl.units | length }} وحدة</span>
+            <a href="{{ url_for('curriculum.level', track_id=track.id, level_id=lvl.id) }}" class="btn btn-outline" style="font-size: 0.8rem; padding: 4px 12px;">
+                عرض الوحدات &larr;
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<!-- Edit Toggle Button -->
+<button class="edit-toggle-btn" id="edit-toggle">&#9998; وضع التعديل</button>
+
+<!-- Modal Overlay -->
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal-content card">
+        <div class="modal-header">
+            <h3 id="modal-title"></h3>
+            <button id="modal-close" class="btn btn-ghost">&cross;</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+        <div class="modal-footer">
+            <button id="modal-cancel" class="btn btn-outline">إلغاء</button>
+            <button id="modal-save" class="btn btn-primary">حفظ</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/edit.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,133 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}التقييمات{% endblock %}
+{% block topbar_title %}التقييمات{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('assessor.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('assessor.assessments') }}" class="sidebar-link active">
+    <span class="sidebar-icon">📋</span>
+    <span>التقييمات</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">📋 التقييمات</h2>
+    <p class="page-subtitle">جميع التقييمات المجدولة والمكتملة</p>
+</div>
+
+<!-- فلاتر -->
+<div class="card" style="margin-bottom: var(--space-xl);">
+    <div style="display: flex; gap: var(--space-md); flex-wrap: wrap; align-items: center;">
+        <div class="tabs" style="margin-bottom: 0; border-bottom: none; flex: 1;">
+            <button class="tab active" onclick="filterAssessments('all', this)">الكل</button>
+            <button class="tab" onclick="filterAssessments('scheduled', this)">مجدولة</button>
+            <button class="tab" onclick="filterAssessments('in_progress', this)">جارية</button>
+            <button class="tab" onclick="filterAssessments('completed', this)">مكتملة</button>
+        </div>
+    </div>
+</div>
+
+<!-- جدول التقييمات -->
+{% if assessments %}
+<div class="card">
+    <div class="table-wrapper">
+        <table class="table" id="assessmentsTable">
+            <thead>
+                <tr>
+                    <th>الطالب</th>
+                    <th>الموعد</th>
+                    <th>النوع</th>
+                    <th>الحالة</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assessment in assessments %}
+                <tr data-status="{{ assessment.status.value }}">
+                    <td>
+                        <div style="display: flex; align-items: center; gap: var(--space-sm);">
+                            <div class="avatar avatar-sm">
+                                {% if assessment.student and assessment.student.avatar_url %}
+                                <img src="{{ assessment.student.avatar_url }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                                {% else %}
+                                {{ assessment.student.name_ar[0] if assessment.student and assessment.student.name_ar else '?' }}
+                                {% endif %}
+                            </div>
+                            <div>
+                                <div style="font-weight: var(--fw-bold);">{{ assessment.student.name_ar if assessment.student else '-' }}</div>
+                                {% if assessment.student %}
+                                <a href="{{ url_for('assessor.student_profile', student_id=assessment.student.id) }}" style="font-size: var(--text-xs); color: var(--sv-purple);">
+                                    عرض الملف
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if assessment.scheduled_at %}
+                        <div style="font-weight: var(--fw-bold);">{{ assessment.scheduled_at.strftime('%Y-%m-%d') }}</div>
+                        <div style="font-size: var(--text-xs); color: var(--text-secondary);">{{ assessment.scheduled_at.strftime('%H:%M') }}</div>
+                        {% else %}
+                        <span style="color: var(--text-muted);">غير محدد</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <span class="badge badge-purple">تقييم</span>
+                    </td>
+                    <td>
+                        {% if assessment.status.value == 'completed' %}
+                        <span class="badge badge-success">مكتمل</span>
+                        {% elif assessment.status.value == 'scheduled' %}
+                        <span class="badge badge-info">مجدول</span>
+                        {% elif assessment.status.value == 'cancelled' %}
+                        <span class="badge badge-danger">ملغي</span>
+                        {% else %}
+                        <span class="badge badge-warning">{{ assessment.status.value }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div style="display: flex; gap: var(--space-xs);">
+                            <a href="{{ url_for('assessor.assessment_detail', assessment_id=assessment.id) }}" class="btn btn-sm btn-primary">
+                                التفاصيل
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card empty-state">
+    <div class="empty-state-icon">📋</div>
+    <div class="empty-state-text">لا توجد تقييمات حاليا</div>
+    <p style="color: var(--text-muted); font-size: var(--text-sm);">ستظهر هنا التقييمات عند جدولتها من قبل الإدارة</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+function filterAssessments(status, btn) {
+    // تحديث الأزرار
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+
+    // تصفية الصفوف
+    const rows = document.querySelectorAll('#assessmentsTable tbody tr');
+    rows.forEach(row => {
+        if (status === 'all' || row.dataset.status === status) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

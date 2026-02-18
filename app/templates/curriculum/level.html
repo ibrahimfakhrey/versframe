@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+
+{% block title %}{{ level.name_ar }} - {{ track.name_ar }}{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/curriculum.css') }}">
+{% endblock %}
+
+{% block body %}
+<!-- Curriculum Navbar -->
+<nav class="curriculum-nav">
+    <a href="{{ url_for('curriculum.home') }}" class="curriculum-nav-brand">SV المنهج</a>
+</nav>
+
+<!-- Hero Section -->
+<section class="curriculum-hero" style="--track-color: {{ track.color }}">
+    <div class="curriculum-hero-content">
+        <div class="breadcrumbs">
+            <a href="{{ url_for('curriculum.home') }}">المنهج</a>
+            <span>/</span>
+            <a href="{{ url_for('curriculum.track', track_id=track.id) }}">{{ track.name_ar }}</a>
+            <span>/</span>
+            <span>{{ level.name_ar }}</span>
+        </div>
+        <div class="track-icon" style="font-size: 3rem; margin-bottom: 0.5rem;">{{ level.icon }}</div>
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_level', track_id=track.id, level_id=level.id) }}" data-field-name="name_ar">
+            <h1 class="editable-text">{{ level.name_ar }}</h1>
+            <button class="edit-btn" onclick="startInlineEdit(this)">&#9998;</button>
+        </div>
+        <p>{{ level.name }}</p>
+        {% if level.slogan %}
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_level', track_id=track.id, level_id=level.id) }}" data-field-name="slogan">
+            <p class="editable-text" style="font-style: italic;">{{ level.slogan }}</p>
+            <button class="edit-btn" onclick="startInlineEdit(this)">&#9998;</button>
+        </div>
+        {% endif %}
+        {% if level.goal %}
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_level', track_id=track.id, level_id=level.id) }}" data-field-name="goal">
+            <p class="editable-text">{{ level.goal }}</p>
+            <button class="edit-btn" onclick="startInlineEdit(this)">&#9998;</button>
+        </div>
+        {% endif %}
+        <div class="hero-stats">
+            <div class="stat-item">
+                <span class="stat-number">{{ level.units | length }}</span>
+                <span class="stat-label-text">وحدة تعليمية</span>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Units Grid -->
+<h2 class="section-title">الوحدات التعليمية</h2>
+<div class="units-grid">
+    {% for u in level.units %}
+    <a href="{{ url_for('curriculum.unit', track_id=track.id, level_id=level.id, unit_id=u.id) }}" class="unit-card">
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_unit', track_id=track.id, level_id=level.id, unit_id=u.id) }}" data-field-name="name">
+            <div class="track-name editable-text">{{ u.name }}</div>
+            <button class="edit-btn" onclick="event.preventDefault(); startInlineEdit(this)">&#9998;</button>
+        </div>
+        <div class="track-name-en">{{ u.name_en }}</div>
+        {% if u.description %}
+        <div class="editable-field" data-api-url="{{ url_for('curriculum.api_update_unit', track_id=track.id, level_id=level.id, unit_id=u.id) }}" data-field-name="description">
+            <p class="track-description editable-text">{{ u.description }}</p>
+            <button class="edit-btn" onclick="event.preventDefault(); startInlineEdit(this)">&#9998;</button>
+        </div>
+        {% endif %}
+        {% if u.project and u.project.name %}
+        <div style="margin-top: var(--space-sm);">
+            <span class="meta-badge">{{ u.project.name }}</span>
+        </div>
+        {% endif %}
+        <div style="margin-top: var(--space-sm);">
+            <span class="meta-badge">{{ u.objectives | length }} هدف</span>
+            <span class="meta-badge">{{ u.skills | length }} مهارة</span>
+        </div>
+        <!-- Delete button -->
+        <button class="delete-btn btn btn-ghost" style="position: absolute; top: 8px; left: 8px; color: var(--danger); font-size: 0.8rem;"
+                onclick="event.preventDefault(); deleteUnit('{{ track.id }}', '{{ level.id }}', '{{ u.id }}')">
+            حذف
+        </button>
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Add Unit Button -->
+<div style="text-align: center; margin: var(--space-xl) 0 var(--space-2xl);">
+    <button class="add-btn btn btn-primary" onclick="addUnit('{{ track.id }}', '{{ level.id }}')">
+        + إضافة وحدة جديدة
+    </button>
+</div>
+
+<!-- Edit Toggle Button -->
+<button class="edit-toggle-btn" id="edit-toggle">&#9998; وضع التعديل</button>
+
+<!-- Modal Overlay -->
+<div id="modal-overlay" class="modal-overlay">
+    <div class="modal-content card">
+        <div class="modal-header">
+            <h3 id="modal-title"></h3>
+            <button id="modal-close" class="btn btn-ghost">&cross;</button>
+        </div>
+        <div id="modal-body" class="modal-body"></div>
+        <div class="modal-footer">
+            <button id="modal-cancel" class="btn btn-outline">إلغاء</button>
+            <button id="modal-save" class="btn btn-primary">حفظ</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/edit.js') }}"></script>
+{% endblock %}

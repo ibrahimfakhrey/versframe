@@ -1,0 +1,138 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}لوحة المقيّم{% endblock %}
+{% block topbar_title %}لوحة المقيّم{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('assessor.dashboard') }}" class="sidebar-link active">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('assessor.assessments') }}" class="sidebar-link">
+    <span class="sidebar-icon">📋</span>
+    <span>التقييمات</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- ترحيب -->
+<div class="page-header">
+    <h2 class="page-title">مرحبا، {{ current_user.name_ar }} 👋</h2>
+    <p class="page-subtitle">إدارة التقييمات ومتابعة أداء الطلاب</p>
+</div>
+
+<!-- الإحصائيات -->
+<div class="stats-grid">
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-purple-glow); color: var(--sv-purple);">📋</div>
+        <div>
+            <div class="stat-value">{{ stats.total_assessments|default(0) }}</div>
+            <div class="stat-label">إجمالي التقييمات</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--success-light); color: var(--success);">✅</div>
+        <div>
+            <div class="stat-value">{{ stats.completed|default(0) }}</div>
+            <div class="stat-label">تقييمات مكتملة</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--warning-light); color: #856404;">⏳</div>
+        <div>
+            <div class="stat-value">{{ stats.pending|default(0) }}</div>
+            <div class="stat-label">تقييمات معلقة</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-orange-glow); color: var(--sv-orange);">📅</div>
+        <div>
+            <div class="stat-value">{{ upcoming_assessments|length }}</div>
+            <div class="stat-label">تقييمات قادمة</div>
+        </div>
+    </div>
+</div>
+
+<!-- محتوى اللوحة -->
+<div class="dashboard-grid">
+    <div class="dashboard-grid-main">
+        <!-- التقييمات القادمة -->
+        <div class="card" style="margin-bottom: var(--space-xl);">
+            <div class="card-header">
+                <h3 class="card-title">📅 التقييمات القادمة</h3>
+                <a href="{{ url_for('assessor.assessments') }}" class="btn btn-sm btn-ghost">عرض الكل</a>
+            </div>
+
+            {% if upcoming_assessments %}
+            <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                {% for assessment in upcoming_assessments[:5] %}
+                <a href="{{ url_for('assessor.assessment_detail', assessment_id=assessment.id) }}" style="text-decoration: none; color: inherit;">
+                    <div class="session-card">
+                        <div class="session-time">
+                            <div class="session-time-hour">{{ assessment.scheduled_at.strftime('%H:%M') if assessment.scheduled_at else '--:--' }}</div>
+                            <div class="session-time-period">{{ assessment.scheduled_at.strftime('%m/%d') if assessment.scheduled_at else '' }}</div>
+                        </div>
+                        <div class="session-info">
+                            <div class="session-title">{{ assessment.student.name_ar if assessment.student else 'طالب' }}</div>
+                            <div class="session-meta">تقييم</div>
+                        </div>
+                        <span class="badge badge-info">قادم</span>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: var(--space-xl);">
+                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-text">لا توجد تقييمات قادمة</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="dashboard-grid-aside">
+        <!-- التقارير الأخيرة -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">📊 أحدث التقارير</h3>
+            </div>
+            {% if recent_reports %}
+            <div class="activity-list">
+                {% for report in recent_reports[:8] %}
+                <div class="activity-item">
+                    <div class="activity-icon" style="background: var(--sv-purple-glow); color: var(--sv-purple);">📊</div>
+                    <div class="activity-text">
+                        <div style="font-weight: var(--fw-bold);">{{ report.student.name_ar if report.student else 'طالب' }}</div>
+                        <div style="font-size: var(--text-xs); color: var(--text-muted);">
+                            {{ report.title or 'تقرير تقييم' }}
+                        </div>
+                    </div>
+                    <div class="activity-time">
+                        {% if report.score is not none %}
+                        <span class="badge badge-purple" style="font-size: 10px;">{{ report.score }}%</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div style="text-align: center; color: var(--text-muted); font-size: var(--text-sm); padding: var(--space-lg);">
+                لا توجد تقارير حتى الآن
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- إجراءات سريعة -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">إجراءات سريعة</h3>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                <a href="{{ url_for('assessor.assessments') }}" class="btn btn-block btn-outline" style="justify-content: flex-start;">
+                    📋 عرض جميع التقييمات
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

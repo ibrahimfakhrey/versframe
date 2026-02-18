@@ -1,0 +1,112 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}الرسائل{% endblock %}
+{% block topbar_title %}الرسائل{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('parent.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('parent.children') }}" class="sidebar-link">
+    <span class="sidebar-icon">👨‍👧‍👦</span>
+    <span>أبنائي</span>
+</a>
+<a href="{{ url_for('parent.messages') }}" class="sidebar-link active">
+    <span class="sidebar-icon">✉️</span>
+    <span>الرسائل</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">✉️ الرسائل</h2>
+    <p class="page-subtitle">تواصل مع معلمي أبنائك وإدارة شلبي فيرس</p>
+</div>
+
+<div class="dashboard-grid">
+    <!-- قائمة المحادثات -->
+    <div class="dashboard-grid-main">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">المحادثات</h3>
+                <button class="btn btn-sm btn-primary" id="newMessageBtn" disabled title="قريبا">
+                    رسالة جديدة
+                </button>
+            </div>
+
+            {% if messages %}
+            <div style="display: flex; flex-direction: column;">
+                {% for msg in messages %}
+                <div style="display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); border-bottom: 1px solid var(--border-light); cursor: pointer; transition: background var(--transition-fast);"
+                     onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
+                    <div class="avatar">
+                        {{ msg.sender_name[0] if msg.sender_name else '?' }}
+                    </div>
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-xs);">
+                            <span style="font-weight: var(--fw-bold); font-size: var(--text-sm);">{{ msg.sender_name or 'مجهول' }}</span>
+                            <span style="font-size: var(--text-xs); color: var(--text-muted);">{{ msg.sent_at.strftime('%Y-%m-%d %H:%M') if msg.sent_at else '' }}</span>
+                        </div>
+                        <div style="font-size: var(--text-sm); color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                            {{ msg.preview or msg.body or '' }}
+                        </div>
+                    </div>
+                    {% if msg.unread %}
+                    <div style="width: 10px; height: 10px; background: var(--sv-orange); border-radius: var(--radius-full); flex-shrink: 0;"></div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">✉️</div>
+                <div class="empty-state-text">لا توجد رسائل حاليا</div>
+                <p style="color: var(--text-muted); font-size: var(--text-sm);">ستظهر هنا الرسائل من المعلمين والإدارة</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- معلومات جانبية -->
+    <div class="dashboard-grid-aside">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">معلومات</h3>
+            </div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.8;">
+                <p style="margin-bottom: var(--space-md);">
+                    خدمة المراسلة ستتيح لك التواصل المباشر مع:
+                </p>
+                <ul style="padding-right: var(--space-lg); margin-bottom: var(--space-md);">
+                    <li style="margin-bottom: var(--space-xs);">معلمي أبنائك</li>
+                    <li style="margin-bottom: var(--space-xs);">إدارة شلبي فيرس</li>
+                    <li style="margin-bottom: var(--space-xs);">فريق الدعم الفني</li>
+                </ul>
+                <div style="padding: var(--space-md); background: var(--info-light); border-radius: var(--radius-md); color: var(--info);">
+                    هذه الخاصية قيد التطوير وستكون متاحة قريبا
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title">الدعم الفني</h3>
+            </div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary); line-height: 1.8;">
+                <p>في حال وجود أي استفسار عاجل، يمكنك التواصل عبر:</p>
+                <div style="margin-top: var(--space-md); padding: var(--space-md); background: var(--bg); border-radius: var(--radius-md);">
+                    <div style="margin-bottom: var(--space-sm);">
+                        <span style="font-weight: var(--fw-bold);">البريد الإلكتروني:</span>
+                        <span style="direction: ltr;">support@shalabyverse.com</span>
+                    </div>
+                    <div>
+                        <span style="font-weight: var(--fw-bold);">واتساب:</span>
+                        <span style="direction: ltr;">+20 XXX XXX XXXX</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

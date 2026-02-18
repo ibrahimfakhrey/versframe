@@ -1,0 +1,53 @@
+{% extends "base_dashboard.html" %}
+
+{% block title %}الطلاب{% endblock %}
+{% block topbar_title %}الطلاب{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('assessor.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('assessor.assessments') }}" class="sidebar-link">
+    <span class="sidebar-icon">📋</span>
+    <span>التقييمات</span>
+</a>
+<a href="{{ url_for('assessor.students') }}" class="sidebar-link active">
+    <span class="sidebar-icon">👨‍🎓</span>
+    <span>الطلاب</span>
+</a>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2 class="page-title">👨‍🎓 الطلاب</h2>
+    <p class="page-subtitle">الطلاب الذين تم تقييمهم أو لديهم تقييمات مجدولة</p>
+</div>
+
+{% if students %}
+<div class="card-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-lg);">
+    {% for student in students %}
+    <div class="card">
+        <div style="display: flex; align-items: center; gap: var(--space-md); margin-bottom: var(--space-md);">
+            <div class="avatar avatar-md" style="background: var(--sv-purple-light); color: white; display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; font-weight: bold;">
+                {{ student.name_ar[0] if student.name_ar else '?' }}
+            </div>
+            <div>
+                <h3 style="font-size: 16px; margin: 0;">{{ student.name_ar }}</h3>
+                <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">{{ student.email }}</p>
+            </div>
+        </div>
+        <a href="{{ url_for('assessor.student_profile', student_id=student.id) }}" class="btn btn-sm btn-purple" style="width: 100%; text-align: center;">
+            عرض الملف الشخصي
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="text-align: center; padding: var(--space-2xl);">
+    <div style="font-size: 3rem; margin-bottom: var(--space-md);">👨‍🎓</div>
+    <h3>لا يوجد طلاب بعد</h3>
+    <p style="color: var(--text-secondary);">ستظهر هنا قائمة الطلاب بعد إجراء التقييمات</p>
+</div>
+{% endif %}
+{% endblock %}

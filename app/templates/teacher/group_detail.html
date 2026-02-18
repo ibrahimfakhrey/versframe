@@ -1,0 +1,206 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}{{ group.name }} - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('teacher.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('teacher.groups') }}" class="sidebar-link active">
+    <span class="sidebar-icon">👥</span>
+    <span>المجموعات</span>
+</a>
+<a href="{{ url_for('teacher.sessions') }}" class="sidebar-link">
+    <span class="sidebar-icon">📅</span>
+    <span>الجلسات</span>
+</a>
+<a href="{{ url_for('teacher.homework') }}" class="sidebar-link">
+    <span class="sidebar-icon">📝</span>
+    <span>الواجبات</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}{{ group.name }}{% endblock %}
+
+{% block topbar_actions %}
+<a href="{{ url_for('teacher.groups') }}" class="btn btn-sm btn-ghost">
+    ← العودة للمجموعات
+</a>
+{% endblock %}
+
+{% block content %}
+<!-- Group Info Header -->
+<div class="stats-grid">
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-purple-glow); color: var(--sv-purple);">👥</div>
+        <div>
+            <div class="stat-value">{{ group.student_count }}</div>
+            <div class="stat-label">عدد الطلاب</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-orange-glow); color: var(--sv-orange);">📅</div>
+        <div>
+            <div class="stat-value">{{ sessions|length }}</div>
+            <div class="stat-label">عدد الجلسات</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--info-light); color: var(--info);">📚</div>
+        <div>
+            <div class="stat-value">{{ group.track_id|default('--', true) }}</div>
+            <div class="stat-label">المسار</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--success-light); color: var(--success);">🎯</div>
+        <div>
+            <div class="stat-value">{{ group.level_id|default('--', true) }}</div>
+            <div class="stat-label">المستوى</div>
+        </div>
+    </div>
+</div>
+
+<!-- Group Details -->
+<div class="dashboard-grid">
+    <div class="dashboard-grid-main">
+        <!-- Students List -->
+        <div class="card" style="margin-bottom: var(--space-xl);">
+            <div class="card-header">
+                <h2 class="card-title">قائمة الطلاب</h2>
+                <span class="badge badge-purple">{{ group.student_count }} طالب</span>
+            </div>
+
+            {% set students_list = group.students.all() %}
+            {% if students_list %}
+            <div class="student-grid">
+                {% for gs in students_list %}
+                <div class="card student-card">
+                    <div class="avatar">
+                        {% if gs.student.avatar_url %}
+                        <img src="{{ gs.student.avatar_url }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                        {% else %}
+                        {{ gs.student.name_ar[0] if gs.student.name_ar else '?' }}
+                        {% endif %}
+                    </div>
+                    <div>
+                        <div class="student-card-name">{{ gs.student.name_ar }}</div>
+                        <div class="student-card-meta">
+                            انضم {{ gs.joined_at|default('', true) }}
+                        </div>
+                    </div>
+                    <a href="{{ url_for('teacher.student_profile', student_id=gs.student.id) }}" class="btn btn-sm btn-outline" style="margin-right: auto;">
+                        عرض الملف
+                    </a>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">🎓</div>
+                <div class="empty-state-text">لا يوجد طلاب في هذه المجموعة بعد</div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Group Sessions -->
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">جلسات المجموعة</h2>
+            </div>
+
+            {% if sessions %}
+            <div class="table-wrapper">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>عنوان الجلسة</th>
+                            <th>الموعد</th>
+                            <th>المدة</th>
+                            <th>الحالة</th>
+                            <th>إجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for s in sessions %}
+                        <tr>
+                            <td style="font-weight: 700;">{{ s.title }}</td>
+                            <td class="text-sm">{{ s.scheduled_at|default('', true) }}</td>
+                            <td class="text-sm">{{ s.duration_minutes|default(60) }} دقيقة</td>
+                            <td>
+                                {% if s.status.value == 'scheduled' %}
+                                    <span class="badge badge-info">مجدولة</span>
+                                {% elif s.status.value == 'live' %}
+                                    <span class="badge badge-orange">مباشرة</span>
+                                {% elif s.status.value == 'completed' %}
+                                    <span class="badge badge-success">مكتملة</span>
+                                {% elif s.status.value == 'cancelled' %}
+                                    <span class="badge badge-danger">ملغية</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url_for('teacher.session_detail', session_id=s.id) }}" class="btn btn-sm btn-primary">
+                                    تفاصيل
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-text">لا توجد جلسات لهذه المجموعة بعد</div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="dashboard-grid-aside">
+        <div class="card">
+            <h3 class="card-title" style="margin-bottom: var(--space-md);">معلومات المجموعة</h3>
+            <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+                <div>
+                    <div class="text-muted text-sm">اسم المجموعة</div>
+                    <div style="font-weight: 700;">{{ group.name }}</div>
+                </div>
+                <div>
+                    <div class="text-muted text-sm">المسار</div>
+                    <div style="font-weight: 700;">{{ group.track_id|default('غير محدد', true) }}</div>
+                </div>
+                <div>
+                    <div class="text-muted text-sm">المستوى</div>
+                    <div style="font-weight: 700;">{{ group.level_id|default('غير محدد', true) }}</div>
+                </div>
+                <div>
+                    <div class="text-muted text-sm">الحد الأقصى للطلاب</div>
+                    <div style="font-weight: 700;">{{ group.max_students|default(12) }}</div>
+                </div>
+                <div>
+                    <div class="text-muted text-sm">الحالة</div>
+                    <div>
+                        {% if group.is_active %}
+                            <span class="badge badge-success">نشطة</span>
+                        {% else %}
+                            <span class="badge badge-danger">غير نشطة</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% if group.schedule_notes %}
+                <div>
+                    <div class="text-muted text-sm">ملاحظات الجدول</div>
+                    <div style="font-size: var(--text-sm);">{{ group.schedule_notes }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

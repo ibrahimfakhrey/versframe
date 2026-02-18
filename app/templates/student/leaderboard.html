@@ -1,0 +1,308 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}المتصدرين - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+.leaderboard-header-card {
+    background: linear-gradient(135deg, #640D5F 0%, #4a0945 40%, #1a0a2e 100%);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2xl) var(--space-xl);
+    color: var(--text-on-dark);
+    position: relative;
+    overflow: hidden;
+    margin-bottom: var(--space-xl);
+    text-align: center;
+}
+.leaderboard-header-card .stars-bg .star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: twinkle 3s infinite;
+}
+.leaderboard-podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+}
+.podium-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.podium-avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--fw-bold);
+    font-size: var(--text-lg);
+    color: white;
+}
+.podium-item:nth-child(2) .podium-avatar {
+    width: 72px;
+    height: 72px;
+    font-size: var(--text-xl);
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+}
+.podium-item:nth-child(1) .podium-avatar {
+    background: linear-gradient(135deg, #C0C0C0, #A0A0A0);
+}
+.podium-item:nth-child(3) .podium-avatar {
+    background: linear-gradient(135deg, #CD7F32, #A0522D);
+}
+.podium-name {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    color: var(--text-on-dark);
+}
+.podium-xp {
+    font-size: var(--text-xs);
+    color: var(--sv-orange);
+    font-weight: var(--fw-bold);
+}
+.podium-medal {
+    font-size: 1.5rem;
+}
+.period-tabs {
+    display: flex;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+}
+.period-tab {
+    padding: 8px 20px;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    border: 2px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all var(--transition-fast);
+}
+.period-tab:hover {
+    border-color: var(--sv-purple);
+    color: var(--sv-purple);
+}
+.period-tab.active {
+    background: var(--sv-purple);
+    border-color: var(--sv-purple);
+    color: var(--text-on-dark);
+}
+.leaderboard-full-list {
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    overflow: hidden;
+}
+.lb-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--border-light);
+    transition: background var(--transition-fast);
+}
+.lb-row:last-child { border-bottom: none; }
+.lb-row:hover { background: var(--bg); }
+.lb-row.self {
+    background: var(--sv-purple-glow);
+    border-right: 4px solid var(--sv-purple);
+}
+.lb-rank {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-full);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--fw-bold);
+    font-size: var(--text-sm);
+    background: var(--border-light);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+}
+.lb-row:nth-child(1) .lb-rank { background: #FFD700; color: #333; }
+.lb-row:nth-child(2) .lb-rank { background: #C0C0C0; color: #333; }
+.lb-row:nth-child(3) .lb-rank { background: #CD7F32; color: white; }
+.lb-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: var(--sv-purple-glow);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: var(--fw-bold);
+    color: var(--sv-purple);
+    font-size: var(--text-sm);
+    flex-shrink: 0;
+}
+.lb-info { flex: 1; min-width: 0; }
+.lb-name { font-weight: var(--fw-bold); font-size: var(--text-sm); }
+.lb-level { font-size: var(--text-xs); color: var(--text-muted); }
+.lb-xp {
+    font-weight: var(--fw-bold);
+    color: var(--sv-purple);
+    font-size: var(--text-sm);
+    flex-shrink: 0;
+}
+@media (max-width: 768px) {
+    .leaderboard-podium { gap: var(--space-md); }
+    .podium-item:nth-child(2) .podium-avatar { width: 56px; height: 56px; }
+}
+</style>
+{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت اليومية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
+    <span>التقويم</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}المتصدرين{% endblock %}
+
+{% block content %}
+<!-- Hero with Podium -->
+<div class="leaderboard-header-card">
+    <div class="stars-bg">
+        <div class="star" style="top:10%;right:20%;animation-delay:0s;"></div>
+        <div class="star" style="top:30%;right:70%;animation-delay:0.7s;"></div>
+        <div class="star" style="top:60%;right:40%;animation-delay:1.4s;"></div>
+        <div class="star" style="top:80%;right:85%;animation-delay:0.3s;"></div>
+        <div class="star" style="top:20%;right:50%;animation-delay:1.8s;"></div>
+    </div>
+    <h2 style="font-size: var(--text-2xl); font-weight: var(--fw-extrabold); margin-bottom: var(--space-xs);">🏆 لوحة المتصدرين</h2>
+    <p style="color: rgba(255,255,255,0.7); font-size: var(--text-sm);">تنافس مع زملائك واحصد نقاط الخبرة!</p>
+
+    {% if leaderboard|length >= 3 %}
+    <div class="leaderboard-podium">
+        <!-- 2nd place -->
+        <div class="podium-item">
+            <div class="podium-medal">🥈</div>
+            <div class="podium-avatar">
+                {% if leaderboard[1].avatar %}
+                    <img src="{{ leaderboard[1].avatar }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                {% else %}
+                    {{ leaderboard[1].name[0] }}
+                {% endif %}
+            </div>
+            <div class="podium-name">{{ leaderboard[1].name }}</div>
+            <div class="podium-xp">{{ leaderboard[1].xp }} XP</div>
+        </div>
+        <!-- 1st place -->
+        <div class="podium-item">
+            <div class="podium-medal">🥇</div>
+            <div class="podium-avatar">
+                {% if leaderboard[0].avatar %}
+                    <img src="{{ leaderboard[0].avatar }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                {% else %}
+                    {{ leaderboard[0].name[0] }}
+                {% endif %}
+            </div>
+            <div class="podium-name">{{ leaderboard[0].name }}</div>
+            <div class="podium-xp">{{ leaderboard[0].xp }} XP</div>
+        </div>
+        <!-- 3rd place -->
+        <div class="podium-item">
+            <div class="podium-medal">🥉</div>
+            <div class="podium-avatar">
+                {% if leaderboard[2].avatar %}
+                    <img src="{{ leaderboard[2].avatar }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+                {% else %}
+                    {{ leaderboard[2].name[0] }}
+                {% endif %}
+            </div>
+            <div class="podium-name">{{ leaderboard[2].name }}</div>
+            <div class="podium-xp">{{ leaderboard[2].xp }} XP</div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Period Tabs -->
+<div class="period-tabs">
+    <a href="{{ url_for('student.leaderboard', period='weekly') }}" class="period-tab {{ 'active' if period == 'weekly' else '' }}">هذا الأسبوع</a>
+    <a href="{{ url_for('student.leaderboard', period='all_time') }}" class="period-tab {{ 'active' if period == 'all_time' else '' }}">كل الأوقات</a>
+</div>
+
+<!-- Your Rank -->
+{% if student_rank %}
+<div class="card" style="margin-bottom: var(--space-lg); background: var(--sv-purple-glow); border-color: var(--sv-purple);">
+    <div style="display: flex; align-items: center; gap: var(--space-md);">
+        <div style="font-size: var(--text-2xl);">🎯</div>
+        <div style="flex: 1;">
+            <div style="font-weight: var(--fw-bold);">ترتيبك الحالي</div>
+            <div class="text-sm text-muted">استمر في التعلم لتتقدم!</div>
+        </div>
+        <div style="font-size: var(--text-2xl); font-weight: var(--fw-extrabold); color: var(--sv-purple);">#{{ student_rank }}</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Full Leaderboard -->
+{% if leaderboard %}
+<div class="leaderboard-full-list">
+    {% for entry in leaderboard %}
+    <div class="lb-row {% if entry.rank == student_rank %}self{% endif %}">
+        <div class="lb-rank">{{ entry.rank }}</div>
+        <div class="lb-avatar">
+            {% if entry.avatar %}
+                <img src="{{ entry.avatar }}" alt="" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">
+            {% else %}
+                {{ entry.name_ar[0] }}
+            {% endif %}
+        </div>
+        <div class="lb-info">
+            <div class="lb-name">{{ entry.name_ar }}</div>
+            <div class="lb-level">المستوى {{ entry.level }}</div>
+        </div>
+        <div class="lb-xp">{{ entry.xp }} XP</div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card">
+    <div class="empty-state">
+        <div class="empty-state-icon">🏆</div>
+        <div class="empty-state-text">لا توجد بيانات للمتصدرين بعد</div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

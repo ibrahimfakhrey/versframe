@@ -1,0 +1,113 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}مجموعاتي - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('teacher.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('teacher.groups') }}" class="sidebar-link active">
+    <span class="sidebar-icon">👥</span>
+    <span>المجموعات</span>
+</a>
+<a href="{{ url_for('teacher.sessions') }}" class="sidebar-link">
+    <span class="sidebar-icon">📅</span>
+    <span>الجلسات</span>
+</a>
+<a href="{{ url_for('teacher.homework') }}" class="sidebar-link">
+    <span class="sidebar-icon">📝</span>
+    <span>الواجبات</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}المجموعات{% endblock %}
+
+{% block content %}
+<!-- Stats Overview -->
+<div class="stats-grid">
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-purple-glow); color: var(--sv-purple);">👥</div>
+        <div>
+            <div class="stat-value">{{ groups|length }}</div>
+            <div class="stat-label">إجمالي المجموعات</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--success-light); color: var(--success);">✅</div>
+        <div>
+            <div class="stat-value">{{ groups|selectattr('is_active')|list|length }}</div>
+            <div class="stat-label">مجموعات نشطة</div>
+        </div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-icon" style="background: var(--sv-orange-glow); color: var(--sv-orange);">🎓</div>
+        <div>
+            <div class="stat-value">{{ groups|sum(attribute='student_count') }}</div>
+            <div class="stat-label">إجمالي الطلاب</div>
+        </div>
+    </div>
+</div>
+
+<!-- Groups List -->
+<div class="card">
+    <div class="card-header">
+        <h2 class="card-title">مجموعاتي</h2>
+    </div>
+
+    {% if groups %}
+    <div class="table-wrapper">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>اسم المجموعة</th>
+                    <th>المسار</th>
+                    <th>المستوى</th>
+                    <th>عدد الطلاب</th>
+                    <th>الحالة</th>
+                    <th>إجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in groups %}
+                <tr>
+                    <td>
+                        <a href="{{ url_for('teacher.group_detail', group_id=group.id) }}" style="font-weight: 700; color: var(--sv-purple); text-decoration: none;">
+                            {{ group.name }}
+                        </a>
+                    </td>
+                    <td>{{ group.track_id|default('--', true) }}</td>
+                    <td>{{ group.level_id|default('--', true) }}</td>
+                    <td>
+                        <span class="badge badge-purple">{{ group.student_count }} / {{ group.max_students|default(12) }}</span>
+                    </td>
+                    <td>
+                        {% if group.is_active %}
+                            <span class="badge badge-success">نشطة</span>
+                        {% else %}
+                            <span class="badge badge-danger">غير نشطة</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('teacher.group_detail', group_id=group.id) }}" class="btn btn-sm btn-primary">
+                            عرض التفاصيل
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">👥</div>
+        <div class="empty-state-text">لا توجد مجموعات حالياً</div>
+        <p class="text-muted text-sm">سيتم إضافة المجموعات من قبل الإدارة</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

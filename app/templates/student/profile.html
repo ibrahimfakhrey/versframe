@@ -1,0 +1,310 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}ملفي الشخصي - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+.profile-hero {
+    background: linear-gradient(135deg, #640D5F 0%, #4a0945 40%, #1a0a2e 100%);
+    border-radius: var(--radius-xl);
+    padding: var(--space-2xl);
+    color: var(--text-on-dark);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 30px rgba(0,0,0,0.35);
+    border: 1px solid rgba(255,255,255,0.12);
+    margin-bottom: var(--space-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--space-xl);
+}
+.profile-hero .stars-bg .star {
+    position: absolute;
+    width: 3px;
+    height: 3px;
+    background: white;
+    border-radius: 50%;
+    opacity: 0.6;
+    animation: twinkle 3s infinite;
+}
+.profile-avatar-large {
+    width: 100px;
+    height: 100px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--sv-orange), #FFD700);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: var(--text-4xl);
+    font-weight: var(--fw-extrabold);
+    color: white;
+    flex-shrink: 0;
+    box-shadow: 0 0 30px rgba(235, 91, 0, 0.3);
+    position: relative;
+    z-index: 1;
+}
+.profile-avatar-large img {
+    width: 100%;
+    height: 100%;
+    border-radius: var(--radius-full);
+    object-fit: cover;
+}
+.profile-hero-info {
+    position: relative;
+    z-index: 1;
+    flex: 1;
+}
+.profile-name {
+    font-size: var(--text-2xl);
+    font-weight: var(--fw-extrabold);
+    margin-bottom: var(--space-xs);
+}
+.profile-role {
+    color: var(--sv-orange);
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    margin-bottom: var(--space-md);
+}
+.profile-hero-stats {
+    display: flex;
+    gap: var(--space-xl);
+}
+.profile-hero-stat {
+    text-align: center;
+}
+.profile-hero-stat-value {
+    font-size: var(--text-2xl);
+    font-weight: var(--fw-extrabold);
+}
+.profile-hero-stat-label {
+    font-size: var(--text-xs);
+    color: rgba(255, 255, 255, 0.7);
+}
+.profile-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+}
+.profile-card {
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+.profile-card-title {
+    font-size: var(--text-lg);
+    font-weight: var(--fw-bold);
+    margin-bottom: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+.profile-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--border-light);
+}
+.profile-info-row:last-child { border-bottom: none; }
+.profile-info-label {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+.profile-info-value {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+}
+.profile-xp-card {
+    padding: var(--space-lg);
+}
+@media (max-width: 768px) {
+    .profile-hero {
+        flex-direction: column;
+        text-align: center;
+    }
+    .profile-hero-stats {
+        justify-content: center;
+    }
+    .profile-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link active" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت اليومية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
+    <span>التقويم</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}ملفي الشخصي{% endblock %}
+
+{% block content %}
+<!-- Profile Hero -->
+<div class="profile-hero">
+    <div class="stars-bg">
+        <div class="star" style="top:15%;right:10%;animation-delay:0s;"></div>
+        <div class="star" style="top:40%;right:55%;animation-delay:0.6s;"></div>
+        <div class="star" style="top:75%;right:80%;animation-delay:1.2s;"></div>
+        <div class="star" style="top:25%;right:90%;animation-delay:0.9s;"></div>
+        <div class="star" style="top:60%;right:35%;animation-delay:1.8s;"></div>
+    </div>
+    <div class="profile-avatar-large">
+        {% if current_user.avatar_url %}
+            <img src="{{ current_user.avatar_url }}" alt="{{ current_user.name_ar }}">
+        {% else %}
+            {{ current_user.name_ar[0] }}
+        {% endif %}
+    </div>
+    <div class="profile-hero-info">
+        <div class="profile-name">{{ current_user.name_ar }}</div>
+        <div class="profile-role">المستوى {{ level }} - {{ level_title }}</div>
+        <div class="profile-hero-stats">
+            <div class="profile-hero-stat">
+                <div class="profile-hero-stat-value">{{ xp_total }}</div>
+                <div class="profile-hero-stat-label">نقاط خبرة</div>
+            </div>
+            <div class="profile-hero-stat">
+                <div class="profile-hero-stat-value">{{ badges_count }}</div>
+                <div class="profile-hero-stat-label">شارات</div>
+            </div>
+            <div class="profile-hero-stat">
+                <div class="profile-hero-stat-value">{{ sessions_attended }}</div>
+                <div class="profile-hero-stat-label">جلسات</div>
+            </div>
+            <div class="profile-hero-stat">
+                <div class="profile-hero-stat-value">{{ streak.current_streak }}</div>
+                <div class="profile-hero-stat-label">أيام متتالية</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Grid -->
+<div class="profile-grid">
+    <!-- Personal Info & Edit Form -->
+    <div class="profile-card">
+        <div class="profile-card-title">👤 المعلومات الشخصية</div>
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('student.profile') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Avatar Upload -->
+            <div class="form-group" style="text-align: center; margin-bottom: var(--space-lg);">
+                <label class="form-label" style="display: block; margin-bottom: var(--space-sm);">الصورة الشخصية</label>
+                <div style="display: inline-block; position: relative; cursor: pointer;" onclick="document.getElementById('avatar-input').click()">
+                    <div style="width: 80px; height: 80px; border-radius: var(--radius-full); background: linear-gradient(135deg, var(--sv-orange), #FFD700); display: flex; align-items: center; justify-content: center; font-size: var(--text-2xl); font-weight: var(--fw-extrabold); color: white; margin: 0 auto; overflow: hidden;">
+                        {% if current_user.avatar_url %}
+                            <img src="{{ current_user.avatar_url }}" alt="{{ current_user.name_ar }}" style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                            {{ current_user.name_ar[0] }}
+                        {% endif %}
+                    </div>
+                    <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); background: var(--sv-purple); color: white; border-radius: var(--radius-full); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px;">📷</div>
+                </div>
+                <input type="file" id="avatar-input" name="avatar" accept=".png,.jpg,.jpeg,.gif,.webp" style="display: none;" onchange="this.form.querySelector('#avatar-preview-text').textContent = this.files[0] ? this.files[0].name : ''">
+                <div id="avatar-preview-text" style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-sm);"></div>
+                <div class="form-hint">PNG, JPG, GIF, WEBP (حد أقصى 10 ميجا)</div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">الاسم (عربي)</label>
+                <input type="text" name="name_ar" class="form-input" value="{{ current_user.name_ar }}" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label">الاسم (English)</label>
+                <input type="text" name="name_en" class="form-input" value="{{ current_user.name_en }}" dir="ltr">
+            </div>
+            <div class="form-group">
+                <label class="form-label">البريد الإلكتروني</label>
+                <input type="email" class="form-input" value="{{ current_user.email }}" dir="ltr" disabled>
+                <div class="form-hint">لا يمكن تغيير البريد الإلكتروني</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label">الهاتف</label>
+                <input type="tel" name="phone" class="form-input" value="{{ current_user.phone or '' }}" dir="ltr">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: var(--space-md);">حفظ التعديلات</button>
+        </form>
+    </div>
+
+    <!-- XP & Level Card -->
+    <div class="profile-card profile-xp-card">
+        <div class="profile-card-title">⚡ التقدم والمستوى</div>
+        <div class="xp-section" style="margin-bottom: var(--space-lg);">
+            <div class="xp-level-badge">{{ level }}</div>
+            <div class="xp-info">
+                <div class="xp-level-title">المستوى {{ level }} - {{ level_title }}</div>
+                <div class="xp-level-subtitle">{{ xp_total }} XP</div>
+                <div class="xp-bar">
+                    <div class="xp-bar-fill" style="width: {{ ((xp_total / (xp_total + 100)) * 100)|int if xp_total else 0 }}%;"></div>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
+            <div style="text-align: center; padding: var(--space-md); background: var(--sv-purple-glow); border-radius: var(--radius-lg);">
+                <div style="font-size: var(--text-xl); font-weight: var(--fw-extrabold); color: var(--sv-purple);">{{ badges_count }}</div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary);">شارات مكتسبة</div>
+            </div>
+            <div style="text-align: center; padding: var(--space-md); background: var(--sv-orange-glow); border-radius: var(--radius-lg);">
+                <div style="font-size: var(--text-xl); font-weight: var(--fw-extrabold); color: var(--sv-orange);">{{ streak.longest_streak }}</div>
+                <div style="font-size: var(--text-xs); color: var(--text-secondary);">أطول سلسلة أيام</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Streak Card -->
+    <div class="profile-card">
+        <div class="profile-card-title">🔥 سلسلة الحضور</div>
+        <div style="text-align: center; padding: var(--space-lg) 0;">
+            <div style="font-size: 3rem;">🔥</div>
+            <div style="font-size: var(--text-3xl); font-weight: var(--fw-extrabold); color: var(--sv-orange); margin-top: var(--space-sm);">{{ streak.current_streak }} يوم</div>
+            <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-xs);">السلسلة الحالية</div>
+            <div style="margin-top: var(--space-md); font-size: var(--text-sm); color: var(--text-muted);">
+                أطول سلسلة: <strong style="color: var(--sv-purple);">{{ streak.longest_streak }} يوم</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Links -->
+    <div class="profile-card">
+        <div class="profile-card-title">🔗 روابط سريعة</div>
+        <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
+            <a href="{{ url_for('student.progress') }}" class="btn btn-ghost" style="justify-content: flex-start;">📊 تقدمي في التعلم</a>
+            <a href="{{ url_for('student.badges') }}" class="btn btn-ghost" style="justify-content: flex-start;">🏅 مجموعة الشارات</a>
+            <a href="{{ url_for('student.leaderboard') }}" class="btn btn-ghost" style="justify-content: flex-start;">🏆 لوحة المتصدرين</a>
+            <a href="{{ url_for('student.homework_list') }}" class="btn btn-ghost" style="justify-content: flex-start;">📝 الواجبات</a>
+            <a href="{{ url_for('student.timetable') }}" class="btn btn-ghost" style="justify-content: flex-start;">📅 الجدول الأسبوعي</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

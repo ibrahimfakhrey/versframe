@@ -1,0 +1,175 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}تقدمي - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+.tracks-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-xl);
+}
+.track-card {
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition-fast);
+}
+.track-card:hover {
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+.track-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--space-md);
+}
+.track-name {
+    font-size: var(--text-lg);
+    font-weight: var(--fw-bold);
+}
+.track-pct {
+    font-size: var(--text-xl);
+    font-weight: var(--fw-extrabold);
+    color: var(--sv-purple);
+}
+.track-progress {
+    height: 12px;
+    background: var(--border-light);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: var(--space-sm);
+}
+.track-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sv-purple), var(--sv-orange));
+    border-radius: var(--radius-full);
+    transition: width 0.8s ease;
+}
+.track-meta {
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+}
+.skills-section {
+    margin-top: var(--space-xl);
+}
+.skills-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-md);
+}
+.skill-card {
+    padding: var(--space-lg);
+    background: var(--bg-card);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
+}
+.skill-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+.skill-card-name {
+    font-weight: var(--fw-bold);
+    font-size: var(--text-base);
+}
+.skill-card-pct {
+    font-size: var(--text-sm);
+    font-weight: var(--fw-bold);
+    color: var(--sv-orange);
+}
+</style>
+{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت اليومية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
+    <span>التقويم</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}تقدمي{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">📊 تقدمي في التعلم</div>
+    <div class="page-subtitle">تابع تقدمك في المسارات والمهارات المختلفة</div>
+</div>
+
+<!-- Tracks Progress -->
+{% if tracks_progress %}
+<h3 style="font-size: var(--text-lg); font-weight: var(--fw-bold); margin-bottom: var(--space-md);">🛤️ المسارات التعليمية</h3>
+<div class="tracks-grid">
+    {% for tp in tracks_progress %}
+    <div class="track-card">
+        <div class="track-header">
+            <div class="track-name">{{ tp.track }}</div>
+            <div class="track-pct">{{ tp.percentage }}%</div>
+        </div>
+        <div class="track-progress">
+            <div class="track-progress-fill" style="width: {{ tp.percentage }}%;"></div>
+        </div>
+        <div class="track-meta">{{ tp.completed_units }} من {{ tp.total_units }} وحدة مكتملة</div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="card" style="margin-bottom: var(--space-xl);">
+    <div class="empty-state">
+        <div class="empty-state-icon">🛤️</div>
+        <div class="empty-state-text">لم تبدأ أي مسار بعد</div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Skills -->
+{% if skills %}
+<div class="skills-section">
+    <h3 style="font-size: var(--text-lg); font-weight: var(--fw-bold); margin-bottom: var(--space-md);">💡 المهارات</h3>
+    <div class="skills-grid">
+        {% for skill in skills %}
+        <div class="skill-card">
+            <div class="skill-card-header">
+                <div class="skill-card-name">{{ skill.name }}</div>
+                <div class="skill-card-pct">{{ skill.progress }}%</div>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" style="width: {{ skill.progress }}%;"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+{% endblock %}
