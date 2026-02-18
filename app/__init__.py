@@ -1,29 +1,49 @@
 import os
+import json
 
 from flask import Flask
 from config import config
 from app.extensions import db, migrate, login_manager, jwt, socketio, csrf, cors
 
 
+def _load_railway_config(app):
+    """Load config from railway.json if env vars are missing (Railway v2 workaround)."""
+    config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'railway.json')
+    if os.path.exists(config_path):
+        with open(config_path) as f:
+            cfg = json.load(f)
+        for key, val in cfg.items():
+            os.environ.setdefault(key, val)
+        print(f"[BOOT] Loaded {len(cfg)} vars from railway.json")
+
+
 def create_app(config_name='development'):
+    # Detect Railway and load config file if env vars are missing
+    on_railway = bool(os.environ.get('RAILWAY_SERVICE_ID'))
+    if on_railway and not os.environ.get('DATABASE_URL'):
+        _load_railway_config(None)
+
+    # Pick production config on Railway automatically
+    if on_railway:
+        config_name = 'production'
+
     app = Flask(__name__)
     app.config.from_object(config.get(config_name, config['default']))
 
-    # Debug: show all env var keys to diagnose Railway injection
-    env_keys = sorted(os.environ.keys())
-    print(f"[BOOT] All env keys: {env_keys}")
-    print(f"[BOOT] DATABASE_URL = {repr(os.environ.get('DATABASE_URL'))}")
-    print(f"[BOOT] FLASK_ENV = {repr(os.environ.get('FLASK_ENV'))}")
-
-    # Always prefer DATABASE_URL from env (Railway, Heroku, etc.)
+    # Override DATABASE_URL from env
     db_url = os.environ.get('DATABASE_URL', '')
     if db_url:
         if db_url.startswith('postgres://'):
             db_url = db_url.replace('postgres://', 'postgresql://', 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-        print(f"[BOOT] Using PostgreSQL: {db_url[:50]}...")
-    else:
-        print(f"[BOOT] WARNING: No DATABASE_URL! Falling back to: {app.config.get('SQLALCHEMY_DATABASE_URI', '')[:50]}")
+
+    # Apply other env overrides
+    for key in ('SECRET_KEY', 'JWT_SECRET_KEY'):
+        val = os.environ.get(key)
+        if val:
+            app.config[key] = val
+
+    print(f"[BOOT] railway={on_railway}, config={config_name}, db={app.config.get('SQLALCHEMY_DATABASE_URI', '')[:50]}")
 
     # Initialize extensions
     db.init_app(app)

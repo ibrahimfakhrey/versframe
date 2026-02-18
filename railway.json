@@ -1,0 +1,9 @@
+{
+    "DATABASE_URL": "postgresql://postgres:DObGOsFgNfQMSYCUOoqRbdFPvtbtrVVT@trolley.proxy.rlwy.net:11793/railway",
+    "FLASK_ENV": "production",
+    "SECRET_KEY": "shalaby-verse-prod-2026-secret",
+    "JWT_SECRET_KEY": "Zo2lot@123",
+    "HMS_ACCESS_KEY": "699560b56a127e1cf125424b",
+    "HMS_SECRET": "Wx_liU-w0p4DGQqadhzofpdpRQFu749CDpZ3Xxu2CfzXEjpmhxrLJj9DsWe6jAql-zyOvMVQieHyO5oclftaRblXCQR4F2RWoRTrT0RFsdhoLQn651yaEjM5y01fPHxj5SJnaF_t8hrbDNKDrVLQC2Lnuk7wlkRJaYBCLyWw3P0=",
+    "HMS_TEMPLATE_ID": "699560eb6236da36a7d8b3da"
+}
