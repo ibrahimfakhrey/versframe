@@ -32,6 +32,9 @@ boto3==1.35.86
 pdf2image==1.17.0
 Pillow==11.1.0
 
+# HTTP
+requests==2.32.3
+
 # Utilities
 python-dotenv==1.0.1
 gunicorn==23.0.0
