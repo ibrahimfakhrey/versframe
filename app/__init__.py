@@ -9,17 +9,21 @@ def create_app(config_name='development'):
     app = Flask(__name__)
     app.config.from_object(config.get(config_name, config['default']))
 
+    # Debug: show all env var keys to diagnose Railway injection
+    env_keys = sorted(os.environ.keys())
+    print(f"[BOOT] All env keys: {env_keys}")
+    print(f"[BOOT] DATABASE_URL = {repr(os.environ.get('DATABASE_URL'))}")
+    print(f"[BOOT] FLASK_ENV = {repr(os.environ.get('FLASK_ENV'))}")
+
     # Always prefer DATABASE_URL from env (Railway, Heroku, etc.)
     db_url = os.environ.get('DATABASE_URL', '')
-    print(f"[BOOT] config_name={config_name}, DATABASE_URL set={bool(db_url)}, current_uri={app.config.get('SQLALCHEMY_DATABASE_URI', 'NOT SET')[:40]}")
     if db_url:
-        # Fix Heroku/Railway postgres:// -> postgresql://
         if db_url.startswith('postgres://'):
             db_url = db_url.replace('postgres://', 'postgresql://', 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = db_url
-        print(f"[BOOT] Overrode DB URI to: {db_url[:40]}...")
+        print(f"[BOOT] Using PostgreSQL: {db_url[:50]}...")
     else:
-        print(f"[BOOT] WARNING: DATABASE_URL not found in env! Using: {app.config.get('SQLALCHEMY_DATABASE_URI', '')[:40]}")
+        print(f"[BOOT] WARNING: No DATABASE_URL! Falling back to: {app.config.get('SQLALCHEMY_DATABASE_URI', '')[:50]}")
 
     # Initialize extensions
     db.init_app(app)
