@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from config import config
 from app.extensions import db, migrate, login_manager, jwt, socketio, csrf, cors
@@ -6,6 +8,14 @@ from app.extensions import db, migrate, login_manager, jwt, socketio, csrf, cors
 def create_app(config_name='development'):
     app = Flask(__name__)
     app.config.from_object(config.get(config_name, config['default']))
+
+    # Always prefer DATABASE_URL from env (Railway, Heroku, etc.)
+    db_url = os.environ.get('DATABASE_URL', '')
+    if db_url:
+        # Fix Heroku/Railway postgres:// -> postgresql://
+        if db_url.startswith('postgres://'):
+            db_url = db_url.replace('postgres://', 'postgresql://', 1)
+        app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 
     # Initialize extensions
     db.init_app(app)
@@ -19,6 +29,10 @@ def create_app(config_name='development'):
 
     # Import models so they are registered with SQLAlchemy
     from app import models  # noqa: F401
+
+    # Create tables if they don't exist (safe for first deploy)
+    with app.app_context():
+        db.create_all()
 
     # Register blueprints
     _register_blueprints(app)
