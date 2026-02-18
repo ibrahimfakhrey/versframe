@@ -27,6 +27,7 @@ app/static/uploads/resources/*
 *.pdf
 test-*.png
 room.jpeg
-_*.py
+_w.py
+_gen_templates.py
 write_templates.py
 codeverse_dashboard.html
