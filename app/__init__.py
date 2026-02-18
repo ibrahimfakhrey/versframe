@@ -11,11 +11,15 @@ def create_app(config_name='development'):
 
     # Always prefer DATABASE_URL from env (Railway, Heroku, etc.)
     db_url = os.environ.get('DATABASE_URL', '')
+    print(f"[BOOT] config_name={config_name}, DATABASE_URL set={bool(db_url)}, current_uri={app.config.get('SQLALCHEMY_DATABASE_URI', 'NOT SET')[:40]}")
     if db_url:
         # Fix Heroku/Railway postgres:// -> postgresql://
         if db_url.startswith('postgres://'):
             db_url = db_url.replace('postgres://', 'postgresql://', 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = db_url
+        print(f"[BOOT] Overrode DB URI to: {db_url[:40]}...")
+    else:
+        print(f"[BOOT] WARNING: DATABASE_URL not found in env! Using: {app.config.get('SQLALCHEMY_DATABASE_URI', '')[:40]}")
 
     # Initialize extensions
     db.init_app(app)
