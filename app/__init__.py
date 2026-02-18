@@ -37,8 +37,8 @@ def create_app(config_name='development'):
             db_url = db_url.replace('postgres://', 'postgresql://', 1)
         app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 
-    # Apply other env overrides
-    for key in ('SECRET_KEY', 'JWT_SECRET_KEY'):
+    # Apply all env overrides
+    for key in ('SECRET_KEY', 'JWT_SECRET_KEY', 'HMS_ACCESS_KEY', 'HMS_SECRET', 'HMS_TEMPLATE_ID'):
         val = os.environ.get(key)
         if val:
             app.config[key] = val
