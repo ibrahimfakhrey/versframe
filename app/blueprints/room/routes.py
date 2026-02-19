@@ -1,4 +1,7 @@
 import os
+import secrets
+import base64
+import string
 from flask import render_template, jsonify, request
 from flask_login import current_user, login_required
 from app.blueprints.room import bp
@@ -12,6 +15,9 @@ from datetime import datetime, timezone
 
 # Track current slide state per session: session_id -> {resource_id, slide_index}
 _session_slide_state = {}
+
+# Track whiteboard state per session: session_id -> {url}
+_session_whiteboard_state = {}
 
 
 @bp.route('/<int:session_id>')
@@ -208,6 +214,31 @@ def current_slide(session_id):
     })
 
 
+@bp.route('/<int:session_id>/start-whiteboard', methods=['POST'])
+@login_required
+def start_whiteboard(session_id):
+    """Teacher starts a collaborative Excalidraw whiteboard for the session."""
+    csrf.protect()
+    if current_user.role not in (Role.TEACHER, Role.ADMIN):
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    session_obj = db.session.get(Session, session_id)
+    if not session_obj:
+        return jsonify({'error': 'Session not found'}), 404
+
+    # Generate Excalidraw collaboration room credentials
+    alphabet = string.ascii_letters + string.digits
+    room_id = ''.join(secrets.choice(alphabet) for _ in range(20))
+    encryption_key = base64.urlsafe_b64encode(secrets.token_bytes(16)).decode().rstrip('=')
+
+    url = f'https://excalidraw.com/#room={room_id},{encryption_key}'
+
+    # Store whiteboard state for late joiners
+    _session_whiteboard_state[session_id] = {'url': url}
+
+    return jsonify({'ok': True, 'url': url})
+
+
 # === SocketIO Event Handlers ===
 
 @socketio.on('join_session')
@@ -251,6 +282,11 @@ def handle_join(data):
     if slide_state:
         emit('slide_sync', slide_state)
 
+    # Send current whiteboard state to the joining user (late joiner sync)
+    wb_state = _session_whiteboard_state.get(session_id)
+    if wb_state:
+        emit('whiteboard_sync', wb_state)
+
 
 @socketio.on('leave_session')
 def handle_leave(data):
@@ -285,6 +321,15 @@ def handle_slide_change(data):
             state['resource_id'] = resource_id
         _session_slide_state[session_id] = state
     emit('slide_change', data, room=f'session_{session_id}', include_self=False)
+
+
+@socketio.on('whiteboard_started')
+def handle_whiteboard_started(data):
+    """Teacher broadcasts whiteboard URL to all students in the room."""
+    session_id = data.get('session_id')
+    url = data.get('url')
+    if session_id and url:
+        emit('whiteboard_start', {'url': url}, room=f'session_{session_id}', include_self=False)
 
 
 @socketio.on('code_broadcast')

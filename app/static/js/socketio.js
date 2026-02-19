@@ -147,6 +147,19 @@ function initSocketIO(sessionId) {
         if (typeof handleActivityResult === 'function') handleActivityResult(data);
     });
 
+    // === Whiteboard ===
+    socket.on('whiteboard_start', (data) => {
+        console.log('whiteboard_start received:', data);
+        if (typeof handleWhiteboardStart === 'function') handleWhiteboardStart(data);
+        else console.warn('handleWhiteboardStart not defined');
+    });
+
+    socket.on('whiteboard_sync', (data) => {
+        console.log('whiteboard_sync received:', data);
+        if (typeof handleWhiteboardStart === 'function') handleWhiteboardStart(data);
+        else console.warn('handleWhiteboardStart not defined');
+    });
+
     return socket;
 }
 
