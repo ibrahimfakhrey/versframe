@@ -1,12 +1,17 @@
+import os
 from flask import render_template, jsonify, request
 from flask_login import current_user, login_required
 from app.blueprints.room import bp
 from app.extensions import db, socketio, csrf
 from app.models.classroom import Session, SessionStatus, Attendance, AttendanceStatus, SessionResource
+from app.models.resource import Resource, ResourceType, ResourceFile, FileType
 from app.models.user import Role
 from app.models.gamification import StudentXP, Streak
 from flask_socketio import emit, join_room, leave_room
 from datetime import datetime, timezone
+
+# Track current slide state per session: session_id -> {resource_id, slide_index}
+_session_slide_state = {}
 
 
 @bp.route('/<int:session_id>')
@@ -95,6 +100,114 @@ def activate_resource(session_id):
     return jsonify({'ok': True})
 
 
+@bp.route('/<int:session_id>/upload-slides', methods=['POST'])
+@login_required
+def upload_slides(session_id):
+    """Teacher uploads PDF/PPTX, converts to slide images, creates Resource."""
+    csrf.protect()
+    if current_user.role not in (Role.TEACHER, Role.ADMIN):
+        return jsonify({'error': 'Unauthorized'}), 403
+
+    session_obj = db.session.get(Session, session_id)
+    if not session_obj:
+        return jsonify({'error': 'Session not found'}), 404
+
+    file = request.files.get('file')
+    if not file or file.filename == '':
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    ext = file.filename.rsplit('.', 1)[-1].lower() if '.' in file.filename else ''
+    if ext not in ('pdf', 'pptx', 'ppt'):
+        return jsonify({'error': 'Only PDF and PPTX files are supported'}), 400
+
+    # Save uploaded file temporarily
+    from app.utils.uploads import save_upload, ALLOWED_DOCUMENTS
+    saved_name = save_upload(file, 'slides', ALLOWED_DOCUMENTS)
+    if not saved_name:
+        return jsonify({'error': 'File save failed. Check file size (max 50MB).'}), 400
+
+    from app.utils.uploads import _UPLOAD_BASE
+    file_path = os.path.join(_UPLOAD_BASE, 'slides', saved_name)
+
+    # Create Resource record
+    resource = Resource(
+        name=file.filename,
+        name_ar=file.filename,
+        type=ResourceType.SLIDES,
+        created_by=current_user.id,
+    )
+    db.session.add(resource)
+    db.session.flush()  # get resource.id
+
+    # Convert to slide images
+    try:
+        from app.utils.slides import convert_to_slide_images
+        slide_urls = convert_to_slide_images(file_path, resource.id)
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'error': f'Conversion failed: {str(e)}'}), 500
+
+    # Create ResourceFile records for each slide image
+    for i, url in enumerate(slide_urls):
+        rf = ResourceFile(
+            resource_id=resource.id,
+            file_type=FileType.SLIDE_IMAGE,
+            s3_key=url,  # using URL path as key for local storage
+            filename=os.path.basename(url),
+            sort_order=i,
+        )
+        db.session.add(rf)
+
+    # Deactivate existing resources, add and activate this one
+    SessionResource.query.filter_by(session_id=session_id).update({'is_active': False})
+    sr = SessionResource(
+        session_id=session_id,
+        resource_id=resource.id,
+        is_active=True,
+        sort_order=0,
+    )
+    db.session.add(sr)
+    db.session.commit()
+
+    # Update slide state
+    _session_slide_state[session_id] = {
+        'resource_id': resource.id,
+        'slide_index': 0,
+    }
+
+    # Broadcast to all users in the room
+    socketio.emit('resource_switch', {
+        'session_id': session_id,
+        'resource_id': resource.id,
+        'resource_type': 'slides',
+        'slide_urls': slide_urls,
+    }, room=f'session_{session_id}')
+
+    # Clean up the original uploaded file
+    try:
+        os.remove(file_path)
+    except OSError:
+        pass
+
+    return jsonify({
+        'ok': True,
+        'resource_id': resource.id,
+        'slide_urls': slide_urls,
+        'slide_count': len(slide_urls),
+    })
+
+
+@bp.route('/<int:session_id>/current-slide')
+@login_required
+def current_slide(session_id):
+    """Return the current slide index for late joiners."""
+    state = _session_slide_state.get(session_id, {})
+    return jsonify({
+        'resource_id': state.get('resource_id'),
+        'slide_index': state.get('slide_index', 0),
+    })
+
+
 # === SocketIO Event Handlers ===
 
 @socketio.on('join_session')
@@ -133,6 +246,11 @@ def handle_join(data):
         'role': current_user.role.value if current_user.is_authenticated else 'guest',
     }, room=f'session_{session_id}')
 
+    # Send current slide state to the joining user (late joiner sync)
+    slide_state = _session_slide_state.get(session_id)
+    if slide_state:
+        emit('slide_sync', slide_state)
+
 
 @socketio.on('leave_session')
 def handle_leave(data):
@@ -156,7 +274,17 @@ def handle_leave(data):
 
 @socketio.on('slide_change')
 def handle_slide_change(data):
-    emit('slide_change', data, room=f'session_{data.get("session_id")}', include_self=False)
+    session_id = data.get('session_id')
+    slide_index = data.get('slide_index', 0)
+    resource_id = data.get('resource_id')
+    # Store current slide state for late joiners
+    if session_id:
+        state = _session_slide_state.get(session_id, {})
+        state['slide_index'] = slide_index
+        if resource_id:
+            state['resource_id'] = resource_id
+        _session_slide_state[session_id] = state
+    emit('slide_change', data, room=f'session_{session_id}', include_self=False)
 
 
 @socketio.on('code_broadcast')

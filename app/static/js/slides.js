@@ -42,6 +42,22 @@ async function initSlides(resourceId, slideUrls) {
     currentSlide = 0;
     renderSlideViewer(viewer);
     renderSlide();
+
+    // For late joiners (students): fetch the teacher's current slide position
+    if (typeof IS_TEACHER !== 'undefined' && !IS_TEACHER && typeof SESSION_ID !== 'undefined') {
+        try {
+            const syncResp = await fetch('/room/' + SESSION_ID + '/current-slide');
+            if (syncResp.ok) {
+                const syncData = await syncResp.json();
+                if (syncData.slide_index > 0 && syncData.slide_index < slides.length) {
+                    currentSlide = syncData.slide_index;
+                    renderSlide();
+                }
+            }
+        } catch (e) {
+            console.warn('Could not sync slide position:', e);
+        }
+    }
 }
 
 function renderSlideViewer(viewer) {
@@ -76,7 +92,7 @@ function nextSlide() {
         renderSlide();
         // Sync to other users (teacher only)
         if (typeof IS_TEACHER !== 'undefined' && IS_TEACHER && typeof emitSlideChange === 'function') {
-            emitSlideChange(SESSION_ID, currentSlide);
+            emitSlideChange(SESSION_ID, currentSlide, slidesResourceId);
         }
     }
 }
@@ -86,7 +102,7 @@ function prevSlide() {
         currentSlide--;
         renderSlide();
         if (typeof IS_TEACHER !== 'undefined' && IS_TEACHER && typeof emitSlideChange === 'function') {
-            emitSlideChange(SESSION_ID, currentSlide);
+            emitSlideChange(SESSION_ID, currentSlide, slidesResourceId);
         }
     }
 }
@@ -96,7 +112,7 @@ function goToSlide(index) {
         currentSlide = index;
         renderSlide();
         if (typeof IS_TEACHER !== 'undefined' && IS_TEACHER && typeof emitSlideChange === 'function') {
-            emitSlideChange(SESSION_ID, currentSlide);
+            emitSlideChange(SESSION_ID, currentSlide, slidesResourceId);
         }
     }
 }
@@ -164,6 +180,29 @@ function updateThumbnails() {
     thumbs.forEach((thumb, i) => {
         thumb.classList.toggle('active', i === currentSlide);
     });
+}
+
+/* ---------- Late Joiner Sync (SocketIO) ---------- */
+
+function handleSlideSync(data) {
+    if (!data) return;
+    var resourceId = data.resource_id;
+    var slideIndex = data.slide_index || 0;
+
+    // If we already have slides loaded for this resource, just jump
+    if (slidesResourceId === resourceId && slides.length > 0) {
+        setSlideIndex(slideIndex);
+        return;
+    }
+
+    // Otherwise, load slides for this resource first then jump
+    if (resourceId) {
+        initSlides(resourceId).then(function() {
+            if (slideIndex > 0) setSlideIndex(slideIndex);
+        });
+        // Switch to slides pane
+        if (typeof switchSubTab === 'function') switchSubTab('slides');
+    }
 }
 
 /* ---------- Keyboard Navigation ---------- */

@@ -79,12 +79,17 @@ function initSocketIO(sessionId) {
 
     // === Resource Switching ===
     socket.on('resource_switch', (data) => {
-        if (typeof switchResource === 'function') switchResource(data.resource_id, data.resource_type);
+        if (typeof switchResource === 'function') switchResource(data.resource_id, data.resource_type, data.slide_urls);
     });
 
     // === Slide Sync ===
     socket.on('slide_change', (data) => {
         if (typeof setSlideIndex === 'function') setSlideIndex(data.slide_index);
+    });
+
+    // === Slide Sync for Late Joiners ===
+    socket.on('slide_sync', (data) => {
+        if (typeof handleSlideSync === 'function') handleSlideSync(data);
     });
 
     // === Code Events ===
@@ -147,9 +152,9 @@ function initSocketIO(sessionId) {
 
 /* ---------- Emit Helpers ---------- */
 
-function emitSlideChange(sessionId, slideIndex) {
+function emitSlideChange(sessionId, slideIndex, resourceId) {
     if (socket && socketConnected) {
-        socket.emit('slide_change', { session_id: sessionId, slide_index: slideIndex });
+        socket.emit('slide_change', { session_id: sessionId, slide_index: slideIndex, resource_id: resourceId || null });
     }
 }
 

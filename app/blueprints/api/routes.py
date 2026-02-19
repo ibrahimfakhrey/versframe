@@ -7,7 +7,7 @@ from app.models.user import User, Role
 from app.models.gamification import StudentXP, Badge, Streak, StudentBadge
 from app.models.notification import Notification
 from app.models.classroom import Session, SessionStatus, Group
-from app.models.resource import Resource
+from app.models.resource import Resource, ResourceFile, FileType
 from app.models.homework import Homework, HomeworkSubmission
 from app.utils.helpers import safe_int
 from datetime import datetime, timezone
@@ -324,6 +324,24 @@ def teacher_grade_submission():
 # ─────────────────────────────────────────────────────────────────────
 # Notification Endpoints (individual mark-as-read)
 # ─────────────────────────────────────────────────────────────────────
+
+@bp.route('/resources/<int:resource_id>/slides')
+@login_required
+def get_slide_urls(resource_id):
+    """Return slide image URLs for a resource."""
+    resource = db.session.get(Resource, resource_id)
+    if not resource:
+        return jsonify({'error': 'Resource not found'}), 404
+
+    files = ResourceFile.query.filter_by(
+        resource_id=resource_id, file_type=FileType.SLIDE_IMAGE
+    ).order_by(ResourceFile.sort_order).all()
+
+    return jsonify({
+        'resource_id': resource_id,
+        'slides': [{'url': f.s3_key, 'filename': f.filename} for f in files],
+    })
+
 
 @bp.route('/notifications/<int:notif_id>/read', methods=['POST'])
 @login_required

@@ -737,8 +737,16 @@ async function activateResource(resourceId) {
     }
 }
 
-function switchResource(resourceId, resourceType) {
+function switchResource(resourceId, resourceType, slideUrls) {
     currentResourceType = resourceType;
+
+    // Handle slides directly — the viewer lives in pane-slides, not resourceContent
+    if (resourceType === 'slides') {
+        if (typeof switchSubTab === 'function') switchSubTab('slides');
+        if (typeof initSlides === 'function') initSlides(resourceId, slideUrls);
+        return;
+    }
+
     var content = document.getElementById('resourceContent');
     if (!content) return;
 
@@ -749,11 +757,7 @@ function switchResource(resourceId, resourceType) {
 
     switch (resourceType) {
         case 'slides':
-            content.innerHTML =
-                '<div class="slides-viewer" id="slidesViewer">' +
-                '<div class="slides-image"><p style="color:rgba(255,255,255,0.5);">جاري تحميل الشرائح...</p></div>' +
-                '</div>';
-            if (typeof initSlides === 'function') initSlides(resourceId);
+            // handled above
             break;
 
         case 'code_exercise':

@@ -830,6 +830,58 @@
     background-size: contain;
 }
 
+/* --- Slides Upload Bar (teacher only) --- */
+.slides-upload-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: rgba(240, 230, 250, 0.5);
+    border-radius: var(--radius-sm);
+    border: 1.5px dashed rgba(180, 140, 210, 0.3);
+    margin-bottom: 8px;
+}
+.slides-upload-bar label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 14px;
+    background: linear-gradient(135deg, var(--sv-orange), #ff8a3d);
+    color: white;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-ar);
+    font-size: 12px;
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    transition: filter var(--transition-fast);
+    white-space: nowrap;
+}
+.slides-upload-bar label:hover { filter: brightness(1.1); }
+.slides-upload-bar input[type="file"] { display: none; }
+.slides-upload-bar .upload-filename {
+    flex: 1;
+    font-size: 12px;
+    color: #636E72;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.slides-upload-progress {
+    width: 100%;
+    height: 6px;
+    background: rgba(180, 140, 210, 0.2);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    display: none;
+}
+.slides-upload-progress .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--sv-purple), var(--sv-orange));
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
 /* --- Responsive --- */
 @media (max-width: 1100px) {
     .room-body { grid-template-columns: 1fr; }
@@ -1428,6 +1480,19 @@
 
                 <!-- === Slides Pane === -->
                 <div class="center-pane active" id="pane-slides">
+                    {% if is_teacher %}
+                    <div class="slides-upload-bar" id="slidesUploadBar">
+                        <label for="slideFileInput">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                            رفع شرائح
+                        </label>
+                        <input type="file" id="slideFileInput" accept=".pdf,.pptx,.ppt" onchange="handleSlideUpload(this)">
+                        <span class="upload-filename" id="uploadFileName">PDF أو PPTX</span>
+                    </div>
+                    <div class="slides-upload-progress" id="slideUploadProgress">
+                        <div class="progress-fill" id="slideUploadProgressFill"></div>
+                    </div>
+                    {% endif %}
                     <div class="slides-viewer" id="slidesViewer">
                         {% if resources %}
                         <div class="slides-empty" id="slidesPlaceholder">
@@ -1672,6 +1737,8 @@
 <script src="{{ url_for('static', filename='js/socketio.js') }}"></script>
 <!-- Room logic -->
 <script src="{{ url_for('static', filename='js/room.js') }}"></script>
+<!-- Slides viewer -->
+<script src="{{ url_for('static', filename='js/slides.js') }}"></script>
 <!-- In-Class Activities -->
 <script src="{{ url_for('static', filename='js/activities.js') }}"></script>
 
@@ -1882,6 +1949,68 @@
     window.loadResource = function(resourceId, resourceType) {
         if (IS_TEACHER && typeof activateResource === 'function') activateResource(resourceId);
         if (typeof switchResource === 'function') switchResource(resourceId, resourceType);
+    };
+
+    /* ============================
+       9. Slide Upload Handler
+       ============================ */
+    window.handleSlideUpload = function(input) {
+        var file = input.files && input.files[0];
+        if (!file) return;
+
+        var nameEl = document.getElementById('uploadFileName');
+        var progressBar = document.getElementById('slideUploadProgress');
+        var progressFill = document.getElementById('slideUploadProgressFill');
+
+        if (nameEl) nameEl.textContent = file.name;
+        if (progressBar) progressBar.style.display = 'block';
+        if (progressFill) progressFill.style.width = '0%';
+
+        var formData = new FormData();
+        formData.append('file', file);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/room/' + SESSION_ID + '/upload-slides', true);
+
+        // CSRF token
+        var csrfMeta = document.querySelector('meta[name="csrf-token"]');
+        if (csrfMeta) xhr.setRequestHeader('X-CSRFToken', csrfMeta.content);
+
+        xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable && progressFill) {
+                var pct = Math.round((e.loaded / e.total) * 100);
+                progressFill.style.width = pct + '%';
+            }
+        };
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                var data = JSON.parse(xhr.responseText);
+                if (data.ok && data.slide_urls) {
+                    if (typeof showToast === 'function') showToast('تم رفع ' + data.slide_count + ' شريحة بنجاح', 'success');
+                    // Switch to slides pane and initialize
+                    switchSubTab('slides');
+                    if (typeof initSlides === 'function') initSlides(data.resource_id, data.slide_urls);
+                } else {
+                    if (typeof showToast === 'function') showToast(data.error || 'خطأ في الرفع', 'error');
+                }
+            } else {
+                var errData = {};
+                try { errData = JSON.parse(xhr.responseText); } catch(e) {}
+                if (typeof showToast === 'function') showToast(errData.error || 'خطأ في رفع الملف', 'error');
+            }
+            if (progressBar) progressBar.style.display = 'none';
+            if (progressFill) progressFill.style.width = '0%';
+            input.value = '';
+        };
+
+        xhr.onerror = function() {
+            if (typeof showToast === 'function') showToast('خطأ في الاتصال', 'error');
+            if (progressBar) progressBar.style.display = 'none';
+            input.value = '';
+        };
+
+        xhr.send(formData);
     };
 
     /* ============================
