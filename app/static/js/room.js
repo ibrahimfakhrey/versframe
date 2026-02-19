@@ -33,6 +33,10 @@ const connectedUsers = new Map();
 // Resource management
 let currentResourceType = null;
 
+// Teacher mic lock state
+let micLockedByTeacher = false;
+const mutedStudents = new Set();
+
 // Keep references to attached video elements so we can detach properly
 // trackId -> { videoEl, container }
 const attachedTracks = new Map();
@@ -227,6 +231,9 @@ function renderPeers() {
                 existingThumbs[pid].remove();
             }
         });
+
+        // Render per-student mute overlays for teacher
+        renderStudentMuteOverlays();
     }
 }
 
@@ -380,6 +387,10 @@ function setupControls() {
 // toggleMic
 // ---------------------------------------------------------------------------
 async function toggleMic() {
+    if (micLockedByTeacher && !isTeacher) {
+        showToast('المعلم قام بكتم الميكروفون', 'warning');
+        return;
+    }
     isAudioMuted = !isAudioMuted;
     updateMicButtonUI();
 
@@ -782,6 +793,152 @@ function switchResource(resourceId, resourceType) {
 }
 
 // ---------------------------------------------------------------------------
+// Teacher Mic Control
+// ---------------------------------------------------------------------------
+
+/**
+ * handleMicLock(data) — called when 'mic_locked' SocketIO event is received.
+ * data: { locked: bool, target: 'all'|'student', student_id?: int }
+ */
+function handleMicLock(data) {
+    if (!data) return;
+
+    if (isTeacher) {
+        // Teacher side: track which students are muted
+        if (data.target === 'all') {
+            if (data.locked) {
+                // Mark all current students as muted
+                connectedUsers.forEach(function(u, uid) {
+                    if (u.role !== 'teacher' && u.role !== 'admin') mutedStudents.add(uid);
+                });
+            } else {
+                mutedStudents.clear();
+            }
+        } else if (data.target === 'student' && data.student_id) {
+            if (data.locked) {
+                mutedStudents.add(data.student_id);
+            } else {
+                mutedStudents.delete(data.student_id);
+            }
+        }
+        updateMuteAllButtonsUI();
+        renderStudentMuteOverlays();
+        return;
+    }
+
+    // Student side
+    var isTargeted = data.target === 'all' ||
+        (data.target === 'student' && data.student_id === window.USER_ID);
+    if (!isTargeted) return;
+
+    if (data.locked) {
+        micLockedByTeacher = true;
+        // Force mute local audio
+        if (hmsActions) {
+            try { hmsActions.setLocalAudioEnabled(false); } catch(e) {}
+        }
+        isAudioMuted = true;
+        updateMicButtonUI();
+        updateMicLockedUI(true);
+        showToast('المعلم قام بكتم الميكروفون', 'warning');
+    } else {
+        micLockedByTeacher = false;
+        updateMicLockedUI(false);
+        showToast('يمكنك الآن تشغيل الميكروفون', 'info');
+    }
+}
+
+function updateMicLockedUI(locked) {
+    var btn = document.getElementById('micBtn');
+    if (!btn) return;
+    if (locked) {
+        btn.classList.add('mic-locked');
+        btn.setAttribute('title', 'الميكروفون مقفل من المعلم');
+    } else {
+        btn.classList.remove('mic-locked');
+        btn.setAttribute('title', 'الميكروفون');
+    }
+}
+
+function updateMuteAllButtonsUI() {
+    var btnMuteAll = document.getElementById('btnMuteAll');
+    var btnUnmuteAll = document.getElementById('btnUnmuteAll');
+    if (btnMuteAll && btnUnmuteAll) {
+        if (mutedStudents.size > 0) {
+            btnMuteAll.classList.add('active-state');
+            btnUnmuteAll.classList.remove('active-state');
+        } else {
+            btnMuteAll.classList.remove('active-state');
+            btnUnmuteAll.classList.add('active-state');
+        }
+    }
+}
+
+function muteAllStudents() {
+    if (typeof emitMuteAll === 'function') emitMuteAll(sessionId);
+}
+
+function unmuteAllStudents() {
+    if (typeof emitUnmuteAll === 'function') emitUnmuteAll(sessionId);
+}
+
+/**
+ * Renders mute/unmute overlay buttons on each student thumbnail (teacher only).
+ */
+function renderStudentMuteOverlays() {
+    if (!isTeacher) return;
+    var grid = document.getElementById('studentVideoGrid');
+    if (!grid) return;
+
+    grid.querySelectorAll('.room-student-thumb').forEach(function(thumb) {
+        var peerId = thumb.getAttribute('data-peer-id');
+        // Find the user ID for this peer from connectedUsers
+        var userId = findUserIdForPeer(peerId);
+
+        // Remove existing overlay if any
+        var existing = thumb.querySelector('.student-mute-overlay');
+        if (existing) existing.remove();
+
+        if (!userId) return;
+
+        var isMuted = mutedStudents.has(userId);
+        var overlay = document.createElement('button');
+        overlay.className = 'student-mute-overlay' + (isMuted ? ' is-muted' : '');
+        overlay.title = isMuted ? 'فتح الميكروفون' : 'كتم الميكروفون';
+        overlay.innerHTML = isMuted
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6"/><path d="M17 16.95A7 7 0 015 12m14 0a7 7 0 01-.11 1.23"/></svg>'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/></svg>';
+
+        overlay.onclick = function(e) {
+            e.stopPropagation();
+            if (isMuted) {
+                if (typeof emitUnmuteStudent === 'function') emitUnmuteStudent(sessionId, userId);
+            } else {
+                if (typeof emitMuteStudent === 'function') emitMuteStudent(sessionId, userId);
+            }
+        };
+
+        thumb.appendChild(overlay);
+    });
+}
+
+/**
+ * Find the userId associated with a 100ms peerId by matching names.
+ */
+function findUserIdForPeer(peerId) {
+    if (!peerId) return null;
+    var peer = peers.get(peerId);
+    if (!peer) return null;
+
+    // Try to match by name with connectedUsers
+    var found = null;
+    connectedUsers.forEach(function(u, uid) {
+        if (u.name === peer.name) found = uid;
+    });
+    return found;
+}
+
+// ---------------------------------------------------------------------------
 // Expose functions globally so template onclick handlers and socketio.js
 // can call them.
 // ---------------------------------------------------------------------------
@@ -802,3 +959,7 @@ window.activateResource = activateResource;
 window.formatTime = formatTime;
 window.renderPeers = renderPeers;
 window.updateParticipantsList = updateParticipantsList;
+window.handleMicLock = handleMicLock;
+window.muteAllStudents = muteAllStudents;
+window.unmuteAllStudents = unmuteAllStudents;
+window.renderStudentMuteOverlays = renderStudentMuteOverlays;

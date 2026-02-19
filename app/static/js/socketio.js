@@ -121,6 +121,11 @@ function initSocketIO(sessionId) {
         if (typeof stopActivityTimer === 'function') stopActivityTimer();
     });
 
+    // === Teacher Mic Control ===
+    socket.on('mic_locked', (data) => {
+        if (typeof handleMicLock === 'function') handleMicLock(data);
+    });
+
     // === In-Class Activities ===
     socket.on('activity_start', (data) => {
         console.log('Activity started:', data);
@@ -248,5 +253,31 @@ function emitActivityEnd(sessionId, activityId) {
             session_id: sessionId,
             activity_id: activityId,
         });
+    }
+}
+
+/* ---------- Teacher Mic Control Emit Helpers ---------- */
+
+function emitMuteAll(sessionId) {
+    if (socket && socketConnected) {
+        socket.emit('mute_all_students', { session_id: sessionId });
+    }
+}
+
+function emitUnmuteAll(sessionId) {
+    if (socket && socketConnected) {
+        socket.emit('unmute_all_students', { session_id: sessionId });
+    }
+}
+
+function emitMuteStudent(sessionId, studentId) {
+    if (socket && socketConnected) {
+        socket.emit('mute_student', { session_id: sessionId, student_id: studentId });
+    }
+}
+
+function emitUnmuteStudent(sessionId, studentId) {
+    if (socket && socketConnected) {
+        socket.emit('unmute_student', { session_id: sessionId, student_id: studentId });
     }
 }

@@ -763,6 +763,73 @@
 .btn-start-session { background: var(--success); color: white; }
 .btn-end-session { background: var(--danger); color: white; }
 
+/* --- Teacher Mic Controls --- */
+.teacher-mic-controls {
+    display: flex;
+    gap: 6px;
+    margin-top: 6px;
+}
+.teacher-mic-controls button {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: var(--radius-sm);
+    border: none;
+    font-family: var(--font-ar);
+    font-size: 11px;
+    font-weight: var(--fw-bold);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: filter var(--transition-fast), opacity var(--transition-fast);
+}
+.teacher-mic-controls button:hover { filter: brightness(1.15); }
+.btn-mute-all { background: #d63031; color: white; }
+.btn-unmute-all { background: #00b894; color: white; }
+.btn-mute-all.active-state { opacity: 0.6; }
+.btn-unmute-all.active-state { opacity: 0.6; }
+
+/* Per-student mute overlay on thumbnails */
+.student-mute-overlay {
+    position: absolute;
+    top: 4px;
+    left: 4px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: none;
+    background: rgba(0,184,148,0.85);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 5;
+    transition: background var(--transition-fast);
+    padding: 0;
+}
+.student-mute-overlay:hover { background: rgba(0,184,148,1); }
+.student-mute-overlay.is-muted { background: rgba(214,48,49,0.85); }
+.student-mute-overlay.is-muted:hover { background: rgba(214,48,49,1); }
+
+/* Student-side locked mic indicator */
+.room-control-btn.mic-locked {
+    background: rgba(225,112,0,0.8) !important;
+    cursor: not-allowed !important;
+    position: relative;
+}
+.room-control-btn.mic-locked::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    width: 10px;
+    height: 10px;
+    background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3'%3E%3Crect x='3' y='11' width='18' height='11' rx='2'/%3E%3Cpath d='M7 11V7a5 5 0 0110 0v4'/%3E%3C/svg%3E") no-repeat center;
+    background-size: contain;
+}
+
 /* --- Responsive --- */
 @media (max-width: 1100px) {
     .room-body { grid-template-columns: 1fr; }
@@ -1309,6 +1376,16 @@
             <div class="teacher-session-ctrl">
                 <button class="btn-start-session" id="btnStartSession" onclick="handleStartSession()">&#9654; بدء الجلسة</button>
                 <button class="btn-end-session" id="btnEndSession" onclick="handleEndSession()">&#9632; إنهاء</button>
+            </div>
+            <div class="teacher-mic-controls">
+                <button class="btn-mute-all" id="btnMuteAll" onclick="muteAllStudents()" title="كتم ميكروفون جميع الطلاب">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="1" y1="1" x2="23" y2="23"/><path d="M9 9v3a3 3 0 005.12 2.12M15 9.34V4a3 3 0 00-5.94-.6"/><path d="M17 16.95A7 7 0 015 12m14 0a7 7 0 01-.11 1.23"/></svg>
+                    كتم الكل
+                </button>
+                <button class="btn-unmute-all" id="btnUnmuteAll" onclick="unmuteAllStudents()" title="فتح ميكروفون جميع الطلاب">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 00-3 3v8a3 3 0 006 0V4a3 3 0 00-3-3z"/><path d="M19 10v2a7 7 0 01-14 0v-2"/><line x1="12" y1="19" x2="12" y2="23"/><line x1="8" y1="23" x2="16" y2="23"/></svg>
+                    فتح الكل
+                </button>
             </div>
             {% endif %}
 

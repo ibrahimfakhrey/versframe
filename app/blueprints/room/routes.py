@@ -384,3 +384,65 @@ def handle_end_activity(data):
         'session_id': session_id,
         'activity_id': activity_id,
     }, room=f'session_{session_id}')
+
+
+# === Teacher Mic Control Handlers ===
+
+@socketio.on('mute_all_students')
+def handle_mute_all(data):
+    """Teacher mutes all students and locks their mic buttons."""
+    if not current_user.is_authenticated or current_user.role not in (Role.TEACHER, Role.ADMIN):
+        return
+    session_id = data.get('session_id')
+    if not session_id:
+        return
+    emit('mic_locked', {
+        'locked': True,
+        'target': 'all',
+    }, room=f'session_{session_id}')
+
+
+@socketio.on('unmute_all_students')
+def handle_unmute_all(data):
+    """Teacher unlocks all students' mic buttons."""
+    if not current_user.is_authenticated or current_user.role not in (Role.TEACHER, Role.ADMIN):
+        return
+    session_id = data.get('session_id')
+    if not session_id:
+        return
+    emit('mic_locked', {
+        'locked': False,
+        'target': 'all',
+    }, room=f'session_{session_id}')
+
+
+@socketio.on('mute_student')
+def handle_mute_student(data):
+    """Teacher mutes a specific student and locks their mic button."""
+    if not current_user.is_authenticated or current_user.role not in (Role.TEACHER, Role.ADMIN):
+        return
+    session_id = data.get('session_id')
+    student_id = data.get('student_id')
+    if not session_id or not student_id:
+        return
+    emit('mic_locked', {
+        'locked': True,
+        'target': 'student',
+        'student_id': student_id,
+    }, room=f'session_{session_id}')
+
+
+@socketio.on('unmute_student')
+def handle_unmute_student(data):
+    """Teacher unlocks a specific student's mic button."""
+    if not current_user.is_authenticated or current_user.role not in (Role.TEACHER, Role.ADMIN):
+        return
+    session_id = data.get('session_id')
+    student_id = data.get('student_id')
+    if not session_id or not student_id:
+        return
+    emit('mic_locked', {
+        'locked': False,
+        'target': 'student',
+        'student_id': student_id,
+    }, room=f'session_{session_id}')
