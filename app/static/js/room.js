@@ -658,6 +658,10 @@ function addChatMessage(data) {
         return;
     }
 
+    // Clear placeholder on first message
+    var placeholder = document.getElementById('chatPlaceholder');
+    if (placeholder) placeholder.remove();
+
     var msgDiv = document.createElement('div');
     msgDiv.className = 'chat-message';
 
@@ -667,7 +671,7 @@ function addChatMessage(data) {
 
     var senderSpan = document.createElement('span');
     senderSpan.className = 'chat-sender';
-    senderSpan.textContent = data.sender_name || data.user_id || '';
+    senderSpan.textContent = data.sender_name || data.user_name || data.user_id || '';
 
     var textSpan = document.createElement('span');
     textSpan.className = 'chat-text';

@@ -147,6 +147,11 @@ function initSocketIO(sessionId) {
         if (typeof handleActivityResult === 'function') handleActivityResult(data);
     });
 
+    socket.on('activity_submission_update', (data) => {
+        console.log('Activity submission update:', data);
+        if (typeof handleActivitySubmissionUpdate === 'function') handleActivitySubmissionUpdate(data);
+    });
+
     // === Whiteboard ===
     socket.on('whiteboard_start', (data) => {
         console.log('whiteboard_start received:', data);

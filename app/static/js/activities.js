@@ -155,6 +155,51 @@
         }
     };
 
+    /**
+     * handleActivitySubmissionUpdate(data) - Teacher receives when a student submits.
+     * data: { student_id, student_name, correct, total, completions, activity_id }
+     */
+    window.handleActivitySubmissionUpdate = function (data) {
+        if (!data || !window.IS_TEACHER) return;
+
+        // Update progress
+        if (data.completions !== undefined) {
+            studentCompletions = data.completions;
+            var total = data.total_students || totalStudentsInRoom || Math.max(studentCompletions, 1);
+            updateActivityProgress(studentCompletions, total);
+        }
+
+        // Show toast with student result
+        var name = data.student_name || ('طالب #' + data.student_id);
+        var pct = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+        var emoji = pct >= 80 ? '&#127942;' : (pct >= 50 ? '&#128170;' : '&#128161;');
+        if (typeof showToast === 'function') {
+            showToast(name + ' أجاب — ' + pct + '%', pct >= 50 ? 'success' : 'warning');
+        }
+
+        // Append submission entry in activity content area (below the activity)
+        var submissionList = document.getElementById('teacherSubmissionList');
+        if (!submissionList) {
+            var contentArea = document.getElementById('activityContent');
+            if (contentArea) {
+                var listDiv = document.createElement('div');
+                listDiv.id = 'teacherSubmissionList';
+                listDiv.style.cssText = 'margin-top:10px;border-top:1px solid rgba(180,140,210,0.15);padding-top:8px;display:flex;flex-direction:column;gap:4px;max-height:120px;overflow-y:auto;';
+                listDiv.innerHTML = '<div style="font-size:10px;font-weight:700;color:#636E72;margin-bottom:2px;">&#128203; الإجابات:</div>';
+                contentArea.appendChild(listDiv);
+                submissionList = listDiv;
+            }
+        }
+        if (submissionList) {
+            var entry = document.createElement('div');
+            entry.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:4px 8px;background:rgba(240,230,250,0.5);border-radius:var(--radius-sm);font-size:11px;';
+            entry.innerHTML = '<span style="color:#2D3436;font-weight:600;">' + escapeHtml(name) + '</span>' +
+                '<span style="color:' + (pct >= 80 ? '#00b894' : (pct >= 50 ? '#EB5B00' : '#d63031')) + ';font-weight:700;font-family:var(--font-en);">' + pct + '%</span>';
+            submissionList.appendChild(entry);
+            submissionList.scrollTop = submissionList.scrollHeight;
+        }
+    };
+
     // -----------------------------------------------------------------------
     // Timer
     // -----------------------------------------------------------------------
@@ -237,10 +282,10 @@
         var contentArea = document.getElementById('activityContent');
         if (contentArea) {
             contentArea.innerHTML =
-                '<div style="text-align:center;padding:20px 10px;color:rgba(255,255,255,0.4);">' +
+                '<div style="text-align:center;padding:20px 10px;color:#636E72;">' +
                 '<div style="font-size:2rem;margin-bottom:8px;">&#127919;</div>' +
                 '<p style="font-size:13px;">لا يوجد نشاط حالياً</p>' +
-                '<p style="font-size:11px;margin-top:4px;">سيظهر النشاط عندما يبدأه المعلم</p>' +
+                '<p style="font-size:11px;margin-top:4px;color:#B2BEC3;">سيظهر النشاط عندما يبدأه المعلم</p>' +
                 '</div>';
         }
 
@@ -288,7 +333,7 @@
                 renderCodeChallenge(data, contentArea);
                 break;
             default:
-                contentArea.innerHTML = '<p style="color:rgba(255,255,255,0.5);text-align:center;">نوع النشاط غير معروف</p>';
+                contentArea.innerHTML = '<p style="color:#636E72;text-align:center;">نوع النشاط غير معروف</p>';
         }
     };
 
@@ -354,7 +399,7 @@
 
         var html = '<div class="activity-dragdrop" dir="rtl">';
         html += '<div class="activity-question">' + escapeHtml(data.title) + '</div>';
-        html += '<div class="dragdrop-hint" style="font-size:11px;color:rgba(255,255,255,0.45);margin-bottom:8px;">اسحب العناصر لترتيبها بالترتيب الصحيح</div>';
+        html += '<div class="dragdrop-hint" style="font-size:11px;color:#636E72;margin-bottom:8px;">اسحب العناصر لترتيبها بالترتيب الصحيح</div>';
         html += '<div class="dragdrop-list" id="dragDropList" dir="ltr">';
 
         // Shuffle items for the student (but keep data.items as reference)
@@ -649,7 +694,7 @@
         html += '<div class="activity-question">' + escapeHtml(data.title) + '</div>';
 
         if (data.description) {
-            html += '<div class="activity-code-desc" style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:8px;">' + escapeHtml(data.description) + '</div>';
+            html += '<div class="activity-code-desc" style="font-size:12px;color:#636E72;margin-bottom:8px;">' + escapeHtml(data.description) + '</div>';
         }
 
         html += '<textarea id="activityCodeEditor" class="activity-code-editor" dir="ltr" spellcheck="false" placeholder="# اكتب الكود هنا..."' +
@@ -766,45 +811,19 @@
                 var currentXP = parseInt(xpDisplay.textContent, 10) || 0;
                 animateNumber(xpDisplay, currentXP, currentXP + xpEarned, 800);
             }
+
+            // Refresh from server to stay accurate
+            if (!window.IS_TEACHER) {
+                setTimeout(function(){
+                    fetch('/api/me').then(function(r){return r.json();}).then(function(d){
+                        var el = document.getElementById('xpDisplay');
+                        if (el && d.total_xp !== undefined) el.textContent = d.total_xp;
+                    }).catch(function(){});
+                }, 1000);
+            }
         }
 
         stopActivityCountdown();
-    };
-
-    // -----------------------------------------------------------------------
-    // Skill Snapshot
-    // -----------------------------------------------------------------------
-
-    /**
-     * updateSkillSnapshot(skills) - Updates skill progress bars in the
-     * Skill Snapshot card.
-     * skills: [{ name: string, progress: 0-100, color?: string }]
-     */
-    window.updateSkillSnapshot = function (skills) {
-        var card = document.getElementById('skillCard');
-        if (!card) {
-            card = document.querySelector('.room-skill-card');
-        }
-        if (!card || !skills || !skills.length) return;
-
-        var html = '<div class="card-header">';
-        html += '<span class="card-title">&#128200; لقطة المهارة</span>';
-        html += '</div>';
-
-        skills.forEach(function (skill) {
-            var color = skill.color || 'linear-gradient(90deg, var(--sv-purple), #a29bfe)';
-            html += '<div class="skill-snapshot-item">';
-            html += '<div class="skill-snapshot-header">';
-            html += '<span class="skill-snapshot-name">' + escapeHtml(skill.name) + '</span>';
-            html += '<span class="skill-snapshot-pct">' + skill.progress + '%</span>';
-            html += '</div>';
-            html += '<div class="progress-bar-track">';
-            html += '<div class="progress-bar-fill skill-bar-animated" style="width:' + skill.progress + '%;background:' + color + ';"></div>';
-            html += '</div>';
-            html += '</div>';
-        });
-
-        card.innerHTML = html;
     };
 
     // -----------------------------------------------------------------------
@@ -817,7 +836,7 @@
 
         var html = '<div class="teacher-activity-launcher" dir="rtl">';
 
-        html += '<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:rgba(255,255,255,0.8);">اختر نوع النشاط:</div>';
+        html += '<div style="font-size:13px;font-weight:700;margin-bottom:10px;color:#2D3436;">إنشاء نشاط جديد:</div>';
 
         html += '<div class="launcher-grid">';
         html += '<button class="launcher-btn" onclick="showActivityCreator(\'mcq\')">';
@@ -841,63 +860,342 @@
         html += '</button>';
         html += '</div>';
 
-        // Quick-launch demo activities
-        html += '<div style="margin-top:12px;border-top:1px solid rgba(255,255,255,0.08);padding-top:10px;">';
-        html += '<div style="font-size:11px;color:rgba(255,255,255,0.4);margin-bottom:6px;">أنشطة سريعة (تجريبي):</div>';
-        html += '<button class="activity-action-btn" style="margin-bottom:4px;font-size:11px;padding:6px;" onclick="launchDemoActivity(\'mcq\')">تجربة MCQ</button>';
-        html += '<button class="activity-action-btn" style="margin-bottom:4px;font-size:11px;padding:6px;background:var(--sv-purple);" onclick="launchDemoActivity(\'dragdrop\')">تجربة سحب وإفلات</button>';
-        html += '<button class="activity-action-btn" style="margin-bottom:4px;font-size:11px;padding:6px;background:linear-gradient(135deg,#00b894,#00cec9);" onclick="launchDemoActivity(\'fillblank\')">تجربة أكمل الكود</button>';
-        html += '</div>';
+        // Template library grouped by topic
+        html += '<div style="margin-top:12px;border-top:1px solid rgba(180,140,210,0.15);padding-top:10px;">';
+        html += '<div style="font-size:11px;color:#636E72;margin-bottom:8px;">قوالب أنشطة برمجية جاهزة:</div>';
+        html += '<div style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:6px;">';
 
+        var lastTopic = '';
+        var typeBadge = { mcq:'اختيار', dragdrop:'ترتيب', fillblank:'أكمل', code:'كود' };
+        var typeBadgeColor = { mcq:'#EB5B00', dragdrop:'var(--sv-purple)', fillblank:'#00b894', code:'#0984E3' };
+
+        ACTIVITY_TEMPLATES.forEach(function (tmpl, idx) {
+            if (tmpl.topic !== lastTopic) {
+                lastTopic = tmpl.topic;
+                html += '<div style="font-size:10px;font-weight:700;color:#636E72;margin-top:4px;">' + tmpl.icon + ' ' + tmpl.topicAr + '</div>';
+            }
+            html += '<button onclick="launchTemplate(' + idx + ')" style="display:flex;align-items:center;gap:6px;width:100%;padding:6px 8px;background:rgba(240,230,250,0.5);border:1px solid rgba(180,140,210,0.12);border-radius:var(--radius-sm);cursor:pointer;text-align:right;font-family:var(--font-ar);font-size:11px;color:#2D3436;transition:all 0.15s;"' +
+                ' onmouseover="this.style.background=\'rgba(235,91,0,0.06)\';this.style.borderColor=\'rgba(235,91,0,0.2)\'" onmouseout="this.style.background=\'rgba(240,230,250,0.5)\';this.style.borderColor=\'rgba(180,140,210,0.12)\'">';
+            html += '<span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + escapeHtml(tmpl.data.title) + '</span>';
+            html += '<span style="font-size:9px;padding:2px 6px;border-radius:var(--radius-full);background:' + (typeBadgeColor[tmpl.data.type] || '#636E72') + ';color:white;white-space:nowrap;">' + (typeBadge[tmpl.data.type] || '') + '</span>';
+            html += '</button>';
+        });
+
+        html += '</div></div>';
         html += '</div>';
 
         contentArea.innerHTML = html;
     }
 
+    // -----------------------------------------------------------------------
+    // Activity Creator Forms (Teacher)
+    // -----------------------------------------------------------------------
+
+    var creatorInputStyle = 'width:100%;padding:8px 10px;background:rgba(255,255,255,0.7);border:1px solid rgba(180,140,210,0.2);border-radius:var(--radius-sm);color:#2D3436;font-family:var(--font-ar);font-size:12px;outline:none;box-sizing:border-box;';
+    var creatorLabelStyle = 'font-size:11px;font-weight:700;color:#636E72;margin-bottom:4px;display:block;';
+    var creatorBtnStyle = 'display:block;width:100%;padding:8px;background:linear-gradient(135deg,var(--sv-orange),#ff8a3d);color:white;border:none;border-radius:var(--radius-md);font-family:var(--font-ar);font-weight:700;font-size:12px;cursor:pointer;border-bottom:3px solid #B84700;margin-top:8px;';
+    var creatorBackBtnStyle = 'display:block;width:100%;padding:6px;background:rgba(180,140,210,0.15);color:#636E72;border:none;border-radius:var(--radius-sm);font-family:var(--font-ar);font-weight:700;font-size:11px;cursor:pointer;margin-top:6px;';
+
     window.showActivityCreator = function (type) {
-        if (typeof showToast === 'function') {
-            showToast('منشئ الأنشطة - ' + type + ' - قريباً!', 'info');
+        var contentArea = document.getElementById('activityContent');
+        if (!contentArea) return;
+
+        switch (type) {
+            case 'mcq': showMCQCreator(contentArea); break;
+            case 'dragdrop': showDragDropCreator(contentArea); break;
+            case 'fillblank': showFillBlankCreator(contentArea); break;
+            case 'code': showCodeCreator(contentArea); break;
         }
     };
 
-    /**
-     * launchDemoActivity - Quick launch of a demo activity for testing.
-     */
-    window.launchDemoActivity = function (type) {
-        var demoActivities = {
-            mcq: {
-                type: 'mcq',
-                id: 'demo_mcq_' + Date.now(),
-                title: 'ما هو المتغير؟',
-                options: ['قيمة ثابتة', 'مكان لتخزين البيانات', 'نوع من الدوال', 'جزء من الذاكرة لا يمكن تغييره'],
-                correct: 1,
-                timeLimit: 60,
-            },
-            dragdrop: {
-                type: 'dragdrop',
-                id: 'demo_dd_' + Date.now(),
-                title: 'رتب خطوات البرنامج',
-                items: ['print("مرحبا")', 'x = 5', 'print(x)', 'y = x + 10'],
-                correctOrder: [1, 0, 2, 3],
-                timeLimit: 90,
-            },
-            fillblank: {
-                type: 'fillblank',
-                id: 'demo_fb_' + Date.now(),
-                title: 'أكمل الكود',
-                lines: [
-                    { text: 'x = ____', blanks: [{ position: 0, answer: '5' }] },
-                    { text: 'y = x + ____', blanks: [{ position: 0, answer: '10' }] },
-                    { text: 'print(____)', blanks: [{ position: 0, answer: 'y' }] },
-                ],
-                timeLimit: 120,
-            },
-        };
-
-        var activity = demoActivities[type];
-        if (activity) {
-            startActivity(activity);
+    function showMCQCreator(container) {
+        var html = '<div dir="rtl" style="display:flex;flex-direction:column;gap:8px;">';
+        html += '<div style="font-size:13px;font-weight:700;color:#2D3436;">&#127793; إنشاء سؤال اختيار متعدد</div>';
+        html += '<div><label style="' + creatorLabelStyle + '">عنوان السؤال</label>';
+        html += '<input type="text" id="mcqTitle" placeholder="مثال: ما هو المتغير؟" style="' + creatorInputStyle + '"></div>';
+        html += '<div id="mcqOptionsContainer">';
+        for (var i = 0; i < 4; i++) {
+            html += '<div style="display:flex;gap:4px;align-items:center;margin-bottom:4px;">';
+            html += '<input type="radio" name="mcqCorrect" value="' + i + '"' + (i === 0 ? ' checked' : '') + ' style="flex-shrink:0;">';
+            html += '<input type="text" class="mcq-creator-opt" placeholder="الخيار ' + (i + 1) + '" style="' + creatorInputStyle + 'margin:0;">';
+            if (i >= 2) html += '<button onclick="this.parentElement.remove()" style="background:none;border:none;color:#d63031;cursor:pointer;font-size:14px;flex-shrink:0;">&#10006;</button>';
+            html += '</div>';
         }
+        html += '</div>';
+        html += '<button onclick="addMCQOption()" style="background:none;border:1px dashed rgba(180,140,210,0.3);color:#636E72;padding:4px;border-radius:var(--radius-sm);font-family:var(--font-ar);font-size:11px;cursor:pointer;">+ إضافة خيار</button>';
+        html += '<div><label style="' + creatorLabelStyle + '">الوقت (ثانية)</label>';
+        html += '<select id="mcqTime" style="' + creatorInputStyle + '"><option value="30">30</option><option value="60" selected>60</option><option value="90">90</option><option value="120">120</option></select></div>';
+        html += '<button onclick="launchCreatedMCQ()" style="' + creatorBtnStyle + '">&#9654; إطلاق النشاط</button>';
+        html += '<button onclick="showTeacherActivityLauncherGlobal()" style="' + creatorBackBtnStyle + '">&#8594; رجوع</button>';
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    window.addMCQOption = function () {
+        var c = document.getElementById('mcqOptionsContainer');
+        if (!c) return;
+        var count = c.querySelectorAll('.mcq-creator-opt').length;
+        if (count >= 6) return;
+        var div = document.createElement('div');
+        div.style.cssText = 'display:flex;gap:4px;align-items:center;margin-bottom:4px;';
+        div.innerHTML = '<input type="radio" name="mcqCorrect" value="' + count + '" style="flex-shrink:0;">' +
+            '<input type="text" class="mcq-creator-opt" placeholder="الخيار ' + (count + 1) + '" style="' + creatorInputStyle + 'margin:0;">' +
+            '<button onclick="this.parentElement.remove()" style="background:none;border:none;color:#d63031;cursor:pointer;font-size:14px;flex-shrink:0;">&#10006;</button>';
+        c.appendChild(div);
+    };
+
+    window.launchCreatedMCQ = function () {
+        var title = document.getElementById('mcqTitle');
+        if (!title || !title.value.trim()) { showToast('أدخل عنوان السؤال', 'warning'); return; }
+        var opts = document.querySelectorAll('.mcq-creator-opt');
+        var options = [];
+        opts.forEach(function (o) { if (o.value.trim()) options.push(o.value.trim()); });
+        if (options.length < 2) { showToast('أدخل خيارين على الأقل', 'warning'); return; }
+        var correct = document.querySelector('input[name="mcqCorrect"]:checked');
+        var correctIdx = correct ? parseInt(correct.value, 10) : 0;
+        if (correctIdx >= options.length) correctIdx = 0;
+        var timeLimit = parseInt(document.getElementById('mcqTime').value, 10) || 60;
+        startActivity({
+            type: 'mcq', id: 'mcq_' + Date.now(), title: title.value.trim(),
+            options: options, correct: correctIdx, timeLimit: timeLimit
+        });
+    };
+
+    function showDragDropCreator(container) {
+        var html = '<div dir="rtl" style="display:flex;flex-direction:column;gap:8px;">';
+        html += '<div style="font-size:13px;font-weight:700;color:#2D3436;">&#128260; إنشاء نشاط سحب وإفلات</div>';
+        html += '<div><label style="' + creatorLabelStyle + '">عنوان النشاط</label>';
+        html += '<input type="text" id="ddTitle" placeholder="رتب الخطوات بالترتيب الصحيح" style="' + creatorInputStyle + '"></div>';
+        html += '<label style="' + creatorLabelStyle + '">العناصر (بالترتيب الصحيح)</label>';
+        html += '<div id="ddItemsContainer">';
+        for (var i = 0; i < 3; i++) {
+            html += '<div style="display:flex;gap:4px;align-items:center;margin-bottom:4px;">';
+            html += '<span style="font-size:11px;color:#B2BEC3;width:18px;text-align:center;">' + (i + 1) + '</span>';
+            html += '<input type="text" class="dd-creator-item" dir="ltr" placeholder="السطر ' + (i + 1) + '" style="' + creatorInputStyle + 'margin:0;font-family:var(--font-mono);direction:ltr;text-align:left;">';
+            if (i >= 2) html += '<button onclick="this.parentElement.remove();renumberDDItems()" style="background:none;border:none;color:#d63031;cursor:pointer;font-size:14px;flex-shrink:0;">&#10006;</button>';
+            html += '</div>';
+        }
+        html += '</div>';
+        html += '<button onclick="addDDItem()" style="background:none;border:1px dashed rgba(180,140,210,0.3);color:#636E72;padding:4px;border-radius:var(--radius-sm);font-family:var(--font-ar);font-size:11px;cursor:pointer;">+ إضافة عنصر</button>';
+        html += '<div><label style="' + creatorLabelStyle + '">الوقت (ثانية)</label>';
+        html += '<select id="ddTime" style="' + creatorInputStyle + '"><option value="60">60</option><option value="90" selected>90</option><option value="120">120</option><option value="180">180</option></select></div>';
+        html += '<button onclick="launchCreatedDragDrop()" style="' + creatorBtnStyle + '">&#9654; إطلاق النشاط</button>';
+        html += '<button onclick="showTeacherActivityLauncherGlobal()" style="' + creatorBackBtnStyle + '">&#8594; رجوع</button>';
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    window.addDDItem = function () {
+        var c = document.getElementById('ddItemsContainer');
+        if (!c) return;
+        var count = c.querySelectorAll('.dd-creator-item').length;
+        if (count >= 8) return;
+        var div = document.createElement('div');
+        div.style.cssText = 'display:flex;gap:4px;align-items:center;margin-bottom:4px;';
+        div.innerHTML = '<span style="font-size:11px;color:#B2BEC3;width:18px;text-align:center;">' + (count + 1) + '</span>' +
+            '<input type="text" class="dd-creator-item" dir="ltr" placeholder="السطر ' + (count + 1) + '" style="' + creatorInputStyle + 'margin:0;font-family:var(--font-mono);direction:ltr;text-align:left;">' +
+            '<button onclick="this.parentElement.remove();renumberDDItems()" style="background:none;border:none;color:#d63031;cursor:pointer;font-size:14px;flex-shrink:0;">&#10006;</button>';
+        c.appendChild(div);
+    };
+
+    window.renumberDDItems = function () {
+        var c = document.getElementById('ddItemsContainer');
+        if (!c) return;
+        c.querySelectorAll('span').forEach(function (s, i) { s.textContent = i + 1; });
+    };
+
+    window.launchCreatedDragDrop = function () {
+        var title = document.getElementById('ddTitle');
+        if (!title || !title.value.trim()) { showToast('أدخل عنوان النشاط', 'warning'); return; }
+        var inputs = document.querySelectorAll('.dd-creator-item');
+        var items = [];
+        inputs.forEach(function (inp) { if (inp.value.trim()) items.push(inp.value.trim()); });
+        if (items.length < 2) { showToast('أدخل عنصرين على الأقل', 'warning'); return; }
+        var correctOrder = items.map(function (_, i) { return i; });
+        var timeLimit = parseInt(document.getElementById('ddTime').value, 10) || 90;
+        startActivity({
+            type: 'dragdrop', id: 'dd_' + Date.now(), title: title.value.trim(),
+            items: items, correctOrder: correctOrder, timeLimit: timeLimit
+        });
+    };
+
+    function showFillBlankCreator(container) {
+        var html = '<div dir="rtl" style="display:flex;flex-direction:column;gap:8px;">';
+        html += '<div style="font-size:13px;font-weight:700;color:#2D3436;">&#9999; إنشاء نشاط أكمل الكود</div>';
+        html += '<div><label style="' + creatorLabelStyle + '">عنوان النشاط</label>';
+        html += '<input type="text" id="fbTitle" placeholder="أكمل الكود التالي" style="' + creatorInputStyle + '"></div>';
+        html += '<label style="' + creatorLabelStyle + '">أسطر الكود (استخدم ____ للفراغات)</label>';
+        html += '<div id="fbLinesContainer">';
+        html += buildFBLineInput(0, 'x = ____', '5');
+        html += buildFBLineInput(1, 'print(____)', 'x');
+        html += '</div>';
+        html += '<button onclick="addFBLine()" style="background:none;border:1px dashed rgba(180,140,210,0.3);color:#636E72;padding:4px;border-radius:var(--radius-sm);font-family:var(--font-ar);font-size:11px;cursor:pointer;">+ إضافة سطر</button>';
+        html += '<div><label style="' + creatorLabelStyle + '">الوقت (ثانية)</label>';
+        html += '<select id="fbTime" style="' + creatorInputStyle + '"><option value="60">60</option><option value="90">90</option><option value="120" selected>120</option><option value="180">180</option></select></div>';
+        html += '<button onclick="launchCreatedFillBlank()" style="' + creatorBtnStyle + '">&#9654; إطلاق النشاط</button>';
+        html += '<button onclick="showTeacherActivityLauncherGlobal()" style="' + creatorBackBtnStyle + '">&#8594; رجوع</button>';
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    function buildFBLineInput(idx, codePlaceholder, ansPlaceholder) {
+        return '<div class="fb-line-group" style="margin-bottom:6px;padding:6px;background:rgba(240,230,250,0.4);border-radius:var(--radius-sm);">' +
+            '<div style="display:flex;gap:4px;align-items:center;margin-bottom:3px;">' +
+            '<input type="text" class="fb-creator-line" dir="ltr" placeholder="' + (codePlaceholder || 'code ____') + '" style="' + creatorInputStyle + 'margin:0;font-family:var(--font-mono);direction:ltr;text-align:left;">' +
+            (idx >= 2 ? '<button onclick="this.closest(\'.fb-line-group\').remove()" style="background:none;border:none;color:#d63031;cursor:pointer;font-size:14px;flex-shrink:0;">&#10006;</button>' : '') +
+            '</div>' +
+            '<input type="text" class="fb-creator-answer" dir="ltr" placeholder="الإجابة: ' + (ansPlaceholder || '') + '" style="' + creatorInputStyle + 'margin:0;font-size:11px;background:rgba(235,91,0,0.05);direction:ltr;text-align:left;">' +
+            '</div>';
+    }
+
+    window.addFBLine = function () {
+        var c = document.getElementById('fbLinesContainer');
+        if (!c) return;
+        var count = c.querySelectorAll('.fb-creator-line').length;
+        if (count >= 8) return;
+        c.insertAdjacentHTML('beforeend', buildFBLineInput(count, '', ''));
+    };
+
+    window.launchCreatedFillBlank = function () {
+        var title = document.getElementById('fbTitle');
+        if (!title || !title.value.trim()) { showToast('أدخل عنوان النشاط', 'warning'); return; }
+        var lineInputs = document.querySelectorAll('.fb-creator-line');
+        var answerInputs = document.querySelectorAll('.fb-creator-answer');
+        var lines = [];
+        lineInputs.forEach(function (inp, i) {
+            var text = inp.value.trim();
+            if (!text) return;
+            var answer = answerInputs[i] ? answerInputs[i].value.trim() : '';
+            if (text.indexOf('____') !== -1 && answer) {
+                lines.push({ text: text, blanks: [{ position: 0, answer: answer }] });
+            } else {
+                lines.push({ text: text, blanks: [] });
+            }
+        });
+        if (lines.length < 1) { showToast('أدخل سطراً واحداً على الأقل', 'warning'); return; }
+        var timeLimit = parseInt(document.getElementById('fbTime').value, 10) || 120;
+        startActivity({
+            type: 'fillblank', id: 'fb_' + Date.now(), title: title.value.trim(),
+            lines: lines, timeLimit: timeLimit
+        });
+    };
+
+    function showCodeCreator(container) {
+        var html = '<div dir="rtl" style="display:flex;flex-direction:column;gap:8px;">';
+        html += '<div style="font-size:13px;font-weight:700;color:#2D3436;">&#128187; إنشاء تحدي كود</div>';
+        html += '<div><label style="' + creatorLabelStyle + '">عنوان التحدي</label>';
+        html += '<input type="text" id="codeCreatorTitle" placeholder="اكتب دالة تجمع رقمين" style="' + creatorInputStyle + '"></div>';
+        html += '<div><label style="' + creatorLabelStyle + '">وصف التحدي</label>';
+        html += '<textarea id="codeCreatorDesc" rows="2" placeholder="الوصف التفصيلي..." style="' + creatorInputStyle + 'resize:vertical;"></textarea></div>';
+        html += '<div><label style="' + creatorLabelStyle + '">كود البداية</label>';
+        html += '<textarea id="codeCreatorStarter" rows="3" dir="ltr" placeholder="# starter code" style="' + creatorInputStyle + 'resize:vertical;font-family:var(--font-mono);direction:ltr;text-align:left;"></textarea></div>';
+        html += '<div><label style="' + creatorLabelStyle + '">الوقت (ثانية)</label>';
+        html += '<select id="codeCreatorTime" style="' + creatorInputStyle + '"><option value="120">120</option><option value="180" selected>180</option><option value="300">300</option><option value="600">600</option></select></div>';
+        html += '<button onclick="launchCreatedCode()" style="' + creatorBtnStyle + '">&#9654; إطلاق النشاط</button>';
+        html += '<button onclick="showTeacherActivityLauncherGlobal()" style="' + creatorBackBtnStyle + '">&#8594; رجوع</button>';
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    window.launchCreatedCode = function () {
+        var title = document.getElementById('codeCreatorTitle');
+        if (!title || !title.value.trim()) { showToast('أدخل عنوان التحدي', 'warning'); return; }
+        var desc = document.getElementById('codeCreatorDesc');
+        var starter = document.getElementById('codeCreatorStarter');
+        var timeLimit = parseInt(document.getElementById('codeCreatorTime').value, 10) || 180;
+        startActivity({
+            type: 'code', id: 'code_' + Date.now(), title: title.value.trim(),
+            description: desc ? desc.value.trim() : '',
+            starterCode: starter ? starter.value : '',
+            timeLimit: timeLimit
+        });
+    };
+
+    window.showTeacherActivityLauncherGlobal = function () {
+        showTeacherActivityLauncher();
+    };
+
+    // -----------------------------------------------------------------------
+    // Programming Activity Templates (~20)
+    // -----------------------------------------------------------------------
+
+    var ACTIVITY_TEMPLATES = [
+        // === Variables & Data Types ===
+        { topic: 'variables', topicAr: 'المتغيرات وأنواع البيانات', icon: '&#128230;',
+          data: { type:'mcq', title:'ما هو المتغير في البرمجة؟', options:['قيمة ثابتة لا تتغير','مكان لتخزين البيانات في الذاكرة','نوع خاص من الدوال','أمر لطباعة النصوص'], correct:1, timeLimit:60 }},
+        { topic: 'variables', topicAr: 'المتغيرات وأنواع البيانات', icon: '&#128230;',
+          data: { type:'mcq', title:'ما نوع القيمة 3.14 في Python؟', options:['int','str','float','bool'], correct:2, timeLimit:45 }},
+        { topic: 'variables', topicAr: 'المتغيرات وأنواع البيانات', icon: '&#128230;',
+          data: { type:'fillblank', title:'أكمل كود المتغيرات', lines:[
+            {text:'x = ____', blanks:[{position:0,answer:'5'}]},
+            {text:'y = x + ____', blanks:[{position:0,answer:'10'}]},
+            {text:'print(____)', blanks:[{position:0,answer:'y'}]}
+          ], timeLimit:120 }},
+        { topic: 'variables', topicAr: 'المتغيرات وأنواع البيانات', icon: '&#128230;',
+          data: { type:'dragdrop', title:'رتب عمليات المتغيرات بالترتيب الصحيح', items:['name = "أحمد"','age = 15','print(name)','print(age)'], correctOrder:[0,1,2,3], timeLimit:90 }},
+
+        // === Conditionals ===
+        { topic: 'conditionals', topicAr: 'الشروط', icon: '&#128256;',
+          data: { type:'mcq', title:'ماذا تعني elif في Python؟', options:['نهاية الشرط','شرط بديل إذا لم يتحقق الشرط السابق','تكرار الشرط','طباعة النتيجة'], correct:1, timeLimit:60 }},
+        { topic: 'conditionals', topicAr: 'الشروط', icon: '&#128256;',
+          data: { type:'fillblank', title:'أكمل الجملة الشرطية', lines:[
+            {text:'x = 15', blanks:[]},
+            {text:'if x ____ 10:', blanks:[{position:0,answer:'>'}]},
+            {text:'    print("كبير")', blanks:[]}
+          ], timeLimit:90 }},
+        { topic: 'conditionals', topicAr: 'الشروط', icon: '&#128256;',
+          data: { type:'dragdrop', title:'رتب كتلة if/elif/else', items:['if score >= 90:','    print("ممتاز")','elif score >= 60:','    print("جيد")','else:','    print("حاول مرة أخرى")'], correctOrder:[0,1,2,3,4,5], timeLimit:120 }},
+
+        // === Loops ===
+        { topic: 'loops', topicAr: 'الحلقات', icon: '&#128260;',
+          data: { type:'mcq', title:'كم مرة تعمل for i in range(3)؟', options:['1 مرة','2 مرات','3 مرات','4 مرات'], correct:2, timeLimit:45 }},
+        { topic: 'loops', topicAr: 'الحلقات', icon: '&#128260;',
+          data: { type:'fillblank', title:'أكمل حلقة for', lines:[
+            {text:'for i in range(____):', blanks:[{position:0,answer:'5'}]},
+            {text:'    print(____)', blanks:[{position:0,answer:'i'}]}
+          ], timeLimit:90 }},
+        { topic: 'loops', topicAr: 'الحلقات', icon: '&#128260;',
+          data: { type:'dragdrop', title:'رتب أجزاء حلقة while', items:['count = 0','while count < 5:','    print(count)','    count = count + 1'], correctOrder:[0,1,2,3], timeLimit:90 }},
+
+        // === Functions ===
+        { topic: 'functions', topicAr: 'الدوال', icon: '&#9881;',
+          data: { type:'fillblank', title:'أكمل تعريف الدالة', lines:[
+            {text:'def ____():', blanks:[{position:0,answer:'greet'}]},
+            {text:'    return "____"', blanks:[{position:0,answer:'مرحبا'}]}
+          ], timeLimit:90 }},
+        { topic: 'functions', topicAr: 'الدوال', icon: '&#9881;',
+          data: { type:'code', title:'اكتب دالة تجمع رقمين', description:'اكتب دالة اسمها add تأخذ معاملين a و b وترجع مجموعهما', starterCode:'def add(a, b):\n    # اكتب الكود هنا\n    pass', timeLimit:180 }},
+        { topic: 'functions', topicAr: 'الدوال', icon: '&#9881;',
+          data: { type:'dragdrop', title:'رتب: تعريف دالة → استدعاء → طباعة', items:['def square(n):','    return n * n','result = square(4)','print(result)'], correctOrder:[0,1,2,3], timeLimit:90 }},
+
+        // === Output Prediction / Debugging ===
+        { topic: 'debugging', topicAr: 'التنبؤ والتصحيح', icon: '&#128027;',
+          data: { type:'mcq', title:'ما ناتج print(2 + "3") في Python؟', options:['23','5','TypeError','None'], correct:2, timeLimit:45 }},
+        { topic: 'debugging', topicAr: 'التنبؤ والتصحيح', icon: '&#128027;',
+          data: { type:'mcq', title:'ما ناتج print(len("hello"))؟', options:['4','5','6','hello'], correct:1, timeLimit:45 }},
+        { topic: 'debugging', topicAr: 'التنبؤ والتصحيح', icon: '&#128027;',
+          data: { type:'mcq', title:'ما ناتج print(10 // 3)؟', options:['3.33','3','4','1'], correct:1, timeLimit:45 }},
+        { topic: 'debugging', topicAr: 'التنبؤ والتصحيح', icon: '&#128027;',
+          data: { type:'code', title:'اعثر على الخطأ وأصلحه', description:'هذا الكود يحاول طباعة مجموع قائمة أرقام لكن فيه خطأ. أصلحه.', starterCode:'numbers = [1, 2, 3, 4, 5]\ntotal = 0\nfor n in numbers\n    total = total + n\nprint(total)', timeLimit:180 }},
+
+        // === Lists & Strings ===
+        { topic: 'lists', topicAr: 'القوائم والنصوص', icon: '&#128220;',
+          data: { type:'mcq', title:'ما ناتج "hello"[1] في Python؟', options:['h','e','l','o'], correct:1, timeLimit:45 }},
+        { topic: 'lists', topicAr: 'القوائم والنصوص', icon: '&#128220;',
+          data: { type:'fillblank', title:'أكمل كود القائمة', lines:[
+            {text:'fruits = [____, ____, ____]', blanks:[{position:0,answer:'"تفاح", "موز", "برتقال"'}]},
+            {text:'print(fruits[0])', blanks:[]}
+          ], timeLimit:120 }},
+        { topic: 'lists', topicAr: 'القوائم والنصوص', icon: '&#128220;',
+          data: { type:'dragdrop', title:'رتب عمليات القائمة', items:['colors = []','colors.append("أحمر")','colors.append("أزرق")','colors.sort()','print(colors)'], correctOrder:[0,1,2,3,4], timeLimit:90 }}
+    ];
+
+    window.launchTemplate = function (idx) {
+        var tmpl = ACTIVITY_TEMPLATES[idx];
+        if (!tmpl) return;
+        var data = JSON.parse(JSON.stringify(tmpl.data));
+        data.id = data.type + '_' + Date.now();
+        startActivity(data);
     };
 
     // -----------------------------------------------------------------------

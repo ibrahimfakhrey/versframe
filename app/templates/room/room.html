@@ -656,25 +656,12 @@
     color: #2D3436;
 }
 
-/* Skill snapshot card */
-.room-skill-card {}
-.skill-name {
-    font-size: var(--text-sm);
-    font-weight: var(--fw-bold);
-    margin-bottom: 8px;
-    color: #2D3436;
-}
-
-/* Treasure / gems */
-.treasure-section {
-    text-align: center;
-    padding: 10px;
-    font-size: 48px;
-    filter: drop-shadow(0 4px 12px rgba(235, 180, 0, 0.3));
-}
-.treasure-section div {
-    color: #636E72 !important;
-}
+/* --- Chat Messages --- */
+.chat-message { padding:8px 12px; background:rgba(240,230,250,0.5); border-radius:var(--radius-sm); border-right:3px solid var(--sv-purple); display:flex; flex-direction:column; gap:2px; }
+.chat-message-mine { border-right-color:var(--sv-orange); background:rgba(235,91,0,0.06); }
+.chat-sender { font-size:11px; color:#EB5B00; font-weight:var(--fw-bold); }
+.chat-text { font-size:var(--text-sm); color:#2D3436; }
+.chat-time { font-size:10px; color:#B2BEC3; }
 
 /* --- Bottom Bar --- */
 .room-bottom-bar {
@@ -803,7 +790,6 @@
     transition: filter var(--transition-fast);
 }
 .teacher-session-ctrl button:hover { filter: brightness(1.1); }
-.btn-start-session { background: var(--success); color: white; }
 .btn-end-session { background: var(--danger); color: white; }
 
 /* --- Teacher Mic Controls --- */
@@ -1358,34 +1344,6 @@
     font-size: 1.3rem;
 }
 
-/* --- Skill Snapshot Styles --- */
-.skill-snapshot-item {
-    margin-bottom: 8px;
-}
-
-.skill-snapshot-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 4px;
-}
-
-.skill-snapshot-name {
-    font-size: var(--text-sm);
-    font-weight: var(--fw-bold);
-    color: #2D3436;
-}
-
-.skill-snapshot-pct {
-    font-size: 11px;
-    font-family: var(--font-en);
-    color: #636E72;
-    font-weight: var(--fw-bold);
-}
-
-.skill-bar-animated {
-    transition: width 0.6s ease-out;
-}
 </style>
 {% endblock %}
 
@@ -1427,6 +1385,10 @@
             <button class="room-topbar-tab" data-top-tab="resources" onclick="switchTopTab('resources')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
                 الموارد
+            </button>
+            <button class="room-topbar-tab" data-top-tab="chat" onclick="switchTopTab('chat')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                المحادثة
             </button>
         </div>
 
@@ -1473,8 +1435,7 @@
             <!-- Teacher controls -->
             {% if is_teacher %}
             <div class="teacher-session-ctrl">
-                <button class="btn-start-session" id="btnStartSession" onclick="handleStartSession()">&#9654; بدء الجلسة</button>
-                <button class="btn-end-session" id="btnEndSession" onclick="handleEndSession()">&#9632; إنهاء</button>
+                <button class="btn-end-session" id="btnEndSession" onclick="handleEndSession()" style="width:100%;">&#9632; إنهاء الجلسة</button>
             </div>
             <div class="teacher-mic-controls">
                 <button class="btn-mute-all" id="btnMuteAll" onclick="muteAllStudents()" title="كتم ميكروفون جميع الطلاب">
@@ -1514,6 +1475,9 @@
                 </button>
                 <button class="room-sub-tab" data-sub-tab="whiteboard" onclick="switchSubTab('whiteboard')">
                     &#128396; السبورة
+                </button>
+                <button class="room-sub-tab" data-sub-tab="chat" onclick="switchSubTab('chat')">
+                    &#128172; المحادثة
                 </button>
             </div>
 
@@ -1664,6 +1628,16 @@
                     </div>
                     {% endif %}
                 </div>
+
+                <!-- === Chat Pane === -->
+                <div class="center-pane" id="pane-chat">
+                    <div id="chatMessages" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding-bottom:10px;">
+                        <div id="chatPlaceholder" style="text-align:center;padding:40px;color:#636E72;">
+                            <span style="font-size:2rem;">&#128172;</span>
+                            <p>لا توجد رسائل بعد</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -1680,7 +1654,7 @@
 
                 <!-- Activity Timer -->
                 <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                    <div class="room-activity-timer" id="activityTimer" style="font-size:var(--text-2xl);font-weight:800;font-family:var(--font-en);color:white;">00:00</div>
+                    <div class="room-activity-timer" id="activityTimer" style="font-size:var(--text-2xl);font-weight:800;font-family:var(--font-en);color:#2D3436;">00:00</div>
                     {% if is_teacher %}
                     <button class="activity-action-btn" style="margin:0;padding:5px 12px;font-size:11px;background:var(--danger);width:auto;" onclick="endActivity()" id="endActivityBtn" title="إنهاء النشاط">&#9632; إنهاء</button>
                     {% endif %}
@@ -1704,28 +1678,6 @@
                         <p style="font-size:13px;">لا يوجد نشاط حالياً</p>
                     </div>
                 </div>
-            </div>
-
-            <!-- Skill Snapshot Card -->
-            <div class="glass-card room-skill-card" id="skillCard">
-                <div class="card-header">
-                    <span class="card-title">&#128200; لقطة المهارة</span>
-                </div>
-                <div class="skill-snapshot-item">
-                    <div class="skill-snapshot-header">
-                        <span class="skill-snapshot-name">المتغيرات</span>
-                        <span class="skill-snapshot-pct">0%</span>
-                    </div>
-                    <div class="progress-bar-track">
-                        <div class="progress-bar-fill" id="skillProgressBar" style="width: 0%;"></div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Treasure Chest / Gems -->
-            <div class="treasure-section">
-                &#129520;
-                <div style="font-size:var(--text-sm);color:#636E72;margin-top:4px;">صندوق الكنز</div>
             </div>
 
             <!-- Teacher: Timer Controls -->
@@ -1853,7 +1805,7 @@
         document.querySelectorAll('.room-topbar-tab').forEach(function(t) { t.classList.remove('active'); });
         var active = document.querySelector('.room-topbar-tab[data-top-tab="' + tabName + '"]');
         if (active) active.classList.add('active');
-        var map = { 'slides': 'slides', 'code': 'code', 'qna': 'qna', 'resources': 'resources', 'whiteboard': 'whiteboard' };
+        var map = { 'slides': 'slides', 'code': 'code', 'qna': 'qna', 'resources': 'resources', 'whiteboard': 'whiteboard', 'chat': 'chat' };
         if (map[tabName]) switchSubTab(map[tabName]);
     };
 
@@ -2006,7 +1958,6 @@
        8. UI Helpers
        ============================ */
     window.toggleMoreOptions = function() { showToast('المزيد من الخيارات قريباً', 'info'); };
-    window.handleStartSession = function() { showToast('تم بدء الجلسة', 'success'); };
 
     window.startCountdownTimer = function(seconds) {
         if (typeof emitTimerStart === 'function') emitTimerStart(SESSION_ID, seconds);
@@ -2089,6 +2040,14 @@
         // Initialize SocketIO connection
         if (typeof initSocketIO === 'function') {
             initSocketIO(SESSION_ID);
+        }
+
+        // Load XP from DB for students
+        if (!IS_TEACHER) {
+            fetch('/api/me').then(function(r){return r.json();}).then(function(d){
+                var el = document.getElementById('xpDisplay');
+                if (el && d.total_xp !== undefined) el.textContent = d.total_xp;
+            }).catch(function(){});
         }
 
         // 1. Load 100ms SDK via dynamic import
