@@ -3,6 +3,9 @@
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/sidebar.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+{% if current_user.is_admin %}<link rel="stylesheet" href="{{ url_for('static', filename='css/admin.css') }}">{% endif %}
+{% if current_user.is_teacher %}<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">{% endif %}
+{% if current_user.is_student %}<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">{% endif %}
 {% block dashboard_css %}{% endblock %}
 {% endblock %}
 

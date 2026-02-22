@@ -40,6 +40,16 @@
   --info: #0984E3;
   --info-light: #E8F4FD;
 
+  /* Status aliases (used in templates) */
+  --status-success: #00B894;
+  --status-success-bg: #E8F8F5;
+  --status-warning: #F39C12;
+  --status-warning-bg: #FEF9E7;
+  --status-error: #D63031;
+  --status-error-bg: #FDEDEE;
+  --status-info: #0984E3;
+  --status-info-bg: #E8F4FD;
+
   /* === Typography === */
   --font-ar: 'Tajawal', 'Segoe UI', sans-serif;
   --font-en: 'Nunito', 'Segoe UI', sans-serif;
