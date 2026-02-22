@@ -99,6 +99,11 @@
         activitySubmitted = false;
         studentCompletions = 0;
 
+        // Auto-switch to the activities tab so both teacher and student see it
+        if (typeof switchTopTab === 'function') {
+            switchTopTab('activities');
+        }
+
         // Show the activity card area
         showActivityCard(true);
 
@@ -269,10 +274,7 @@
     // -----------------------------------------------------------------------
 
     function showActivityCard(active) {
-        var card = document.querySelector('.room-activity-card');
-        if (!card) return;
-
-        var liveBadge = card.querySelector('.room-activity-live');
+        var liveBadge = document.querySelector('.room-activity-live');
         if (liveBadge) {
             liveBadge.style.display = active ? 'inline-flex' : 'none';
         }
@@ -292,7 +294,7 @@
         updateTimerDisplay(0);
         updateActivityProgress(0, 1);
 
-        var liveBadge = document.querySelector('.room-activity-card .room-activity-live');
+        var liveBadge = document.querySelector('.room-activity-live');
         if (liveBadge) liveBadge.style.display = 'none';
 
         // Show teacher launch panel if teacher
@@ -1228,10 +1230,10 @@
     // -----------------------------------------------------------------------
 
     window.toggleActivitiesPanel = function () {
-        // Scroll to the activity card on mobile or show it
-        var card = document.querySelector('.room-activity-card');
-        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        if (typeof showToast === 'function') showToast('لوحة الأنشطة', 'info');
+        // Switch to the activities tab in center panel
+        if (typeof switchTopTab === 'function') {
+            switchTopTab('activities');
+        }
     };
 
     // -----------------------------------------------------------------------

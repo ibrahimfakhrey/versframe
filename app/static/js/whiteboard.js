@@ -1,8 +1,8 @@
-/* === Whiteboard (Excalidraw Collaboration via iframe) === */
+/* === Whiteboard (WBO Collaboration via iframe) === */
 
 /**
  * Teacher clicks "Start Whiteboard" button.
- * POSTs to server, which generates an Excalidraw collab room URL,
+ * POSTs to server, which generates a WBO board URL,
  * stores it for late joiners, and broadcasts to all via SocketIO.
  */
 function startWhiteboard() {
@@ -42,31 +42,22 @@ function startWhiteboard() {
 }
 
 /**
- * Loads the Excalidraw collaborative whiteboard into the pane.
- * Teacher: full interactive iframe.
- * Student: iframe with pointer-events blocked + view-only badge.
+ * Loads WBO collaborative whiteboard into the pane via iframe.
+ * Both teacher and student get the same interactive board.
  */
 function loadWhiteboard(url) {
     var pane = document.getElementById('pane-whiteboard');
     if (!pane) return;
 
-    var isTeacher = (typeof IS_TEACHER !== 'undefined') && IS_TEACHER;
-
-    var html = '';
-    if (!isTeacher) {
-        html += '<div class="whiteboard-overlay">&#128065; مشاهدة فقط</div>';
-    }
-    html += '<iframe id="whiteboardFrame" class="whiteboard-frame" src="' + url + '" ' +
+    pane.innerHTML = '<iframe id="whiteboardFrame" class="whiteboard-frame" src="' + url + '" ' +
             'allow="clipboard-read; clipboard-write" ' +
             'frameborder="0" allowfullscreen></iframe>';
-
-    pane.innerHTML = html;
 
     // Switch to whiteboard tab
     if (typeof switchSubTab === 'function') switchSubTab('whiteboard');
 
     if (typeof showToast === 'function') {
-        showToast(isTeacher ? 'تم تشغيل السبورة التفاعلية' : 'السبورة التفاعلية متصلة', 'success');
+        showToast('تم تشغيل السبورة التفاعلية', 'success');
     }
 }
 

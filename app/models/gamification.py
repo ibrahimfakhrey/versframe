@@ -119,5 +119,5 @@ class Streak(db.Model):
             self.current_streak = 1
 
         self.last_activity_date = today
-        if self.current_streak > self.longest_streak:
+        if self.current_streak > (self.longest_streak or 0):
             self.longest_streak = self.current_streak

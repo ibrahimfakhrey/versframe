@@ -1,5 +1,4 @@
 import os
-import secrets
 import base64
 import string
 from flask import render_template, jsonify, request
@@ -226,14 +225,16 @@ def start_whiteboard(session_id):
     if not session_obj:
         return jsonify({'error': 'Session not found'}), 404
 
-    # Generate Excalidraw collaboration room credentials
-    alphabet = string.ascii_letters + string.digits
-    room_id = ''.join(secrets.choice(alphabet) for _ in range(20))
-    encryption_key = base64.urlsafe_b64encode(secrets.token_bytes(16)).decode().rstrip('=')
+    # Reuse existing whiteboard if already active
+    existing = _session_whiteboard_state.get(session_id)
+    if existing and existing.get('url'):
+        return jsonify({'ok': True, 'url': existing['url']})
 
-    url = f'https://excalidraw.com/#room={room_id},{encryption_key}'
+    # Generate WBO collaborative whiteboard URL (auto-creates room on visit)
+    import secrets
+    board_id = f'verse-{session_id}-{secrets.token_hex(4)}'
+    url = f'https://wbo.ophir.dev/boards/{board_id}'
 
-    # Store whiteboard state for late joiners
     _session_whiteboard_state[session_id] = {'url': url}
 
     return jsonify({'ok': True, 'url': url})
@@ -284,8 +285,8 @@ def handle_join(data):
 
     # Send current whiteboard state to the joining user (late joiner sync)
     wb_state = _session_whiteboard_state.get(session_id)
-    if wb_state:
-        emit('whiteboard_sync', wb_state)
+    if wb_state and wb_state.get('url'):
+        emit('whiteboard_sync', {'url': wb_state['url']})
 
 
 @socketio.on('leave_session')

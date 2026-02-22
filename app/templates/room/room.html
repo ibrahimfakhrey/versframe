@@ -531,8 +531,10 @@
     border: none;
     border-radius: var(--radius-md);
 }
+/* Whiteboard iframe */
 #pane-whiteboard {
     position: relative;
+    overflow: hidden;
 }
 .whiteboard-overlay {
     position: absolute;
@@ -1390,6 +1392,10 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
                 المحادثة
             </button>
+            <button class="room-topbar-tab" data-top-tab="activities" onclick="switchTopTab('activities')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                الأنشطة
+            </button>
         </div>
 
         <!-- Right: Timer, Students, XP -->
@@ -1478,6 +1484,9 @@
                 </button>
                 <button class="room-sub-tab" data-sub-tab="chat" onclick="switchSubTab('chat')">
                     &#128172; المحادثة
+                </button>
+                <button class="room-sub-tab" data-sub-tab="activities" onclick="switchSubTab('activities')">
+                    &#127919; الأنشطة
                 </button>
             </div>
 
@@ -1638,64 +1647,55 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- === Activities Pane === -->
+                <div class="center-pane" id="pane-activities">
+                    <div class="activity-center-wrapper" dir="rtl" style="display:flex;gap:16px;padding:var(--space-lg);height:100%;overflow:hidden;">
+                        <!-- Activity Content (main area) -->
+                        <div style="flex:1;display:flex;flex-direction:column;min-width:0;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:1.3rem;">&#127919;</span>
+                                    <span id="activityTitle" style="font-size:var(--text-lg);font-weight:var(--fw-bold);color:#2D3436;">نشاط داخل الحصة</span>
+                                    <span class="room-activity-live" style="display:none;">LIVE</span>
+                                </div>
+                                {% if is_teacher %}
+                                <button class="activity-action-btn" style="margin:0;padding:5px 14px;font-size:11px;background:var(--danger);width:auto;border-radius:var(--radius-full);" onclick="endActivity()" id="endActivityBtn" title="إنهاء النشاط">&#9632; إنهاء</button>
+                                {% endif %}
+                            </div>
+
+                            <!-- Timer + Progress row -->
+                            <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+                                <div id="activityTimer" style="font-size:var(--text-2xl);font-weight:800;font-family:var(--font-en);color:#2D3436;">00:00</div>
+                                <div style="flex:1;">
+                                    <div style="display:flex;justify-content:space-between;font-size:11px;color:#636E72;margin-bottom:4px;">
+                                        <span>الإكمال</span>
+                                        <span id="activityProgressText">0 / 0</span>
+                                    </div>
+                                    <div class="progress-bar-track" style="height:8px;background:rgba(180,140,210,0.2);border-radius:var(--radius-full);overflow:hidden;">
+                                        <div class="progress-bar-fill" id="activityProgressBar" style="width:0%;height:100%;border-radius:var(--radius-full);background:linear-gradient(90deg,var(--sv-orange),var(--sv-orange-light));transition:width 0.3s;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dynamic Activity Content -->
+                            <div id="activityContent" style="flex:1;overflow-y:auto;">
+                                <div style="text-align:center;padding:40px 10px;color:#636E72;">
+                                    <div style="font-size:2.5rem;margin-bottom:12px;">&#127919;</div>
+                                    <p style="font-size:15px;font-weight:var(--fw-bold);">لا يوجد نشاط حالياً</p>
+                                    <p style="font-size:12px;margin-top:6px;color:#B2BEC3;">سيظهر النشاط عندما يبدأه المعلم</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
         <!-- ======================== -->
         <!--  RIGHT PANEL - Activity  -->
         <!-- ======================== -->
-        <aside class="room-right-panel">
-            <!-- In-Class Activity Card -->
-            <div class="glass-card room-activity-card" id="activityCard">
-                <div class="card-header">
-                    <span class="card-title">&#127919; <span id="activityTitle">نشاط داخل الحصة</span></span>
-                    <span class="room-activity-live" style="display:none;">LIVE</span>
-                </div>
-
-                <!-- Activity Timer -->
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
-                    <div class="room-activity-timer" id="activityTimer" style="font-size:var(--text-2xl);font-weight:800;font-family:var(--font-en);color:#2D3436;">00:00</div>
-                    {% if is_teacher %}
-                    <button class="activity-action-btn" style="margin:0;padding:5px 12px;font-size:11px;background:var(--danger);width:auto;" onclick="endActivity()" id="endActivityBtn" title="إنهاء النشاط">&#9632; إنهاء</button>
-                    {% endif %}
-                </div>
-
-                <!-- Activity Progress -->
-                <div class="room-activity-progress" id="activityProgress">
-                    <div class="progress-label">
-                        <span>الإكمال</span>
-                        <span id="activityProgressText">0 / 0</span>
-                    </div>
-                    <div class="progress-bar-track">
-                        <div class="progress-bar-fill" id="activityProgressBar" style="width: 0%;"></div>
-                    </div>
-                </div>
-
-                <!-- Dynamic Activity Content Area -->
-                <div id="activityContent" style="margin-top:10px;">
-                    <div style="text-align:center;padding:20px 10px;color:#636E72;">
-                        <div style="font-size:2rem;margin-bottom:8px;">&#127919;</div>
-                        <p style="font-size:13px;">لا يوجد نشاط حالياً</p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Teacher: Timer Controls -->
-            {% if is_teacher %}
-            <div class="glass-card">
-                <div class="card-title" style="margin-bottom:8px;">&#9201; التحكم بالمؤقت</div>
-                <div style="display:flex;gap:6px;">
-                    <button class="activity-action-btn" style="margin:0;" onclick="startCountdownTimer(60)">1 دقيقة</button>
-                    <button class="activity-action-btn" style="margin:0;" onclick="startCountdownTimer(180)">3 دقائق</button>
-                    <button class="activity-action-btn" style="margin:0;" onclick="startCountdownTimer(300)">5 دقائق</button>
-                </div>
-                <div style="display:flex;gap:6px;margin-top:6px;">
-                    <input type="number" id="customTimerInput" min="10" max="3600" value="120" style="flex:1;padding:6px 10px;background:rgba(255,255,255,0.7);border:1px solid rgba(0,0,0,0.08);border-radius:var(--radius-sm);color:#2D3436;font-size:var(--text-sm);text-align:center;">
-                    <button class="activity-action-btn" style="margin:0;flex:1;" onclick="startCountdownTimer(parseInt(document.getElementById('customTimerInput').value)||120)">تشغيل</button>
-                </div>
-            </div>
-            {% endif %}
-        </aside>
+        <!-- Right panel removed — activities moved to center pane -->
     </div>
 
     <!-- ====================== -->
@@ -1805,7 +1805,7 @@
         document.querySelectorAll('.room-topbar-tab').forEach(function(t) { t.classList.remove('active'); });
         var active = document.querySelector('.room-topbar-tab[data-top-tab="' + tabName + '"]');
         if (active) active.classList.add('active');
-        var map = { 'slides': 'slides', 'code': 'code', 'qna': 'qna', 'resources': 'resources', 'whiteboard': 'whiteboard', 'chat': 'chat' };
+        var map = { 'slides': 'slides', 'code': 'code', 'qna': 'qna', 'resources': 'resources', 'whiteboard': 'whiteboard', 'chat': 'chat', 'activities': 'activities' };
         if (map[tabName]) switchSubTab(map[tabName]);
     };
 
