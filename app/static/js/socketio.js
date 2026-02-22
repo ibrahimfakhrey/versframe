@@ -79,7 +79,24 @@ function initSocketIO(sessionId) {
 
     // === Resource Switching ===
     socket.on('resource_switch', (data) => {
-        if (typeof switchResource === 'function') switchResource(data.resource_id, data.resource_type, data.slide_urls);
+        if (data.resource_type === 'video' && data.config && data.config.youtube_url) {
+            if (typeof loadVideo === 'function') loadVideo(data.config.youtube_url);
+            if (typeof switchSubTab === 'function') switchSubTab('video');
+            // Teacher also emits video_load for sync state
+            if (typeof IS_TEACHER !== 'undefined' && IS_TEACHER) {
+                if (typeof emitVideoLoad === 'function') emitVideoLoad(data.session_id, data.config.youtube_url);
+            }
+        } else if (data.resource_type === 'game' && data.config && data.config.activity) {
+            // Start activity from game resource
+            var activity = data.config.activity;
+            activity.id = activity.id || 'game-' + data.resource_id + '-' + Date.now();
+            if (typeof IS_TEACHER !== 'undefined' && IS_TEACHER) {
+                if (typeof emitActivityStart === 'function') emitActivityStart(data.session_id, activity);
+            }
+            if (typeof switchSubTab === 'function') switchSubTab('activities');
+        } else {
+            if (typeof switchResource === 'function') switchResource(data.resource_id, data.resource_type, data.slide_urls);
+        }
     });
 
     // === Slide Sync ===
@@ -161,6 +178,29 @@ function initSocketIO(sessionId) {
     socket.on('whiteboard_sync', (data) => {
         console.log('whiteboard_sync received:', data);
         if (typeof handleWhiteboardStart === 'function') handleWhiteboardStart(data);
+    });
+
+    // === YouTube Video Sync ===
+    socket.on('video_load', (data) => {
+        console.log('video_load received:', data);
+        if (typeof handleVideoLoad === 'function') handleVideoLoad(data);
+    });
+
+    socket.on('video_play', (data) => {
+        if (typeof handleVideoPlay === 'function') handleVideoPlay(data);
+    });
+
+    socket.on('video_pause', (data) => {
+        if (typeof handleVideoPause === 'function') handleVideoPause(data);
+    });
+
+    socket.on('video_seek', (data) => {
+        if (typeof handleVideoSeek === 'function') handleVideoSeek(data);
+    });
+
+    socket.on('video_sync', (data) => {
+        console.log('video_sync (late joiner):', data);
+        if (typeof handleVideoSync === 'function') handleVideoSync(data);
     });
 
     return socket;
@@ -300,5 +340,31 @@ function emitMuteStudent(sessionId, studentId) {
 function emitUnmuteStudent(sessionId, studentId) {
     if (socket && socketConnected) {
         socket.emit('unmute_student', { session_id: sessionId, student_id: studentId });
+    }
+}
+
+/* ---------- Video Emit Helpers ---------- */
+
+function emitVideoLoad(sessionId, youtubeUrl) {
+    if (socket && socketConnected) {
+        socket.emit('video_load', { session_id: sessionId, youtube_url: youtubeUrl });
+    }
+}
+
+function emitVideoPlay(sessionId, currentTime) {
+    if (socket && socketConnected) {
+        socket.emit('video_play', { session_id: sessionId, current_time: currentTime });
+    }
+}
+
+function emitVideoPause(sessionId, currentTime) {
+    if (socket && socketConnected) {
+        socket.emit('video_pause', { session_id: sessionId, current_time: currentTime });
+    }
+}
+
+function emitVideoSeek(sessionId, currentTime) {
+    if (socket && socketConnected) {
+        socket.emit('video_seek', { session_id: sessionId, current_time: currentTime });
     }
 }

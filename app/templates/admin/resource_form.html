@@ -13,59 +13,439 @@
 <a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
 {% endblock %}
 
+{% block dashboard_css %}
+<style>
+.builder-card {
+    position: relative;
+    background: rgba(240, 235, 248, 0.6);
+    border: 1px solid rgba(180, 140, 210, 0.2);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    padding-top: 20px;
+    margin-bottom: 12px;
+}
+.builder-card .card-num {
+    position: absolute; top: -10px; right: 12px;
+    background: var(--sv-purple); color: white;
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+}
+.builder-card .remove-btn {
+    position: absolute; top: 8px; left: 8px;
+    background: rgba(214,48,49,0.1); color: #d63031;
+    border: none; width: 28px; height: 28px; border-radius: 50%;
+    cursor: pointer; font-size: 16px;
+    display: flex; align-items: center; justify-content: center;
+}
+.builder-card .remove-btn:hover { background: rgba(214,48,49,0.2); }
+.add-btn {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+    width: 100%; padding: 12px;
+    border: 2px dashed rgba(180,140,210,0.3); border-radius: var(--radius-md);
+    background: rgba(240,235,248,0.3); color: var(--sv-purple);
+    font-family: var(--font-ar); font-size: var(--text-sm); font-weight: 600;
+    cursor: pointer; transition: all 0.15s;
+}
+.add-btn:hover { background: rgba(240,235,248,0.6); border-color: var(--sv-purple); }
+.mcq-opt-row { display: flex; gap: 8px; margin-bottom: 6px; align-items: center; }
+.mcq-opt-row .form-input { flex: 1; }
+.counter-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 12px; background: var(--sv-orange); color: white;
+    border-radius: var(--radius-full); font-size: 12px; font-weight: 700;
+}
+.type-desc {
+    padding: 12px 16px; margin-bottom: 16px;
+    background: rgba(235,91,0,0.06); border-right: 3px solid var(--sv-orange);
+    border-radius: var(--radius-sm); font-size: var(--text-sm); color: #636E72;
+}
+.type-desc strong { color: #2D3436; }
+</style>
+{% endblock dashboard_css %}
+
 {% block content %}
-<div class="card" style="max-width:600px;">
-    <form method="POST" enctype="multipart/form-data">
+{% set is_edit = resource is defined and resource %}
+
+<div class="card" style="max-width:750px;">
+    <form method="POST" enctype="multipart/form-data" id="resourceForm">
         <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="hidden" name="questions_json" id="questionsJsonInput" value="[]">
+        <input type="hidden" name="videos_json" id="videosJsonInput" value="[]">
+
         <div class="form-group">
             <label class="form-label">الاسم (English)</label>
-            <input type="text" name="name" class="form-input" value="{{ resource.name if resource is defined and resource else '' }}" dir="ltr" required>
+            <input type="text" name="name" class="form-input" value="{{ resource.name if is_edit else '' }}" dir="ltr" required>
         </div>
         <div class="form-group">
             <label class="form-label">الاسم (عربي)</label>
-            <input type="text" name="name_ar" class="form-input" value="{{ resource.name_ar if resource is defined and resource else '' }}" required>
+            <input type="text" name="name_ar" class="form-input" value="{{ resource.name_ar if is_edit else '' }}" required>
         </div>
-        {% if not (resource is defined and resource) %}
+
+        {% if not is_edit %}
         <div class="form-group">
             <label class="form-label">النوع</label>
-            <select name="type" class="form-select">
+            <select name="type" id="resourceType" class="form-select" onchange="toggleResourceFields()">
                 <option value="slides">شرائح (Slides)</option>
                 <option value="code_exercise">تمرين برمجي (Code Exercise)</option>
                 <option value="qna">أسئلة وأجوبة (Q&A)</option>
                 <option value="whiteboard">سبورة (Whiteboard)</option>
-            </select>
-        </div>
-        <div class="form-group">
-            <label class="form-label">المسار</label>
-            <select name="track_id" class="form-select">
-                <option value="">— بدون مسار —</option>
-                {% for t in tracks %}
-                <option value="{{ t.id }}">{{ t.name_ar }}</option>
-                {% endfor %}
+                <option value="video">فيديو يوتيوب (YouTube Video)</option>
+                <option value="game">لعبة / نشاط (Game / Activity)</option>
             </select>
         </div>
         {% endif %}
+
         <div class="form-group">
-            <label class="form-label">رفع ملف</label>
-            <input type="file" name="file" class="form-input" accept=".pdf,.doc,.docx,.pptx,.png,.jpg,.jpeg,.gif,.webp">
-            <div class="form-hint">PDF, Word, PowerPoint أو صور (حد أقصى 50 ميجا للشرائح، 10 ميجا لغيرها)</div>
-            {% if resource is defined and resource and resource.config_json %}
-                {% set config_data = resource.config_json | default('{}', true) %}
-                {% if '"file_url"' in config_data %}
-                <div style="margin-top: var(--space-sm); padding: var(--space-sm); background: var(--success-light); border-radius: var(--radius-md); font-size: var(--text-sm); color: var(--success);">
+            <label class="form-label">المسار <span style="color:var(--status-error);">*</span></label>
+            <select name="track_id" class="form-select" required>
+                <option value="">— اختر المسار —</option>
+                {% for t in tracks %}
+                <option value="{{ t.id }}" {{ 'selected' if is_edit and resource.track_id == t.id else '' }}>{{ t.name_ar }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Type description banner -->
+        <div id="typeDesc"></div>
+
+        <!-- ===== SLIDES — File Upload ===== -->
+        <div id="fields-slides">
+            <div class="form-group">
+                <label class="form-label">رفع ملف العرض</label>
+                <input type="file" name="file" class="form-input" accept=".pdf,.doc,.docx,.pptx,.png,.jpg,.jpeg,.gif,.webp">
+                <div class="form-hint">PDF, PowerPoint أو صور (حد أقصى 50 ميجا)</div>
+                {% if is_edit and resource.config_json and '"file_url"' in resource.config_json %}
+                <div style="margin-top:var(--space-sm);padding:var(--space-sm);background:var(--success-light);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--success);">
                     ملف مرفوع حالياً (سيتم استبداله عند رفع ملف جديد)
                 </div>
                 {% endif %}
-            {% endif %}
+            </div>
+            <div class="form-group">
+                <label class="form-label">إعدادات إضافية (JSON)</label>
+                <textarea name="config_json" class="form-textarea" rows="3" dir="ltr" placeholder='{"slides_count": 10}'>{{ resource.config_json if is_edit and resource.config_json else '' }}</textarea>
+            </div>
         </div>
-        <div class="form-group">
-            <label class="form-label">إعدادات (JSON)</label>
-            <textarea name="config_json" class="form-textarea" rows="4" dir="ltr" placeholder='{"slides_count": 10}'>{{ resource.config_json if resource is defined and resource and resource.config_json else '' }}</textarea>
+
+        <!-- ===== VIDEO — Multiple YouTube URLs ===== -->
+        <div id="fields-video" style="display:none;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+                <label class="form-label" style="margin:0;">فيديوهات يوتيوب</label>
+                <span class="counter-badge" id="videoCount">0 فيديو</span>
+            </div>
+            <div id="videosContainer"></div>
+            <button type="button" class="add-btn" onclick="addVideo()">+ إضافة فيديو</button>
         </div>
-        <div style="display:flex;gap:var(--space-md);">
-            <button type="submit" class="btn btn-primary">{{ 'حفظ التعديلات' if resource is defined and resource else 'إنشاء المورد' }}</button>
+
+        <!-- ===== QUESTION-BASED TYPES (game, code_exercise, qna) ===== -->
+        <div id="fields-questions" style="display:none;">
+            <div class="form-group">
+                <label class="form-label">نوع الأسئلة</label>
+                <select name="game_type" id="gameType" class="form-select" onchange="onGameTypeChange()">
+                    <option value="mcq">اختيار من متعدد (MCQ)</option>
+                    <option value="dragdrop">ترتيب سحب وإفلات (Drag & Drop)</option>
+                    <option value="fillblank">ملء الفراغات (Fill Blank)</option>
+                    <option value="code">تحدي برمجي (Code Challenge)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">عنوان النشاط</label>
+                <input type="text" name="game_title" id="gameTitle" class="form-input" placeholder="مثلاً: اختبار الدوال في بايثون">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+                <div class="form-group">
+                    <label class="form-label">المدة لكل سؤال (ثواني)</label>
+                    <input type="number" name="game_time" id="gameTime" class="form-input" value="60" min="10" max="600" dir="ltr">
+                </div>
+                <div class="form-group" style="display:flex;align-items:flex-end;">
+                    <span class="counter-badge" id="questionCount">0 سؤال</span>
+                </div>
+            </div>
+            <div id="questionsContainer"></div>
+            <button type="button" class="add-btn" id="addQuestionBtn" onclick="addQuestion()">+ إضافة سؤال</button>
+        </div>
+
+        <!-- ===== WHITEBOARD — No extra fields ===== -->
+        <div id="fields-whiteboard" style="display:none;">
+            <div style="text-align:center;padding:24px;color:#636E72;">
+                <span style="font-size:2.5rem;">🖌</span>
+                <p style="margin-top:8px;">السبورة لا تحتاج إعدادات إضافية — سيتم إنشاؤها تلقائياً في الجلسة.</p>
+            </div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-md);margin-top:var(--space-lg);">
+            <button type="submit" class="btn btn-primary">{{ 'حفظ التعديلات' if is_edit else 'إنشاء المورد' }}</button>
             <a href="{{ url_for('admin.resources') }}" class="btn btn-outline">إلغاء</a>
         </div>
     </form>
 </div>
+
+<script>
+var questions = [];
+var videos = [];
+
+/* ==========================================
+   TYPE DESCRIPTIONS & FIELD TOGGLING
+   ========================================== */
+var TYPE_INFO = {
+    slides:        { desc: '<strong>شرائح عرض:</strong> ارفع ملف PDF أو PowerPoint سيتم تحويله لشرائح تفاعلية يعرضها المعلم في الجلسة.', fields: 'slides' },
+    code_exercise: { desc: '<strong>تمرين برمجي:</strong> أنشئ أسئلة برمجية متعددة — اختيار من متعدد، ترتيب كود، ملء فراغات، أو تحدي كتابة كود. سيحلها الطلاب في الجلسة ويحصلون على XP.', fields: 'questions', defaultGame: 'code' },
+    qna:           { desc: '<strong>أسئلة وأجوبة:</strong> أنشئ بنك أسئلة — MCQ أو ملء فراغات. يمكن استخدامها كاختبار سريع أو نشاط داخل الجلسة.', fields: 'questions', defaultGame: 'mcq' },
+    whiteboard:    { desc: '<strong>سبورة تفاعلية:</strong> يفتحها المعلم مباشرة في الجلسة للرسم والشرح مع الطلاب.', fields: 'whiteboard' },
+    video:         { desc: '<strong>فيديو يوتيوب:</strong> أضف فيديو أو أكثر. المعلم يتحكم بالتشغيل والإيقاف والطلاب يشاهدون بالتزامن.', fields: 'video' },
+    game:          { desc: '<strong>لعبة / نشاط:</strong> أنشئ أسئلة تفاعلية متنوعة — MCQ، ترتيب، ملء فراغات، أو كود. يلعبها الطلاب مباشرة ويكسبون XP.', fields: 'questions', defaultGame: 'mcq' },
+};
+
+function toggleResourceFields() {
+    var typeEl = document.getElementById('resourceType');
+    if (!typeEl) return;
+    var val = typeEl.value;
+    var info = TYPE_INFO[val] || TYPE_INFO['slides'];
+
+    // Hide all field sections
+    ['slides', 'video', 'questions', 'whiteboard'].forEach(function(s) {
+        var el = document.getElementById('fields-' + s);
+        if (el) el.style.display = 'none';
+    });
+
+    // Show the right one
+    var target = document.getElementById('fields-' + info.fields);
+    if (target) target.style.display = 'block';
+
+    // Update description banner
+    document.getElementById('typeDesc').innerHTML = '<div class="type-desc">' + info.desc + '</div>';
+
+    // Set default game type for question-based types
+    if (info.fields === 'questions' && info.defaultGame) {
+        var gt = document.getElementById('gameType');
+        if (gt) gt.value = info.defaultGame;
+    }
+}
+
+function getGameType() {
+    var el = document.getElementById('gameType');
+    return el ? el.value : 'mcq';
+}
+
+function onGameTypeChange() {
+    if (questions.length > 0 && !confirm('تغيير النوع سيمسح الأسئلة الحالية. متأكد؟')) {
+        return;
+    }
+    questions = [];
+    renderQuestions();
+}
+
+/* ==========================================
+   VIDEO BUILDER
+   ========================================== */
+function addVideo(url, title) {
+    videos.push({ url: url || '', title: title || '' });
+    renderVideos();
+}
+
+function removeVideo(idx) {
+    videos.splice(idx, 1);
+    renderVideos();
+}
+
+function renderVideos() {
+    var c = document.getElementById('videosContainer');
+    var h = '';
+    videos.forEach(function(v, i) {
+        var vid = extractYTId(v.url);
+        h += '<div class="builder-card">';
+        h += '<span class="card-num">' + (i+1) + '</span>';
+        if (videos.length > 1) h += '<button type="button" class="remove-btn" onclick="removeVideo('+i+')">×</button>';
+        h += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label" style="font-size:12px;">عنوان الفيديو</label>';
+        h += '<input type="text" class="form-input" value="'+esc(v.title)+'" placeholder="فيديو '+(i+1)+'" oninput="videos['+i+'].title=this.value"></div>';
+        h += '<div class="form-group" style="margin-bottom:8px;"><label class="form-label" style="font-size:12px;">رابط يوتيوب</label>';
+        h += '<input type="url" class="form-input" dir="ltr" value="'+esc(v.url)+'" placeholder="https://www.youtube.com/watch?v=..." oninput="videos['+i+'].url=this.value;renderVideos()"></div>';
+        if (vid) h += '<div style="border-radius:var(--radius-md);overflow:hidden;"><iframe width="100%" height="200" src="https://www.youtube.com/embed/'+vid+'" style="border:none;" allowfullscreen></iframe></div>';
+        h += '</div>';
+    });
+    c.innerHTML = h;
+    document.getElementById('videoCount').textContent = videos.length + ' فيديو';
+}
+
+function extractYTId(url) {
+    if (!url) return null;
+    var m = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([a-zA-Z0-9_-]{11})/);
+    return m ? m[1] : null;
+}
+
+/* ==========================================
+   QUESTION BUILDER
+   ========================================== */
+function addQuestion() {
+    var type = getGameType();
+    var q = { type: type };
+    if (type === 'mcq')       { q.question=''; q.options=['','','','']; q.correct=0; }
+    else if (type === 'dragdrop')  { q.instruction=''; q.items=['','','','']; q.correctOrder=[0,1,2,3]; }
+    else if (type === 'fillblank') { q.lines=[{text:'',blanks:[{answer:''}]}]; }
+    else if (type === 'code')      { q.instructions=''; q.starterCode=''; }
+    questions.push(q);
+    renderQuestions();
+    var cards = document.querySelectorAll('#questionsContainer .builder-card');
+    if (cards.length) cards[cards.length-1].scrollIntoView({behavior:'smooth',block:'center'});
+}
+
+function removeQuestion(idx) { questions.splice(idx,1); renderQuestions(); }
+
+function renderQuestions() {
+    var c = document.getElementById('questionsContainer');
+    var type = getGameType();
+    var h = '';
+    questions.forEach(function(q,i) {
+        h += '<div class="builder-card"><span class="card-num">'+(i+1)+'</span>';
+        if (questions.length > 1) h += '<button type="button" class="remove-btn" onclick="removeQuestion('+i+')">×</button>';
+        if (type==='mcq')           h += renderMCQ(q,i);
+        else if (type==='dragdrop') h += renderDragDrop(q,i);
+        else if (type==='fillblank') h += renderFillBlank(q,i);
+        else if (type==='code')     h += renderCode(q,i);
+        h += '</div>';
+    });
+    c.innerHTML = h;
+    document.getElementById('questionCount').textContent = questions.length + ' سؤال';
+    var labels = {mcq:'+ إضافة سؤال MCQ', dragdrop:'+ إضافة سؤال ترتيب', fillblank:'+ إضافة سؤال فراغات', code:'+ إضافة تحدي برمجي'};
+    document.getElementById('addQuestionBtn').textContent = labels[type] || '+ إضافة سؤال';
+}
+
+/* --- MCQ --- */
+function renderMCQ(q, qi) {
+    var h = '<div class="form-group" style="margin-bottom:10px;"><label class="form-label" style="font-size:12px;">السؤال</label>';
+    h += '<input type="text" class="form-input" value="'+esc(q.question)+'" placeholder="اكتب السؤال هنا..." oninput="questions['+qi+'].question=this.value"></div>';
+    h += '<div class="form-group" style="margin-bottom:6px;"><label class="form-label" style="font-size:12px;">الخيارات <span style="color:#636E72;font-weight:400;">(اختر الصحيحة)</span></label>';
+    q.options.forEach(function(opt,oi) {
+        h += '<div class="mcq-opt-row">';
+        h += '<input type="radio" name="q'+qi+'_c" value="'+oi+'" '+(q.correct===oi?'checked':'')+' onchange="questions['+qi+'].correct='+oi+'">';
+        h += '<input type="text" class="form-input" value="'+esc(opt)+'" placeholder="الخيار '+(oi+1)+'" oninput="questions['+qi+'].options['+oi+']=this.value">';
+        if (q.options.length > 2) h += '<button type="button" style="background:none;border:none;color:#d63031;cursor:pointer;font-size:18px;padding:0 4px;" onclick="rmMcqOpt('+qi+','+oi+')">×</button>';
+        h += '</div>';
+    });
+    if (q.options.length < 6) h += '<button type="button" style="background:none;border:1px dashed rgba(180,140,210,0.3);border-radius:var(--radius-sm);padding:6px 12px;color:var(--sv-purple);font-size:12px;cursor:pointer;font-family:var(--font-ar);width:100%;" onclick="addMcqOpt('+qi+')">+ خيار إضافي</button>';
+    h += '</div>';
+    return h;
+}
+function addMcqOpt(qi) { questions[qi].options.push(''); renderQuestions(); }
+function rmMcqOpt(qi,oi) { questions[qi].options.splice(oi,1); if(questions[qi].correct>=questions[qi].options.length) questions[qi].correct=0; renderQuestions(); }
+
+/* --- Drag & Drop --- */
+function renderDragDrop(q, qi) {
+    var h = '<div class="form-group" style="margin-bottom:10px;"><label class="form-label" style="font-size:12px;">التعليمات</label>';
+    h += '<input type="text" class="form-input" value="'+esc(q.instruction||'')+'" placeholder="رتب الأسطر بالترتيب الصحيح" oninput="questions['+qi+'].instruction=this.value"></div>';
+    h += '<div class="form-group" style="margin-bottom:6px;"><label class="form-label" style="font-size:12px;">العناصر بالترتيب الصحيح <span style="color:#636E72;font-weight:400;">(تُخلط للطالب)</span></label>';
+    q.items.forEach(function(item,ii) {
+        h += '<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">';
+        h += '<span style="color:#636E72;font-size:12px;width:20px;text-align:center;">'+(ii+1)+'</span>';
+        h += '<input type="text" class="form-input" dir="ltr" value="'+esc(item)+'" placeholder="العنصر '+(ii+1)+'" oninput="questions['+qi+'].items['+ii+']=this.value" style="flex:1;">';
+        if (q.items.length > 2) h += '<button type="button" style="background:none;border:none;color:#d63031;cursor:pointer;font-size:18px;padding:0 4px;" onclick="rmDragItem('+qi+','+ii+')">×</button>';
+        h += '</div>';
+    });
+    if (q.items.length < 10) h += '<button type="button" style="background:none;border:1px dashed rgba(180,140,210,0.3);border-radius:var(--radius-sm);padding:6px 12px;color:var(--sv-purple);font-size:12px;cursor:pointer;font-family:var(--font-ar);width:100%;" onclick="addDragItem('+qi+')">+ عنصر إضافي</button>';
+    h += '</div>';
+    return h;
+}
+function addDragItem(qi) { questions[qi].items.push(''); questions[qi].correctOrder.push(questions[qi].items.length-1); renderQuestions(); }
+function rmDragItem(qi,ii) { questions[qi].items.splice(ii,1); questions[qi].correctOrder=questions[qi].items.map(function(_,i){return i;}); renderQuestions(); }
+
+/* --- Fill Blank --- */
+function renderFillBlank(q, qi) {
+    var h = '<div class="form-group" style="margin-bottom:6px;"><label class="form-label" style="font-size:12px;">أسطر الكود <span style="color:#636E72;font-weight:400;">(استخدم ___ للفراغ)</span></label>';
+    q.lines.forEach(function(line,li) {
+        h += '<div style="display:flex;gap:8px;margin-bottom:6px;align-items:center;">';
+        h += '<span style="color:#636E72;font-size:11px;width:20px;text-align:center;">'+(li+1)+'</span>';
+        h += '<input type="text" class="form-input" dir="ltr" value="'+esc(line.text)+'" placeholder="x = ___ + 2" oninput="updFillLine('+qi+','+li+',this.value)" style="flex:1;font-family:var(--font-mono);font-size:13px;">';
+        if (q.lines.length > 1) h += '<button type="button" style="background:none;border:none;color:#d63031;cursor:pointer;font-size:18px;padding:0 4px;" onclick="rmFillLine('+qi+','+li+')">×</button>';
+        h += '</div>';
+        if (line.blanks && line.blanks.length) {
+            line.blanks.forEach(function(b,bi) {
+                h += '<div style="display:flex;gap:8px;margin-bottom:4px;margin-right:28px;align-items:center;">';
+                h += '<span style="color:var(--sv-orange);font-size:11px;">إجابة '+(bi+1)+':</span>';
+                h += '<input type="text" class="form-input" dir="ltr" value="'+esc(b.answer)+'" placeholder="الإجابة" oninput="questions['+qi+'].lines['+li+'].blanks['+bi+'].answer=this.value" style="flex:1;max-width:200px;font-family:var(--font-mono);">';
+                h += '</div>';
+            });
+        }
+    });
+    h += '<button type="button" style="background:none;border:1px dashed rgba(180,140,210,0.3);border-radius:var(--radius-sm);padding:6px 12px;color:var(--sv-purple);font-size:12px;cursor:pointer;font-family:var(--font-ar);width:100%;" onclick="addFillLine('+qi+')">+ سطر إضافي</button>';
+    h += '</div>';
+    return h;
+}
+function updFillLine(qi,li,text) {
+    questions[qi].lines[li].text = text;
+    var n = (text.match(/___/g)||[]).length;
+    var b = questions[qi].lines[li].blanks || [];
+    while(b.length < n) b.push({answer:''});
+    while(b.length > n) b.pop();
+    questions[qi].lines[li].blanks = n ? b : [];
+    renderQuestions();
+}
+function addFillLine(qi) { questions[qi].lines.push({text:'',blanks:[]}); renderQuestions(); }
+function rmFillLine(qi,li) { questions[qi].lines.splice(li,1); renderQuestions(); }
+
+/* --- Code Challenge --- */
+function renderCode(q, qi) {
+    var h = '<div class="form-group" style="margin-bottom:10px;"><label class="form-label" style="font-size:12px;">التعليمات</label>';
+    h += '<textarea class="form-textarea" rows="2" placeholder="اكتب دالة تحسب..." oninput="questions['+qi+'].instructions=this.value">'+esc(q.instructions||'')+'</textarea></div>';
+    h += '<div class="form-group"><label class="form-label" style="font-size:12px;">كود البداية</label>';
+    h += '<textarea class="form-textarea" rows="4" dir="ltr" style="font-family:var(--font-mono);font-size:13px;" placeholder="def solve():&#10;    pass" oninput="questions['+qi+'].starterCode=this.value">'+esc(q.starterCode||'')+'</textarea></div>';
+    return h;
+}
+
+/* --- Helpers --- */
+function esc(s) { return s ? s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;') : ''; }
+
+/* --- Submit: serialize --- */
+document.getElementById('resourceForm').addEventListener('submit', function() {
+    document.getElementById('questionsJsonInput').value = JSON.stringify(questions);
+    document.getElementById('videosJsonInput').value = JSON.stringify(videos);
+});
+
+/* ==========================================
+   INIT
+   ========================================== */
+{% if is_edit %}
+    {% if resource.type.value == 'video' %}
+        document.getElementById('fields-slides').style.display = 'none';
+        document.getElementById('fields-video').style.display = 'block';
+        document.getElementById('typeDesc').innerHTML = '<div class="type-desc">' + TYPE_INFO.video.desc + '</div>';
+        try {
+            var cfg = JSON.parse({{ resource.config_json | default('"{}"', true) | tojson }});
+            if (cfg.videos && cfg.videos.length) { cfg.videos.forEach(function(v){videos.push(v);}); }
+            else if (cfg.youtube_url) { videos.push({url:cfg.youtube_url,title:''}); }
+            renderVideos();
+        } catch(e) {}
+    {% elif resource.type.value in ('game','code_exercise','qna') %}
+        document.getElementById('fields-slides').style.display = 'none';
+        document.getElementById('fields-questions').style.display = 'block';
+        document.getElementById('typeDesc').innerHTML = '<div class="type-desc">' + TYPE_INFO['{{ resource.type.value }}'].desc + '</div>';
+        try {
+            var cfg = JSON.parse({{ resource.config_json | default('"{}"', true) | tojson }});
+            if (cfg.activity) {
+                var a = cfg.activity;
+                if (document.getElementById('gameType')) document.getElementById('gameType').value = a.type || 'mcq';
+                if (document.getElementById('gameTitle')) document.getElementById('gameTitle').value = a.title || '';
+                if (document.getElementById('gameTime')) document.getElementById('gameTime').value = a.timeLimit || 60;
+                if (a.questions && a.questions.length) { questions = a.questions; }
+                else {
+                    var q = {type:a.type};
+                    if (a.type==='mcq') {q.question=a.question||'';q.options=a.options||[];q.correct=a.correct||0;}
+                    else if (a.type==='dragdrop') {q.instruction='';q.items=a.items||[];q.correctOrder=a.correctOrder||[];}
+                    else if (a.type==='fillblank') {q.lines=a.lines||[];}
+                    else if (a.type==='code') {q.instructions=a.instructions||'';q.starterCode=a.starterCode||'';}
+                    questions = [q];
+                }
+                renderQuestions();
+            }
+        } catch(e) {}
+    {% elif resource.type.value == 'whiteboard' %}
+        document.getElementById('fields-slides').style.display = 'none';
+        document.getElementById('fields-whiteboard').style.display = 'block';
+        document.getElementById('typeDesc').innerHTML = '<div class="type-desc">' + TYPE_INFO.whiteboard.desc + '</div>';
+    {% else %}
+        document.getElementById('typeDesc').innerHTML = '<div class="type-desc">' + TYPE_INFO.slides.desc + '</div>';
+    {% endif %}
+{% else %}
+    toggleResourceFields();
+{% endif %}
+</script>
 {% endblock %}

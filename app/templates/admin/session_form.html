@@ -1,0 +1,210 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}إنشاء جلسة جديدة{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:700px;">
+    <form method="POST" id="sessionForm">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+            <label class="form-label">عنوان الجلسة <span style="color:var(--status-error);">*</span></label>
+            <input type="text" name="title" class="form-input" required placeholder="مثلاً: مقدمة في بايثون - الدرس 3">
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">المجموعة <span style="color:var(--status-error);">*</span></label>
+            <select name="group_id" id="groupSelect" class="form-select" required onchange="onGroupChange()">
+                <option value="">— اختر المجموعة —</option>
+                {% for g in groups %}
+                <option value="{{ g.id }}" data-track="{{ g.track_id or '' }}" data-teacher="{{ g.teacher_id or '' }}">
+                    {{ g.name }}{% if g.track %} — {{ g.track.name_ar }}{% endif %}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label class="form-label">المعلم <span style="color:var(--status-error);">*</span></label>
+            <select name="teacher_id" id="teacherSelect" class="form-select" required>
+                <option value="">— اختر المعلم —</option>
+                {% for t in teachers %}
+                <option value="{{ t.id }}">{{ t.name_ar }} ({{ t.email }})</option>
+                {% endfor %}
+            </select>
+            <div class="form-hint" id="teacherHint" style="display:none;">تم تعبئة المعلم تلقائياً من المجموعة — يمكنك التغيير</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-md);">
+            <div class="form-group">
+                <label class="form-label">الموعد <span style="color:var(--status-error);">*</span></label>
+                <input type="datetime-local" name="scheduled_at" class="form-input" required dir="ltr">
+            </div>
+            <div class="form-group">
+                <label class="form-label">المدة</label>
+                <select name="duration_minutes" class="form-select">
+                    <option value="30">30 دقيقة</option>
+                    <option value="45">45 دقيقة</option>
+                    <option value="60" selected>60 دقيقة</option>
+                    <option value="90">90 دقيقة</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Resource Picker -->
+        <div class="form-group">
+            <label class="form-label">الموارد</label>
+            <div id="resourcePickerNotice" style="padding:12px;background:rgba(180,140,210,0.08);border-radius:var(--radius-md);color:#636E72;font-size:var(--text-sm);text-align:center;">
+                اختر مجموعة أولاً لعرض الموارد المتاحة
+            </div>
+            <div id="resourceSearch" style="display:none;margin-bottom:8px;">
+                <input type="text" id="resourceSearchInput" class="form-input" placeholder="ابحث عن مورد..." oninput="filterResources()">
+            </div>
+            <div id="resourceList" style="display:none;max-height:280px;overflow-y:auto;border:1px solid var(--border);border-radius:var(--radius-md);padding:8px;"></div>
+            <div id="selectedResources" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;"></div>
+        </div>
+
+        <div style="display:flex;gap:var(--space-md);">
+            <button type="submit" class="btn btn-primary">إنشاء الجلسة</button>
+            <a href="{{ url_for('admin.sessions') }}" class="btn btn-outline">إلغاء</a>
+        </div>
+    </form>
+</div>
+
+<script>
+var selectedResourceIds = [];
+var allResources = [];
+
+function onGroupChange() {
+    var sel = document.getElementById('groupSelect');
+    var opt = sel.options[sel.selectedIndex];
+    var trackId = opt.getAttribute('data-track');
+    var teacherId = opt.getAttribute('data-teacher');
+
+    // Auto-fill teacher
+    if (teacherId) {
+        document.getElementById('teacherSelect').value = teacherId;
+        document.getElementById('teacherHint').style.display = 'block';
+    } else {
+        document.getElementById('teacherHint').style.display = 'none';
+    }
+
+    // Load resources for this track
+    if (trackId) {
+        loadResources(trackId);
+    } else if (sel.value) {
+        loadResources('');
+    } else {
+        document.getElementById('resourcePickerNotice').style.display = 'block';
+        document.getElementById('resourceSearch').style.display = 'none';
+        document.getElementById('resourceList').style.display = 'none';
+    }
+}
+
+function loadResources(trackId) {
+    var url = '{{ url_for("admin.api_resources") }}';
+    if (trackId) url += '?track_id=' + encodeURIComponent(trackId);
+
+    fetch(url).then(function(r) { return r.json(); }).then(function(data) {
+        allResources = data;
+        document.getElementById('resourcePickerNotice').style.display = 'none';
+        document.getElementById('resourceSearch').style.display = 'block';
+        document.getElementById('resourceList').style.display = 'block';
+        renderResources(data);
+    }).catch(function() {
+        document.getElementById('resourcePickerNotice').textContent = 'خطأ في تحميل الموارد';
+        document.getElementById('resourcePickerNotice').style.display = 'block';
+    });
+}
+
+function renderResources(resources) {
+    var container = document.getElementById('resourceList');
+    if (!resources.length) {
+        container.innerHTML = '<div style="text-align:center;padding:16px;color:#636E72;">لا توجد موارد لهذا المسار</div>';
+        return;
+    }
+    var html = '';
+    resources.forEach(function(r) {
+        var checked = selectedResourceIds.indexOf(r.id) !== -1 ? 'checked' : '';
+        var icon = getTypeIcon(r.type);
+        var badge = getTypeBadge(r.type);
+        html += '<label style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;transition:background 0.15s;" onmouseover="this.style.background=\'rgba(180,140,210,0.08)\'" onmouseout="this.style.background=\'none\'" data-name="' + (r.name_ar || r.name).toLowerCase() + '">';
+        html += '<input type="checkbox" value="' + r.id + '" ' + checked + ' onchange="toggleResource(' + r.id + ',this.checked)" style="width:18px;height:18px;">';
+        html += '<span style="font-size:1.2rem;">' + icon + '</span>';
+        html += '<span style="flex:1;font-size:var(--text-sm);">' + (r.name_ar || r.name) + '</span>';
+        html += badge;
+        html += '</label>';
+    });
+    container.innerHTML = html;
+}
+
+function getTypeIcon(type) {
+    var icons = { slides: '📊', code_exercise: '💻', video: '🎬', game: '🎮', qna: '❓', whiteboard: '🖌' };
+    return icons[type] || '📄';
+}
+
+function getTypeBadge(type) {
+    var labels = { slides: 'شرائح', code_exercise: 'كود', video: 'فيديو', game: 'لعبة', qna: 'سؤال', whiteboard: 'سبورة' };
+    var colors = { video: '#d63031', game: '#00b894', slides: '#0984e3', code_exercise: '#6c5ce7' };
+    var color = colors[type] || '#636E72';
+    return '<span style="font-size:10px;padding:2px 8px;border-radius:var(--radius-full);background:' + color + '15;color:' + color + ';font-weight:600;">' + (labels[type] || type) + '</span>';
+}
+
+function toggleResource(id, checked) {
+    if (checked && selectedResourceIds.indexOf(id) === -1) {
+        selectedResourceIds.push(id);
+    } else if (!checked) {
+        selectedResourceIds = selectedResourceIds.filter(function(x) { return x !== id; });
+    }
+    updateSelectedChips();
+    updateHiddenInputs();
+}
+
+function updateSelectedChips() {
+    var container = document.getElementById('selectedResources');
+    var html = '';
+    selectedResourceIds.forEach(function(id) {
+        var r = allResources.find(function(x) { return x.id === id; });
+        if (!r) return;
+        html += '<span style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;background:var(--sv-orange);color:white;border-radius:var(--radius-full);font-size:11px;font-weight:600;">';
+        html += getTypeIcon(r.type) + ' ' + (r.name_ar || r.name);
+        html += '<button type="button" onclick="toggleResource(' + id + ',false);document.querySelector(\'input[value=\\x27' + id + '\\x27]\').checked=false;" style="background:none;border:none;color:white;cursor:pointer;font-size:14px;padding:0 2px;">×</button>';
+        html += '</span>';
+    });
+    container.innerHTML = html;
+}
+
+function updateHiddenInputs() {
+    // Remove old hidden inputs
+    document.querySelectorAll('input[name="resource_ids"]').forEach(function(el) { el.remove(); });
+    var form = document.getElementById('sessionForm');
+    selectedResourceIds.forEach(function(id) {
+        var inp = document.createElement('input');
+        inp.type = 'hidden';
+        inp.name = 'resource_ids';
+        inp.value = id;
+        form.appendChild(inp);
+    });
+}
+
+function filterResources() {
+    var q = document.getElementById('resourceSearchInput').value.trim().toLowerCase();
+    var labels = document.querySelectorAll('#resourceList label');
+    labels.forEach(function(label) {
+        var name = label.getAttribute('data-name') || '';
+        label.style.display = (!q || name.indexOf(q) !== -1) ? 'flex' : 'none';
+    });
+}
+</script>
+{% endblock %}

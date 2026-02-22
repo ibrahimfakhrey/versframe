@@ -4,7 +4,7 @@ from flask_login import current_user
 from app.blueprints.admin import bp
 from app.extensions import db
 from app.models.user import User, Role
-from app.models.classroom import Group, GroupStudent, Session, SessionStatus
+from app.models.classroom import Group, GroupStudent, Session, SessionStatus, SessionResource
 from app.models.resource import Resource, ResourceType
 from app.models.curriculum import Track, Level
 from app.models.gamification import StudentXP
@@ -237,14 +237,19 @@ def session_detail(session_id):
 def resources():
     page = safe_int(request.args.get('page', 1))
     type_filter = request.args.get('type', '')
+    track_filter = request.args.get('track_id', '')
     query = Resource.query.order_by(Resource.created_at.desc())
     if type_filter:
         try:
             query = query.filter_by(type=ResourceType(type_filter))
         except ValueError:
             pass
+    if track_filter:
+        query = query.filter_by(track_id=track_filter)
     result = paginate(query, page)
-    return render_template('admin/resources.html', **result, type_filter=type_filter)
+    tracks = Track.query.order_by(Track.sort_order).all()
+    return render_template('admin/resources.html', **result, type_filter=type_filter,
+                           track_filter=track_filter, tracks=tracks)
 
 
 @bp.route('/resources/new', methods=['GET', 'POST'])
@@ -255,36 +260,73 @@ def resource_create():
         name_ar = request.form.get('name_ar', '').strip()
         type_str = request.form.get('type', 'slides')
         track_id = request.form.get('track_id') or None
-        config_json = request.form.get('config_json', '')
 
         try:
             rtype = ResourceType(type_str)
         except ValueError:
             rtype = ResourceType.SLIDES
 
-        # Handle file upload
-        uploaded_file = request.files.get('file')
-        if uploaded_file and uploaded_file.filename:
-            # Determine subfolder based on resource type
-            subfolder = 'slides' if rtype == ResourceType.SLIDES else 'resources'
-            allowed = ALLOWED_DOCUMENTS | ALLOWED_IMAGES
-            saved_name = save_upload(uploaded_file, subfolder, allowed)
-            if saved_name:
-                file_url = get_upload_url(saved_name, subfolder)
-                # Merge file_url into config_json
-                try:
-                    config_data = json.loads(config_json) if config_json else {}
-                except (json.JSONDecodeError, TypeError):
-                    config_data = {}
-                config_data['file_url'] = file_url
-                config_json = json.dumps(config_data, ensure_ascii=False)
-            else:
-                flash('فشل رفع الملف. تأكد من نوع وحجم الملف.', 'error')
+        config_data = {}
+
+        # Build config_json based on type
+        if rtype == ResourceType.VIDEO:
+            videos_raw = request.form.get('videos_json', '[]')
+            try:
+                videos = json.loads(videos_raw)
+            except (json.JSONDecodeError, TypeError):
+                videos = []
+            config_data['videos'] = videos
+            if videos:
+                config_data['youtube_url'] = videos[0].get('url', '')
+
+        elif rtype in (ResourceType.GAME, ResourceType.CODE_EXERCISE, ResourceType.QNA):
+            # All question-based types use the same questions_json builder
+            game_type = request.form.get('game_type', 'mcq')
+            game_title = request.form.get('game_title', '').strip()
+            game_time = safe_int(request.form.get('game_time', 60), 60)
+            questions_raw = request.form.get('questions_json', '[]')
+            try:
+                questions = json.loads(questions_raw)
+            except (json.JSONDecodeError, TypeError):
+                questions = []
+            game_config = {
+                'type': game_type,
+                'title': game_title or name_ar,
+                'timeLimit': game_time,
+                'questions': questions,
+            }
+            if questions and game_type == 'mcq':
+                q = questions[0]
+                game_config['question'] = q.get('question', '')
+                game_config['options'] = q.get('options', [])
+                game_config['correct'] = q.get('correct', 0)
+            config_data['activity'] = game_config
+
+        elif rtype == ResourceType.SLIDES:
+            raw_config = request.form.get('config_json', '')
+            try:
+                config_data = json.loads(raw_config) if raw_config else {}
+            except (json.JSONDecodeError, TypeError):
+                config_data = {}
+            uploaded_file = request.files.get('file')
+            if uploaded_file and uploaded_file.filename:
+                allowed = ALLOWED_DOCUMENTS | ALLOWED_IMAGES
+                saved_name = save_upload(uploaded_file, 'slides', allowed)
+                if saved_name:
+                    config_data['file_url'] = get_upload_url(saved_name, 'slides')
+                else:
+                    flash('فشل رفع الملف. تأكد من نوع وحجم الملف.', 'error')
+
+        else:
+            # WHITEBOARD, SCREEN_SHARE — minimal config
+            config_data = {}
+
+        config_json = json.dumps(config_data, ensure_ascii=False) if config_data else None
 
         resource = Resource(
             name=name, name_ar=name_ar, type=rtype,
             track_id=track_id, created_by=current_user.id,
-            config_json=config_json or None,
+            config_json=config_json,
         )
         db.session.add(resource)
         db.session.commit()
@@ -306,36 +348,65 @@ def resource_edit(resource_id):
     if request.method == 'POST':
         resource.name = request.form.get('name', resource.name).strip()
         resource.name_ar = request.form.get('name_ar', resource.name_ar).strip()
-        config_json = request.form.get('config_json', '')
 
-        # Handle file upload on edit
-        uploaded_file = request.files.get('file')
-        if uploaded_file and uploaded_file.filename:
-            subfolder = 'slides' if resource.type == ResourceType.SLIDES else 'resources'
-            allowed = ALLOWED_DOCUMENTS | ALLOWED_IMAGES
-            saved_name = save_upload(uploaded_file, subfolder, allowed)
-            if saved_name:
-                # Delete old file if exists
-                try:
-                    old_config = json.loads(resource.config_json) if resource.config_json else {}
-                    old_url = old_config.get('file_url', '')
-                    if old_url:
-                        old_filename = old_url.rsplit('/', 1)[-1]
-                        old_subfolder = 'slides' if '/slides/' in old_url else 'resources'
-                        delete_upload(old_filename, old_subfolder)
-                except (json.JSONDecodeError, TypeError):
-                    pass
-                file_url = get_upload_url(saved_name, subfolder)
-                try:
-                    config_data = json.loads(config_json) if config_json else {}
-                except (json.JSONDecodeError, TypeError):
-                    config_data = {}
-                config_data['file_url'] = file_url
-                config_json = json.dumps(config_data, ensure_ascii=False)
-            else:
-                flash('فشل رفع الملف. تأكد من نوع وحجم الملف.', 'error')
+        config_data = {}
 
-        resource.config_json = config_json or None
+        if resource.type == ResourceType.VIDEO:
+            videos_raw = request.form.get('videos_json', '[]')
+            try:
+                videos = json.loads(videos_raw)
+            except (json.JSONDecodeError, TypeError):
+                videos = []
+            config_data['videos'] = videos
+            if videos:
+                config_data['youtube_url'] = videos[0].get('url', '')
+        elif resource.type in (ResourceType.GAME, ResourceType.CODE_EXERCISE, ResourceType.QNA):
+            game_type = request.form.get('game_type', 'mcq')
+            game_title = request.form.get('game_title', '').strip()
+            game_time = safe_int(request.form.get('game_time', 60), 60)
+            questions_raw = request.form.get('questions_json', '[]')
+            try:
+                questions = json.loads(questions_raw)
+            except (json.JSONDecodeError, TypeError):
+                questions = []
+            game_config = {
+                'type': game_type,
+                'title': game_title or resource.name_ar,
+                'timeLimit': game_time,
+                'questions': questions,
+            }
+            if questions and game_type == 'mcq':
+                q = questions[0]
+                game_config['question'] = q.get('question', '')
+                game_config['options'] = q.get('options', [])
+                game_config['correct'] = q.get('correct', 0)
+            config_data['activity'] = game_config
+        else:
+            raw_config = request.form.get('config_json', '')
+            try:
+                config_data = json.loads(raw_config) if raw_config else {}
+            except (json.JSONDecodeError, TypeError):
+                config_data = {}
+            uploaded_file = request.files.get('file')
+            if uploaded_file and uploaded_file.filename:
+                subfolder = 'slides' if resource.type == ResourceType.SLIDES else 'resources'
+                allowed = ALLOWED_DOCUMENTS | ALLOWED_IMAGES
+                saved_name = save_upload(uploaded_file, subfolder, allowed)
+                if saved_name:
+                    try:
+                        old_config = json.loads(resource.config_json) if resource.config_json else {}
+                        old_url = old_config.get('file_url', '')
+                        if old_url:
+                            old_filename = old_url.rsplit('/', 1)[-1]
+                            old_subfolder = 'slides' if '/slides/' in old_url else 'resources'
+                            delete_upload(old_filename, old_subfolder)
+                    except (json.JSONDecodeError, TypeError):
+                        pass
+                    config_data['file_url'] = get_upload_url(saved_name, subfolder)
+                else:
+                    flash('فشل رفع الملف. تأكد من نوع وحجم الملف.', 'error')
+
+        resource.config_json = json.dumps(config_data, ensure_ascii=False) if config_data else None
         db.session.commit()
         flash('تم تحديث المورد بنجاح', 'success')
         return redirect(url_for('admin.resources'))
@@ -363,6 +434,96 @@ def resource_delete(resource_id):
         db.session.commit()
         flash('تم حذف المورد', 'success')
     return redirect(url_for('admin.resources'))
+
+
+# --- Session Creator ---
+
+@bp.route('/sessions/new', methods=['GET', 'POST'])
+@admin_required
+def session_create():
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        group_id = safe_int(request.form.get('group_id'), None)
+        teacher_id = safe_int(request.form.get('teacher_id'), None)
+        scheduled_at_str = request.form.get('scheduled_at', '')
+        duration = safe_int(request.form.get('duration_minutes', 60), 60)
+        resource_ids = request.form.getlist('resource_ids')
+
+        if not title or not group_id or not teacher_id or not scheduled_at_str:
+            flash('يرجى ملء جميع الحقول المطلوبة', 'error')
+            groups = Group.query.filter_by(is_active=True).order_by(Group.name).all()
+            teachers = User.query.filter_by(role=Role.TEACHER, is_active=True).all()
+            return render_template('admin/session_form.html', groups=groups, teachers=teachers)
+
+        try:
+            scheduled_at = datetime.strptime(scheduled_at_str, '%Y-%m-%dT%H:%M')
+        except ValueError:
+            flash('صيغة التاريخ غير صحيحة', 'error')
+            groups = Group.query.filter_by(is_active=True).order_by(Group.name).all()
+            teachers = User.query.filter_by(role=Role.TEACHER, is_active=True).all()
+            return render_template('admin/session_form.html', groups=groups, teachers=teachers)
+
+        session_obj = Session(
+            title=title,
+            group_id=group_id,
+            teacher_id=teacher_id,
+            scheduled_at=scheduled_at,
+            duration_minutes=duration,
+            status=SessionStatus.SCHEDULED,
+        )
+        db.session.add(session_obj)
+        db.session.flush()
+
+        for i, rid in enumerate(resource_ids):
+            rid_int = safe_int(rid, None)
+            if rid_int:
+                sr = SessionResource(
+                    session_id=session_obj.id,
+                    resource_id=rid_int,
+                    sort_order=i,
+                )
+                db.session.add(sr)
+
+        db.session.commit()
+        flash('تم إنشاء الجلسة بنجاح', 'success')
+        return redirect(url_for('admin.sessions'))
+
+    groups = Group.query.filter_by(is_active=True).order_by(Group.name).all()
+    teachers = User.query.filter_by(role=Role.TEACHER, is_active=True).all()
+    return render_template('admin/session_form.html', groups=groups, teachers=teachers)
+
+
+# --- API Endpoints ---
+
+@bp.route('/api/resources')
+@admin_required
+def api_resources():
+    track_id = request.args.get('track_id', '')
+    query = Resource.query.order_by(Resource.created_at.desc())
+    if track_id:
+        query = query.filter_by(track_id=track_id)
+    resources_list = query.all()
+    return jsonify([{
+        'id': r.id,
+        'name': r.name,
+        'name_ar': r.name_ar,
+        'type': r.type.value,
+        'track_id': r.track_id,
+    } for r in resources_list])
+
+
+@bp.route('/api/groups/<int:group_id>')
+@admin_required
+def api_group_detail(group_id):
+    group = db.session.get(Group, group_id)
+    if not group:
+        return jsonify({'error': 'not found'}), 404
+    return jsonify({
+        'id': group.id,
+        'name': group.name,
+        'track_id': group.track_id,
+        'teacher_id': group.teacher_id,
+    })
 
 
 # --- Reports ---

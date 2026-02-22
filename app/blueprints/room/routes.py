@@ -1,4 +1,5 @@
 import os
+import json
 import base64
 import string
 from flask import render_template, jsonify, request
@@ -17,6 +18,9 @@ _session_slide_state = {}
 
 # Track whiteboard state per session: session_id -> {url}
 _session_whiteboard_state = {}
+
+# Track video state per session: session_id -> {youtube_url, current_time, is_playing}
+_session_video_state = {}
 
 
 @bp.route('/<int:session_id>')
@@ -95,11 +99,20 @@ def activate_resource(session_id):
         sr.is_active = True
         db.session.commit()
 
+        # Build extra data for video/game types
+        extra = {}
+        if sr.resource and sr.resource.config_json:
+            try:
+                extra = json.loads(sr.resource.config_json)
+            except (json.JSONDecodeError, TypeError):
+                pass
+
         # Emit to all users in room
         socketio.emit('resource_switch', {
             'session_id': session_id,
             'resource_id': resource_id,
             'resource_type': sr.resource.type.value if sr.resource else '',
+            'config': extra,
         }, room=f'session_{session_id}')
 
     return jsonify({'ok': True})
@@ -287,6 +300,11 @@ def handle_join(data):
     wb_state = _session_whiteboard_state.get(session_id)
     if wb_state and wb_state.get('url'):
         emit('whiteboard_sync', {'url': wb_state['url']})
+
+    # Send current video state to the joining user (late joiner sync)
+    video_state = _session_video_state.get(session_id)
+    if video_state and video_state.get('youtube_url'):
+        emit('video_sync', video_state)
 
 
 @socketio.on('leave_session')
@@ -620,3 +638,69 @@ def handle_unmute_student(data):
         'target': 'student',
         'student_id': student_id,
     }, room=f'session_{session_id}')
+
+
+# === YouTube Video Sync Handlers ===
+
+@socketio.on('video_load')
+def handle_video_load(data):
+    """Teacher loads a YouTube video — broadcast URL to room."""
+    if not current_user.is_authenticated or current_user.role not in (Role.TEACHER, Role.ADMIN):
+        return
+    session_id = data.get('session_id')
+    youtube_url = data.get('youtube_url', '')
+    if not session_id or not youtube_url:
+        return
+    _session_video_state[session_id] = {
+        'youtube_url': youtube_url,
+        'current_time': 0,
+        'is_playing': False,
+    }
+    emit('video_load', {'youtube_url': youtube_url}, room=f'session_{session_id}')
+
+
+@socketio.on('video_play')
+def handle_video_play(data):
+    """Teacher plays video — broadcast to room."""
+    if not current_user.is_authenticated or current_user.role not in (Role.TEACHER, Role.ADMIN):
+        return
+    session_id = data.get('session_id')
+    current_time = data.get('current_time', 0)
+    if not session_id:
+        return
+    state = _session_video_state.get(session_id, {})
+    state['is_playing'] = True
+    state['current_time'] = current_time
+    _session_video_state[session_id] = state
+    emit('video_play', {'current_time': current_time}, room=f'session_{session_id}', include_self=False)
+
+
+@socketio.on('video_pause')
+def handle_video_pause(data):
+    """Teacher pauses video — broadcast to room."""
+    if not current_user.is_authenticated or current_user.role not in (Role.TEACHER, Role.ADMIN):
+        return
+    session_id = data.get('session_id')
+    current_time = data.get('current_time', 0)
+    if not session_id:
+        return
+    state = _session_video_state.get(session_id, {})
+    state['is_playing'] = False
+    state['current_time'] = current_time
+    _session_video_state[session_id] = state
+    emit('video_pause', {'current_time': current_time}, room=f'session_{session_id}', include_self=False)
+
+
+@socketio.on('video_seek')
+def handle_video_seek(data):
+    """Teacher seeks video — broadcast to room."""
+    if not current_user.is_authenticated or current_user.role not in (Role.TEACHER, Role.ADMIN):
+        return
+    session_id = data.get('session_id')
+    current_time = data.get('current_time', 0)
+    if not session_id:
+        return
+    state = _session_video_state.get(session_id, {})
+    state['current_time'] = current_time
+    _session_video_state[session_id] = state
+    emit('video_seek', {'current_time': current_time}, room=f'session_{session_id}', include_self=False)

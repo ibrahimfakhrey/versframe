@@ -1380,6 +1380,10 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 سؤال وجواب
             </button>
+            <button class="room-topbar-tab" data-top-tab="video" onclick="switchTopTab('video')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg>
+                الفيديو
+            </button>
             <button class="room-topbar-tab" data-top-tab="whiteboard" onclick="switchTopTab('whiteboard')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
                 السبورة
@@ -1478,6 +1482,9 @@
                 </button>
                 <button class="room-sub-tab" data-sub-tab="qna" onclick="switchSubTab('qna')">
                     &#10067; سؤال وجواب
+                </button>
+                <button class="room-sub-tab" data-sub-tab="video" onclick="switchSubTab('video')">
+                    &#127909; الفيديو
                 </button>
                 <button class="room-sub-tab" data-sub-tab="whiteboard" onclick="switchSubTab('whiteboard')">
                     &#128396; السبورة
@@ -1599,7 +1606,7 @@
                         <div class="glass-card" style="cursor:pointer;" onclick="loadResource({{ res.id }}, '{{ res.resource.type.value if res.resource else '' }}')">
                             <div style="display:flex;align-items:center;gap:10px;">
                                 <span style="font-size:1.5rem;">
-                                    {% if res.resource and res.resource.type.value == 'slides' %}&#128202;{% elif res.resource and res.resource.type.value == 'code_exercise' %}&#128187;{% else %}&#128196;{% endif %}
+                                    {% if res.resource and res.resource.type.value == 'slides' %}&#128202;{% elif res.resource and res.resource.type.value == 'code_exercise' %}&#128187;{% elif res.resource and res.resource.type.value == 'video' %}&#127909;{% elif res.resource and res.resource.type.value == 'game' %}&#127918;{% else %}&#128196;{% endif %}
                                 </span>
                                 <div>
                                     <div style="font-weight:var(--fw-bold);font-size:var(--text-sm);">{{ res.resource.name_ar if res.resource else 'مورد' }}</div>
@@ -1613,6 +1620,20 @@
                             <p>لا توجد موارد لهذه الجلسة</p>
                         </div>
                         {% endif %}
+                    </div>
+                </div>
+
+                <!-- === Video Pane === -->
+                <div class="center-pane" id="pane-video" style="position:relative;">
+                    <div id="videoPlaceholder" style="flex:1;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;color:#636E72;">
+                        <span style="font-size:3rem;">&#127909;</span>
+                        <p>لا يوجد فيديو حالياً</p>
+                        <p style="font-size:var(--text-xs);">سيظهر الفيديو عندما يقوم المعلم بتحميله</p>
+                    </div>
+                    <div id="ytPlayerContainer" style="display:none;flex:1;position:relative;min-height:300px;">
+                        <div id="ytPlayer" style="width:100%;height:100%;border-radius:var(--radius-md);"></div>
+                        <!-- Student overlay: blocks clicks on iframe -->
+                        <div id="videoStudentOverlay" style="display:none;position:absolute;top:0;left:0;right:0;bottom:0;z-index:5;cursor:not-allowed;"></div>
                     </div>
                 </div>
 
@@ -1760,6 +1781,8 @@
 <script src="{{ url_for('static', filename='js/whiteboard.js') }}"></script>
 <!-- In-Class Activities -->
 <script src="{{ url_for('static', filename='js/activities.js') }}"></script>
+<!-- YouTube Video Player -->
+<script src="{{ url_for('static', filename='js/video.js') }}"></script>
 
 <script>
 (function() {
@@ -1805,7 +1828,7 @@
         document.querySelectorAll('.room-topbar-tab').forEach(function(t) { t.classList.remove('active'); });
         var active = document.querySelector('.room-topbar-tab[data-top-tab="' + tabName + '"]');
         if (active) active.classList.add('active');
-        var map = { 'slides': 'slides', 'code': 'code', 'qna': 'qna', 'resources': 'resources', 'whiteboard': 'whiteboard', 'chat': 'chat', 'activities': 'activities' };
+        var map = { 'slides': 'slides', 'code': 'code', 'qna': 'qna', 'resources': 'resources', 'video': 'video', 'whiteboard': 'whiteboard', 'chat': 'chat', 'activities': 'activities' };
         if (map[tabName]) switchSubTab(map[tabName]);
     };
 
@@ -1965,8 +1988,16 @@
     };
 
     window.loadResource = function(resourceId, resourceType) {
-        if (IS_TEACHER && typeof activateResource === 'function') activateResource(resourceId);
-        if (typeof switchResource === 'function') switchResource(resourceId, resourceType);
+        // activateResource sends POST to server which emits resource_switch
+        // resource_switch handler in socketio.js handles video/game/slides routing
+        if (IS_TEACHER && typeof activateResource === 'function') {
+            activateResource(resourceId);
+        } else {
+            // Student fallback: switch tab based on type
+            if (resourceType === 'video') switchSubTab('video');
+            else if (resourceType === 'game') switchSubTab('activities');
+            else if (typeof switchResource === 'function') switchResource(resourceId, resourceType);
+        }
     };
 
     /* ============================

@@ -9,6 +9,8 @@ class ResourceType(enum.Enum):
     QNA = 'qna'
     WHITEBOARD = 'whiteboard'
     SCREEN_SHARE = 'screen_share'
+    VIDEO = 'video'
+    GAME = 'game'
 
 
 class FileType(enum.Enum):
