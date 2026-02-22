@@ -8,7 +8,7 @@ from app.models.homework import Homework, HomeworkSubmission
 from app.models.gamification import StudentXP
 from app.utils.decorators import teacher_required
 from app.utils.helpers import paginate, safe_int
-from datetime import datetime, timezone
+from datetime import datetime, date, timedelta, timezone
 
 
 @bp.route('/')
@@ -23,6 +23,34 @@ def dashboard():
     ).order_by(Session.scheduled_at.desc()).limit(5).all()
     return render_template('teacher/dashboard.html',
                            groups=my_groups, upcoming=upcoming_sessions, recent=recent_sessions)
+
+
+@bp.route('/timetable')
+@teacher_required
+def timetable():
+    offset = request.args.get('week_offset', 0, type=int)
+    today = date.today()
+    # Saturday = start of Arabic week (weekday(): Mon=0 … Sun=6)
+    start = today - timedelta(days=(today.weekday() + 2) % 7) + timedelta(weeks=offset)
+    end = start + timedelta(days=7)
+
+    sessions = Session.query.filter(
+        Session.teacher_id == current_user.id,
+        Session.scheduled_at >= datetime.combine(start, datetime.min.time()),
+        Session.scheduled_at < datetime.combine(end, datetime.min.time())
+    ).order_by(Session.scheduled_at).all()
+
+    day_names = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة']
+    days = []
+    for i in range(7):
+        d = start + timedelta(days=i)
+        day_sessions = [s for s in sessions if s.scheduled_at and s.scheduled_at.date() == d]
+        days.append({'date': d, 'name': day_names[i], 'sessions': day_sessions, 'is_today': d == today})
+
+    week_label = f"{start.strftime('%Y-%m-%d')} → {(end - timedelta(days=1)).strftime('%Y-%m-%d')}"
+
+    return render_template('teacher/timetable.html',
+                           days=days, week_offset=offset, week_label=week_label)
 
 
 @bp.route('/groups')

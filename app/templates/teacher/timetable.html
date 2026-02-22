@@ -1,0 +1,99 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}الجدول الأسبوعي - شلبي فيرس{% endblock %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/teacher.css') }}">
+{% endblock %}
+
+{% block sidebar_nav %}
+<a href="{{ url_for('teacher.dashboard') }}" class="sidebar-link">
+    <span class="sidebar-icon">🏠</span>
+    <span>الرئيسية</span>
+</a>
+<a href="{{ url_for('teacher.groups') }}" class="sidebar-link">
+    <span class="sidebar-icon">👥</span>
+    <span>المجموعات</span>
+</a>
+<a href="{{ url_for('teacher.sessions') }}" class="sidebar-link">
+    <span class="sidebar-icon">📅</span>
+    <span>الجلسات</span>
+</a>
+<a href="{{ url_for('teacher.timetable') }}" class="sidebar-link active">
+    <span class="sidebar-icon">🗓</span>
+    <span>الجدول الأسبوعي</span>
+</a>
+<a href="{{ url_for('teacher.homework') }}" class="sidebar-link">
+    <span class="sidebar-icon">📝</span>
+    <span>الواجبات</span>
+</a>
+{% endblock %}
+
+{% block topbar_title %}الجدول الأسبوعي{% endblock %}
+
+{% block content %}
+<!-- Week Navigation -->
+<div class="timetable-week-nav">
+    <a href="{{ url_for('teacher.timetable', week_offset=week_offset - 1) }}" class="btn btn-ghost btn-sm">
+        الأسبوع القادم →
+    </a>
+    <div class="timetable-week-label">
+        <span>{{ week_label }}</span>
+        {% if week_offset != 0 %}
+        <a href="{{ url_for('teacher.timetable') }}" class="btn btn-ghost btn-sm" style="font-size: var(--text-xs);">اليوم</a>
+        {% endif %}
+    </div>
+    <a href="{{ url_for('teacher.timetable', week_offset=week_offset + 1) }}" class="btn btn-ghost btn-sm">
+        ← الأسبوع السابق
+    </a>
+</div>
+
+<!-- Day Cards Grid -->
+<div class="timetable-grid">
+    {% for day in days %}
+    <div class="day-card {{ 'today' if day.is_today }}">
+        <div class="day-card-header {{ 'today' if day.is_today }}">
+            <span class="day-name">{{ day.name }}</span>
+            <span class="day-date">{{ day.date.strftime('%m/%d') }}</span>
+        </div>
+        <div class="day-card-body">
+            {% if day.sessions %}
+                {% for s in day.sessions %}
+                <a href="{{ url_for('teacher.session_detail', session_id=s.id) }}" class="session-mini">
+                    <div class="session-mini-time">
+                        {{ s.scheduled_at.strftime('%H:%M') if s.scheduled_at else '--:--' }}
+                    </div>
+                    <div class="session-mini-info">
+                        <div class="session-mini-title">{{ s.title }}</div>
+                        <div class="session-mini-meta">
+                            {% if s.group %}
+                            <span class="session-mini-group">{{ s.group.name }}</span>
+                            {% endif %}
+                            <span class="session-mini-duration">{{ s.duration_minutes|default(60) }}د</span>
+                        </div>
+                    </div>
+                    <div class="session-mini-status">
+                        {% if s.status.value == 'scheduled' %}
+                            <span class="badge badge-info">مجدولة</span>
+                        {% elif s.status.value == 'live' %}
+                            <span class="badge badge-orange session-live-pulse">مباشرة</span>
+                        {% elif s.status.value == 'completed' %}
+                            <span class="badge badge-success">مكتملة</span>
+                        {% elif s.status.value == 'cancelled' %}
+                            <span class="badge badge-danger">ملغية</span>
+                        {% endif %}
+                    </div>
+                </a>
+                {% endfor %}
+            {% else %}
+                <div class="day-card-empty">لا توجد جلسات</div>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/teacher.js') }}"></script>
+{% endblock %}
