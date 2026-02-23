@@ -372,3 +372,177 @@ def mark_notification_read(notif_id):
     n.is_read = True
     db.session.commit()
     return jsonify({'ok': True})
+
+
+@bp.route('/setup-journey-tables')
+def setup_journey_tables():
+    """One-time route to add gamified journey columns and tables to PostgreSQL."""
+    from sqlalchemy import text
+    results = []
+
+    try:
+        conn = db.engine.connect()
+
+        # --- Add columns to existing tables (IF NOT EXISTS) ---
+        alter_columns = [
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS motivation_type VARCHAR(20)",
+            "ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE",
+            "ALTER TABLE badges ADD COLUMN IF NOT EXISTS tier INTEGER NOT NULL DEFAULT 1",
+        ]
+        for sql in alter_columns:
+            try:
+                conn.execute(text(sql))
+                results.append(f"OK: {sql}")
+            except Exception as e:
+                results.append(f"SKIP: {sql} ({e})")
+
+        # --- Mark all existing students as onboarded ---
+        try:
+            conn.execute(text("UPDATE users SET onboarding_completed = TRUE WHERE role = 'student'"))
+            results.append("OK: Existing students marked as onboarded")
+        except Exception as e:
+            results.append(f"SKIP: mark onboarded ({e})")
+
+        # --- Create new tables ---
+        create_tables = [
+            """CREATE TABLE IF NOT EXISTS student_wallets (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+                coins INTEGER NOT NULL DEFAULT 0,
+                gems INTEGER NOT NULL DEFAULT 0
+            )""",
+            """CREATE TABLE IF NOT EXISTS currency_transactions (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                currency VARCHAR(10) NOT NULL,
+                amount INTEGER NOT NULL,
+                reason VARCHAR(200) NOT NULL DEFAULT '',
+                created_at TIMESTAMP
+            )""",
+            """CREATE TABLE IF NOT EXISTS quests (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(200) NOT NULL,
+                title_ar VARCHAR(200) NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                description_ar TEXT NOT NULL DEFAULT '',
+                difficulty VARCHAR(20) NOT NULL DEFAULT 'beginner',
+                category VARCHAR(20) NOT NULL DEFAULT 'coding',
+                xp_reward INTEGER NOT NULL DEFAULT 50,
+                coin_reward INTEGER NOT NULL DEFAULT 20,
+                gem_reward INTEGER NOT NULL DEFAULT 0,
+                required_level INTEGER NOT NULL DEFAULT 1,
+                prerequisite_quest_id INTEGER REFERENCES quests(id),
+                track_id VARCHAR(50) REFERENCES tracks(id),
+                estimated_minutes INTEGER NOT NULL DEFAULT 15,
+                sort_order INTEGER NOT NULL DEFAULT 0
+            )""",
+            """CREATE TABLE IF NOT EXISTS student_quests (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                quest_id INTEGER NOT NULL REFERENCES quests(id) ON DELETE CASCADE,
+                status VARCHAR(20) NOT NULL DEFAULT 'available',
+                started_at TIMESTAMP,
+                completed_at TIMESTAMP,
+                UNIQUE(student_id, quest_id)
+            )""",
+            """CREATE TABLE IF NOT EXISTS activities (
+                id SERIAL PRIMARY KEY,
+                title VARCHAR(200) NOT NULL,
+                title_ar VARCHAR(200) NOT NULL,
+                activity_type VARCHAR(20) NOT NULL DEFAULT 'coding',
+                source VARCHAR(20) NOT NULL DEFAULT 'self_paced',
+                difficulty VARCHAR(20) NOT NULL DEFAULT 'beginner',
+                xp_reward INTEGER NOT NULL DEFAULT 20,
+                coin_reward INTEGER NOT NULL DEFAULT 10,
+                track_id VARCHAR(50) REFERENCES tracks(id),
+                quest_id INTEGER REFERENCES quests(id),
+                session_id INTEGER REFERENCES sessions(id),
+                due_date TIMESTAMP,
+                estimated_minutes INTEGER NOT NULL DEFAULT 10,
+                sort_order INTEGER NOT NULL DEFAULT 0
+            )""",
+            """CREATE TABLE IF NOT EXISTS student_activities (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                activity_id INTEGER NOT NULL REFERENCES activities(id) ON DELETE CASCADE,
+                status VARCHAR(20) NOT NULL DEFAULT 'pending',
+                started_at TIMESTAMP,
+                completed_at TIMESTAMP,
+                score INTEGER,
+                UNIQUE(student_id, activity_id)
+            )""",
+            """CREATE TABLE IF NOT EXISTS daily_rewards (
+                id SERIAL PRIMARY KEY,
+                day_number INTEGER NOT NULL UNIQUE,
+                reward_type VARCHAR(20) NOT NULL,
+                amount INTEGER NOT NULL DEFAULT 10,
+                label_ar VARCHAR(100) NOT NULL DEFAULT '',
+                label_en VARCHAR(100) NOT NULL DEFAULT ''
+            )""",
+            """CREATE TABLE IF NOT EXISTS student_daily_rewards (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                day_number INTEGER NOT NULL,
+                claimed_at TIMESTAMP,
+                cycle_start DATE NOT NULL,
+                UNIQUE(student_id, day_number, cycle_start)
+            )""",
+            """CREATE TABLE IF NOT EXISTS student_unit_progress (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                track_id VARCHAR(50) NOT NULL,
+                level_id VARCHAR(50) NOT NULL,
+                unit_id VARCHAR(50) NOT NULL,
+                status VARCHAR(20) NOT NULL DEFAULT 'locked',
+                completed_at TIMESTAMP,
+                UNIQUE(student_id, track_id, level_id, unit_id),
+                FOREIGN KEY (track_id, level_id, unit_id) REFERENCES units(track_id, level_id, id) ON DELETE CASCADE
+            )""",
+            """CREATE TABLE IF NOT EXISTS journey_milestones (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                milestone_type VARCHAR(30) NOT NULL,
+                title_ar VARCHAR(200) NOT NULL,
+                title_en VARCHAR(200) NOT NULL DEFAULT '',
+                detail VARCHAR(500),
+                created_at TIMESTAMP
+            )""",
+            """CREATE TABLE IF NOT EXISTS lesson_contents (
+                id SERIAL PRIMARY KEY,
+                track_id VARCHAR(50) NOT NULL,
+                level_id VARCHAR(50) NOT NULL,
+                unit_id VARCHAR(50) NOT NULL,
+                chapter_number INTEGER NOT NULL DEFAULT 1,
+                title_ar VARCHAR(200) NOT NULL,
+                title_en VARCHAR(200) NOT NULL DEFAULT '',
+                content_html TEXT NOT NULL DEFAULT '',
+                quiz_json TEXT,
+                glossary_json TEXT,
+                FOREIGN KEY (track_id, level_id, unit_id) REFERENCES units(track_id, level_id, id) ON DELETE CASCADE
+            )""",
+            """CREATE TABLE IF NOT EXISTS lesson_progress (
+                id SERIAL PRIMARY KEY,
+                student_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                lesson_id INTEGER NOT NULL REFERENCES lesson_contents(id) ON DELETE CASCADE,
+                completed BOOLEAN NOT NULL DEFAULT FALSE,
+                completed_at TIMESTAMP,
+                UNIQUE(student_id, lesson_id)
+            )""",
+        ]
+
+        for sql in create_tables:
+            try:
+                conn.execute(text(sql))
+                table_name = sql.split('IF NOT EXISTS')[1].split('(')[0].strip()
+                results.append(f"OK: Table {table_name}")
+            except Exception as e:
+                results.append(f"ERROR: {e}")
+
+        conn.execute(text("COMMIT"))
+        conn.close()
+
+        return jsonify({'status': 'success', 'results': results}), 200
+
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
