@@ -5,132 +5,292 @@
 {% block dashboard_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
 <style>
-.profile-hero {
+/* Profile Hero */
+.sv-profile-hero {
     background: linear-gradient(135deg, #640D5F 0%, #4a0945 40%, #1a0a2e 100%);
-    border-radius: var(--radius-xl);
-    padding: var(--space-2xl);
-    color: var(--text-on-dark);
+    border-radius: 24px;
+    padding: 2rem 2.5rem;
+    color: white;
     position: relative;
     overflow: hidden;
     box-shadow: 0 6px 30px rgba(0,0,0,0.35);
     border: 1px solid rgba(255,255,255,0.12);
-    margin-bottom: var(--space-xl);
+    margin-bottom: 1.5rem;
     display: flex;
     align-items: center;
-    gap: var(--space-xl);
+    gap: 1.5rem;
 }
-.profile-hero .stars-bg .star {
-    position: absolute;
-    width: 3px;
-    height: 3px;
-    background: white;
-    border-radius: 50%;
-    opacity: 0.6;
-    animation: twinkle 3s infinite;
-}
-.profile-avatar-large {
+.sv-profile-avatar {
     width: 100px;
     height: 100px;
-    border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--sv-orange), #FFD700);
+    border-radius: 50%;
+    background: linear-gradient(135deg, #EB5B00, #FFD700);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: var(--text-4xl);
-    font-weight: var(--fw-extrabold);
+    font-size: 2.5rem;
+    font-weight: 800;
     color: white;
     flex-shrink: 0;
-    box-shadow: 0 0 30px rgba(235, 91, 0, 0.3);
     position: relative;
-    z-index: 1;
+    box-shadow: 0 0 30px rgba(235,91,0,0.3);
 }
-.profile-avatar-large img {
+.sv-profile-avatar img {
     width: 100%;
     height: 100%;
-    border-radius: var(--radius-full);
+    border-radius: 50%;
     object-fit: cover;
 }
-.profile-hero-info {
-    position: relative;
-    z-index: 1;
-    flex: 1;
+.sv-profile-level-shield {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border-radius: 10px;
+    padding: 2px 8px;
+    font-size: 0.65rem;
+    font-weight: 900;
+    color: #4a3600;
+    box-shadow: 0 2px 8px rgba(255,215,0,0.5);
 }
-.profile-name {
-    font-size: var(--text-2xl);
-    font-weight: var(--fw-extrabold);
-    margin-bottom: var(--space-xs);
-}
-.profile-role {
-    color: var(--sv-orange);
-    font-size: var(--text-sm);
-    font-weight: var(--fw-bold);
-    margin-bottom: var(--space-md);
-}
-.profile-hero-stats {
+.sv-profile-info { flex: 1; position: relative; z-index: 1; }
+.sv-profile-name { font-size: 1.5rem; font-weight: 800; margin-bottom: 0.25rem; }
+.sv-profile-title { color: #FFD700; font-size: 0.9rem; font-weight: 700; margin-bottom: 0.5rem; }
+.sv-profile-bio { color: rgba(255,255,255,0.8); font-size: 0.85rem; margin-bottom: 0.75rem; }
+.sv-profile-stats-row {
     display: flex;
-    gap: var(--space-xl);
+    gap: 2rem;
 }
-.profile-hero-stat {
-    text-align: center;
+.sv-profile-stat { text-align: center; }
+.sv-profile-stat-val { font-size: 1.5rem; font-weight: 800; }
+.sv-profile-stat-label { font-size: 0.7rem; color: rgba(255,255,255,0.7); }
+
+/* Currency Row */
+.sv-profile-currency {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.75rem;
 }
-.profile-hero-stat-value {
-    font-size: var(--text-2xl);
-    font-weight: var(--fw-extrabold);
+.sv-profile-currency-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(255,255,255,0.12);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
 }
-.profile-hero-stat-label {
-    font-size: var(--text-xs);
-    color: rgba(255, 255, 255, 0.7);
-}
-.profile-grid {
+
+/* Section Grid */
+.sv-profile-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: var(--space-xl);
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
 }
-.profile-card {
-    padding: var(--space-lg);
-    background: var(--bg-card);
-    border-radius: var(--radius-xl);
-    border: 1px solid var(--border-light);
-    box-shadow: var(--shadow-sm);
+
+/* Glass Card */
+.sv-profile-card {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(10px);
+    border-radius: 18px;
+    padding: 1.25rem;
+    border: 1px solid rgba(255,255,255,0.5);
 }
-.profile-card-title {
-    font-size: var(--text-lg);
-    font-weight: var(--fw-bold);
-    margin-bottom: var(--space-lg);
+.sv-profile-card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: #2D3436;
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
+    gap: 0.5rem;
 }
-.profile-info-row {
+
+/* Track Progress Cards */
+.sv-profile-track {
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    padding: var(--space-md) 0;
-    border-bottom: 1px solid var(--border-light);
+    gap: 0.75rem;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid rgba(100,13,95,0.08);
 }
-.profile-info-row:last-child { border-bottom: none; }
-.profile-info-label {
-    font-size: var(--text-sm);
-    color: var(--text-secondary);
+.sv-profile-track:last-child { border-bottom: none; }
+.sv-profile-track-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    flex-shrink: 0;
 }
-.profile-info-value {
-    font-size: var(--text-sm);
-    font-weight: var(--fw-bold);
+.sv-profile-track-info { flex: 1; }
+.sv-profile-track-name { font-size: 0.85rem; font-weight: 700; margin-bottom: 0.2rem; }
+.sv-profile-track-bar {
+    height: 6px;
+    background: #f0eef5;
+    border-radius: 10px;
+    overflow: hidden;
 }
-.profile-xp-card {
-    padding: var(--space-lg);
+.sv-profile-track-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #640D5F, #EB5B00);
+    border-radius: 10px;
 }
-@media (max-width: 768px) {
-    .profile-hero {
-        flex-direction: column;
-        text-align: center;
-    }
-    .profile-hero-stats {
-        justify-content: center;
-    }
-    .profile-grid {
-        grid-template-columns: 1fr;
-    }
+.sv-profile-track-pct {
+    font-size: 0.72rem;
+    color: #636E72;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Stats Row */
+.sv-profile-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+}
+.sv-profile-stat-card {
+    text-align: center;
+    padding: 0.75rem;
+    background: rgba(100,13,95,0.04);
+    border-radius: 14px;
+}
+.sv-profile-stat-card-val {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #640D5F;
+}
+.sv-profile-stat-card-label {
+    font-size: 0.72rem;
+    color: #636E72;
+}
+
+/* Badge Grid */
+.sv-profile-badge-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+    gap: 0.5rem;
+}
+.sv-profile-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.5rem 0.25rem;
+    border-radius: 12px;
+    transition: transform 0.2s;
+}
+.sv-profile-badge:hover { transform: translateY(-2px); }
+.sv-profile-badge-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+}
+.sv-profile-badge-icon.earned {
+    background: linear-gradient(135deg, #640D5F, #EB5B00);
+    color: white;
+}
+.sv-profile-badge-icon.locked {
+    background: #ddd;
+    color: #999;
+    filter: grayscale(1);
+}
+.sv-profile-badge-name {
+    font-size: 0.6rem;
+    font-weight: 600;
+    text-align: center;
+    color: #636E72;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* Tier borders */
+.sv-profile-badge-icon.tier-1 { box-shadow: 0 0 0 2px #CD7F32; }
+.sv-profile-badge-icon.tier-2 { box-shadow: 0 0 0 2px #C0C0C0; }
+.sv-profile-badge-icon.tier-3 { box-shadow: 0 0 0 2px #FFD700; }
+.sv-profile-badge-icon.tier-4 { box-shadow: 0 0 0 2px #B9F2FF; }
+
+/* Timeline */
+.sv-profile-timeline {
+    position: relative;
+    padding-right: 1.5rem;
+}
+.sv-profile-timeline::before {
+    content: '';
+    position: absolute;
+    right: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #640D5F, #EB5B00, #FFD700);
+    border-radius: 2px;
+}
+.sv-timeline-item {
+    position: relative;
+    padding: 0.5rem 0;
+    padding-right: 1.25rem;
+}
+.sv-timeline-dot {
+    position: absolute;
+    right: -1.05rem;
+    top: 0.7rem;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #640D5F;
+    border: 2px solid white;
+}
+.sv-timeline-title {
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: #2D3436;
+}
+.sv-timeline-date {
+    font-size: 0.68rem;
+    color: #636E72;
+}
+
+/* Edit Form */
+.sv-profile-form .form-group {
+    margin-bottom: 0.75rem;
+}
+.sv-profile-form .form-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #636E72;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+.sv-profile-form .form-input,
+.sv-profile-form .form-textarea {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(100,13,95,0.15);
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    transition: border-color 0.2s;
+}
+.sv-profile-form .form-input:focus,
+.sv-profile-form .form-textarea:focus {
+    border-color: #640D5F;
+    outline: none;
+}
+
+@media (max-width: 900px) {
+    .sv-profile-hero { flex-direction: column; text-align: center; }
+    .sv-profile-stats-row { justify-content: center; }
+    .sv-profile-grid { grid-template-columns: 1fr; }
+    .sv-profile-stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 </style>
 {% endblock %}
@@ -144,21 +304,25 @@
     <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
     <span>الرئيسية</span>
 </a>
+<a class="sidebar-link" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.activities') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الأنشطة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
 <a class="sidebar-link" href="{{ url_for('student.sessions') }}">
     <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
     <span>الجلسات</span>
 </a>
-<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
-    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
-    <span>المكتبة</span>
-</a>
-<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+<a class="sidebar-link" href="{{ url_for('student.rewards') }}">
     <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
-    <span>المكافآت اليومية</span>
-</a>
-<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
-    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
-    <span>التقويم</span>
+    <span>المكافآت</span>
 </a>
 <a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
     <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
@@ -168,73 +332,136 @@
 
 {% block topbar_title %}ملفي الشخصي{% endblock %}
 
+{% set badge_icons = {
+    'star': '&#11088;', 'rocket': '&#128640;', 'calendar': '&#128197;',
+    'fire': '&#128293;', 'flame': '&#128293;', 'sword': '&#9876;',
+    'crown': '&#128081;', 'question': '&#10067;', 'gem': '&#128142;',
+    'trophy': '&#127942;'
+} %}
+
 {% block content %}
 <!-- Profile Hero -->
-<div class="profile-hero">
-    <div class="stars-bg">
-        <div class="star" style="top:15%;right:10%;animation-delay:0s;"></div>
-        <div class="star" style="top:40%;right:55%;animation-delay:0.6s;"></div>
-        <div class="star" style="top:75%;right:80%;animation-delay:1.2s;"></div>
-        <div class="star" style="top:25%;right:90%;animation-delay:0.9s;"></div>
-        <div class="star" style="top:60%;right:35%;animation-delay:1.8s;"></div>
-    </div>
-    <div class="profile-avatar-large">
+<div class="sv-profile-hero">
+    <div class="sv-profile-avatar">
         {% if current_user.avatar_url %}
             <img src="{{ current_user.avatar_url }}" alt="{{ current_user.name_ar }}">
         {% else %}
             {{ current_user.name_ar[0] }}
         {% endif %}
+        <div class="sv-profile-level-shield">Lv.{{ level }}</div>
     </div>
-    <div class="profile-hero-info">
-        <div class="profile-name">{{ current_user.name_ar }}</div>
-        <div class="profile-role">المستوى {{ level }} - {{ level_title }}</div>
-        <div class="profile-hero-stats">
-            <div class="profile-hero-stat">
-                <div class="profile-hero-stat-value">{{ xp_total }}</div>
-                <div class="profile-hero-stat-label">نقاط خبرة</div>
+    <div class="sv-profile-info">
+        <div class="sv-profile-name">{{ current_user.name_ar }}</div>
+        <div class="sv-profile-title">{{ level_title }} - المستوى {{ level }}</div>
+        {% if current_user.bio %}
+        <div class="sv-profile-bio">{{ current_user.bio }}</div>
+        {% endif %}
+        <div class="sv-profile-stats-row">
+            <div class="sv-profile-stat">
+                <div class="sv-profile-stat-val">{{ xp_total }}</div>
+                <div class="sv-profile-stat-label">نقاط خبرة</div>
             </div>
-            <div class="profile-hero-stat">
-                <div class="profile-hero-stat-value">{{ badges_count }}</div>
-                <div class="profile-hero-stat-label">شارات</div>
+            <div class="sv-profile-stat">
+                <div class="sv-profile-stat-val">{{ badges_count }}</div>
+                <div class="sv-profile-stat-label">شارات</div>
             </div>
-            <div class="profile-hero-stat">
-                <div class="profile-hero-stat-value">{{ sessions_attended }}</div>
-                <div class="profile-hero-stat-label">جلسات</div>
+            <div class="sv-profile-stat">
+                <div class="sv-profile-stat-val">{{ sessions_attended }}</div>
+                <div class="sv-profile-stat-label">جلسات</div>
             </div>
-            <div class="profile-hero-stat">
-                <div class="profile-hero-stat-value">{{ streak.current_streak }}</div>
-                <div class="profile-hero-stat-label">أيام متتالية</div>
+            <div class="sv-profile-stat">
+                <div class="sv-profile-stat-val">{{ streak.current_streak }}</div>
+                <div class="sv-profile-stat-label">أيام متتالية</div>
+            </div>
+        </div>
+        <div class="sv-profile-currency">
+            <div class="sv-profile-currency-item">
+                <img src="{{ url_for('static', filename='img/icons/coin.png') }}" alt="" style="width:16px;height:16px;">
+                <span>{{ wallet.coins }}</span>
+            </div>
+            <div class="sv-profile-currency-item">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#8B5CF6"><path d="M12 2L2 9l10 13L22 9z"/></svg>
+                <span>{{ wallet.gems }}</span>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Profile Grid -->
-<div class="profile-grid">
-    <!-- Personal Info & Edit Form -->
-    <div class="profile-card">
-        <div class="profile-card-title">👤 المعلومات الشخصية</div>
-        <form method="POST" enctype="multipart/form-data" action="{{ url_for('student.profile') }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<!-- Your Universes (Track Progress) -->
+{% if tracks_with_progress %}
+<div class="sv-profile-card" style="margin-bottom: 1.25rem;">
+    <div class="sv-profile-card-title">&#127760; عوالمك</div>
+    {% for tp in tracks_with_progress %}
+    <div class="sv-profile-track">
+        <div class="sv-profile-track-icon" style="background: {{ tp.track.color }}20;">
+            <span>{{ tp.track.icon }}</span>
+        </div>
+        <div class="sv-profile-track-info">
+            <div class="sv-profile-track-name">{{ tp.track.name_ar }}</div>
+            <div class="sv-profile-track-bar">
+                <div class="sv-profile-track-fill" style="width: {{ tp.pct }}%;"></div>
+            </div>
+        </div>
+        <div class="sv-profile-track-pct">{{ tp.pct }}%</div>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}
 
-            <!-- Avatar Upload -->
-            <div class="form-group" style="text-align: center; margin-bottom: var(--space-lg);">
-                <label class="form-label" style="display: block; margin-bottom: var(--space-sm);">الصورة الشخصية</label>
+<!-- Stats + Achievements + Edit Form + Timeline -->
+<div class="sv-profile-grid">
+    <!-- Stats -->
+    <div class="sv-profile-card">
+        <div class="sv-profile-card-title">&#128200; الإحصائيات</div>
+        <div class="sv-profile-stats-grid">
+            <div class="sv-profile-stat-card">
+                <div class="sv-profile-stat-card-val">{{ quests_completed }}/{{ total_quests }}</div>
+                <div class="sv-profile-stat-card-label">مهمات مكتملة</div>
+            </div>
+            <div class="sv-profile-stat-card">
+                <div class="sv-profile-stat-card-val">{{ sessions_attended }}</div>
+                <div class="sv-profile-stat-card-label">جلسات حضرت</div>
+            </div>
+            <div class="sv-profile-stat-card">
+                <div class="sv-profile-stat-card-val">{{ streak.longest_streak }}</div>
+                <div class="sv-profile-stat-card-label">أطول سلسلة</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Achievements (Badges) -->
+    <div class="sv-profile-card">
+        <div class="sv-profile-card-title">&#127942; الشارات ({{ badges_count }}/{{ all_badges|length }})</div>
+        <div class="sv-profile-badge-grid">
+            {% for badge in all_badges %}
+            {% set is_earned = badge.id in earned_ids %}
+            <div class="sv-profile-badge" title="{{ badge.description_ar }}">
+                <div class="sv-profile-badge-icon {{ 'earned tier-' ~ badge.tier if is_earned else 'locked' }}">
+                    {{ badge_icons.get(badge.icon, '&#127941;')|safe }}
+                </div>
+                <div class="sv-profile-badge-name">{{ badge.name_ar }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="sv-profile-card">
+        <div class="sv-profile-card-title">&#9997; تعديل الملف الشخصي</div>
+        <form method="POST" enctype="multipart/form-data" action="{{ url_for('student.profile') }}" class="sv-profile-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group" style="text-align: center;">
                 <div style="display: inline-block; position: relative; cursor: pointer;" onclick="document.getElementById('avatar-input').click()">
-                    <div style="width: 80px; height: 80px; border-radius: var(--radius-full); background: linear-gradient(135deg, var(--sv-orange), #FFD700); display: flex; align-items: center; justify-content: center; font-size: var(--text-2xl); font-weight: var(--fw-extrabold); color: white; margin: 0 auto; overflow: hidden;">
+                    <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #EB5B00, #FFD700); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: white; margin: 0 auto; overflow: hidden;">
                         {% if current_user.avatar_url %}
-                            <img src="{{ current_user.avatar_url }}" alt="{{ current_user.name_ar }}" style="width: 100%; height: 100%; object-fit: cover;">
+                            <img src="{{ current_user.avatar_url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
                         {% else %}
                             {{ current_user.name_ar[0] }}
                         {% endif %}
                     </div>
-                    <div style="position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%); background: var(--sv-purple); color: white; border-radius: var(--radius-full); width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-size: 12px;">📷</div>
                 </div>
-                <input type="file" id="avatar-input" name="avatar" accept=".png,.jpg,.jpeg,.gif,.webp" style="display: none;" onchange="this.form.querySelector('#avatar-preview-text').textContent = this.files[0] ? this.files[0].name : ''">
-                <div id="avatar-preview-text" style="font-size: var(--text-xs); color: var(--text-secondary); margin-top: var(--space-sm);"></div>
-                <div class="form-hint">PNG, JPG, GIF, WEBP (حد أقصى 10 ميجا)</div>
+                <input type="file" id="avatar-input" name="avatar" accept=".png,.jpg,.jpeg,.gif,.webp" style="display: none;">
             </div>
-
             <div class="form-group">
                 <label class="form-label">الاسم (عربي)</label>
                 <input type="text" name="name_ar" class="form-input" value="{{ current_user.name_ar }}" required>
@@ -244,67 +471,40 @@
                 <input type="text" name="name_en" class="form-input" value="{{ current_user.name_en }}" dir="ltr">
             </div>
             <div class="form-group">
-                <label class="form-label">البريد الإلكتروني</label>
-                <input type="email" class="form-input" value="{{ current_user.email }}" dir="ltr" disabled>
-                <div class="form-hint">لا يمكن تغيير البريد الإلكتروني</div>
+                <label class="form-label">النبذة</label>
+                <textarea name="bio" class="form-textarea" rows="2" placeholder="أخبرنا عن نفسك...">{{ current_user.bio or '' }}</textarea>
             </div>
             <div class="form-group">
                 <label class="form-label">الهاتف</label>
                 <input type="tel" name="phone" class="form-input" value="{{ current_user.phone or '' }}" dir="ltr">
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top: var(--space-md);">حفظ التعديلات</button>
+            <button type="submit" class="btn btn-primary" style="margin-top: 0.5rem; width: 100%;">حفظ التعديلات</button>
         </form>
     </div>
 
-    <!-- XP & Level Card -->
-    <div class="profile-card profile-xp-card">
-        <div class="profile-card-title">⚡ التقدم والمستوى</div>
-        <div class="xp-section" style="margin-bottom: var(--space-lg);">
-            <div class="xp-level-badge">{{ level }}</div>
-            <div class="xp-info">
-                <div class="xp-level-title">المستوى {{ level }} - {{ level_title }}</div>
-                <div class="xp-level-subtitle">{{ xp_total }} XP</div>
-                <div class="xp-bar">
-                    <div class="xp-bar-fill" style="width: {{ ((xp_total / (xp_total + 100)) * 100)|int if xp_total else 0 }}%;"></div>
+    <!-- Journey Timeline -->
+    <div class="sv-profile-card">
+        <div class="sv-profile-card-title">&#128205; رحلة التعلم</div>
+        {% if milestones %}
+        <div class="sv-profile-timeline">
+            {% for ms in milestones %}
+            <div class="sv-timeline-item">
+                <div class="sv-timeline-dot"></div>
+                <div class="sv-timeline-title">{{ ms.title_ar }}</div>
+                <div class="sv-timeline-date">
+                    {% if ms.created_at %}
+                    {{ ms.created_at.strftime('%Y-%m-%d') }}
+                    {% endif %}
                 </div>
             </div>
+            {% endfor %}
         </div>
-
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-md);">
-            <div style="text-align: center; padding: var(--space-md); background: var(--sv-purple-glow); border-radius: var(--radius-lg);">
-                <div style="font-size: var(--text-xl); font-weight: var(--fw-extrabold); color: var(--sv-purple);">{{ badges_count }}</div>
-                <div style="font-size: var(--text-xs); color: var(--text-secondary);">شارات مكتسبة</div>
-            </div>
-            <div style="text-align: center; padding: var(--space-md); background: var(--sv-orange-glow); border-radius: var(--radius-lg);">
-                <div style="font-size: var(--text-xl); font-weight: var(--fw-extrabold); color: var(--sv-orange);">{{ streak.longest_streak }}</div>
-                <div style="font-size: var(--text-xs); color: var(--text-secondary);">أطول سلسلة أيام</div>
-            </div>
+        {% else %}
+        <div style="text-align: center; padding: 1.5rem; color: #636E72;">
+            <div style="font-size: 2rem; margin-bottom: 0.5rem;">&#128640;</div>
+            <p style="font-size: 0.85rem;">رحلتك بدأت للتو!</p>
         </div>
-    </div>
-
-    <!-- Streak Card -->
-    <div class="profile-card">
-        <div class="profile-card-title">🔥 سلسلة الحضور</div>
-        <div style="text-align: center; padding: var(--space-lg) 0;">
-            <div style="font-size: 3rem;">🔥</div>
-            <div style="font-size: var(--text-3xl); font-weight: var(--fw-extrabold); color: var(--sv-orange); margin-top: var(--space-sm);">{{ streak.current_streak }} يوم</div>
-            <div style="font-size: var(--text-sm); color: var(--text-secondary); margin-top: var(--space-xs);">السلسلة الحالية</div>
-            <div style="margin-top: var(--space-md); font-size: var(--text-sm); color: var(--text-muted);">
-                أطول سلسلة: <strong style="color: var(--sv-purple);">{{ streak.longest_streak }} يوم</strong>
-            </div>
-        </div>
-    </div>
-
-    <!-- Quick Links -->
-    <div class="profile-card">
-        <div class="profile-card-title">🔗 روابط سريعة</div>
-        <div style="display: flex; flex-direction: column; gap: var(--space-sm);">
-            <a href="{{ url_for('student.progress') }}" class="btn btn-ghost" style="justify-content: flex-start;">📊 تقدمي في التعلم</a>
-            <a href="{{ url_for('student.badges') }}" class="btn btn-ghost" style="justify-content: flex-start;">🏅 مجموعة الشارات</a>
-            <a href="{{ url_for('student.leaderboard') }}" class="btn btn-ghost" style="justify-content: flex-start;">🏆 لوحة المتصدرين</a>
-            <a href="{{ url_for('student.homework_list') }}" class="btn btn-ghost" style="justify-content: flex-start;">📝 الواجبات</a>
-            <a href="{{ url_for('student.timetable') }}" class="btn btn-ghost" style="justify-content: flex-start;">📅 الجدول الأسبوعي</a>
-        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

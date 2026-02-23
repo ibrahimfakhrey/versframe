@@ -6,6 +6,13 @@ from app.models.assessment import Assessment, AssessmentReport
 from app.models.gamification import StudentXP, Badge, StudentBadge, Streak
 from app.models.homework import Homework, HomeworkSubmission
 from app.models.notification import Notification
+from app.models.journey import (
+    StudentWallet, CurrencyTransaction, Quest, StudentQuest,
+    Activity, StudentActivity, DailyReward, StudentDailyReward,
+    StudentUnitProgress, JourneyMilestone, LessonContent, LessonProgress,
+    QuestDifficulty, QuestCategory, QuestStatus,
+    ActivityType, ActivitySource, RewardType, MilestoneType, MotivationType,
+)
 
 __all__ = [
     'User', 'Role', 'parent_student',
@@ -16,4 +23,9 @@ __all__ = [
     'StudentXP', 'Badge', 'StudentBadge', 'Streak',
     'Homework', 'HomeworkSubmission',
     'Notification',
+    'StudentWallet', 'CurrencyTransaction', 'Quest', 'StudentQuest',
+    'Activity', 'StudentActivity', 'DailyReward', 'StudentDailyReward',
+    'StudentUnitProgress', 'JourneyMilestone', 'LessonContent', 'LessonProgress',
+    'QuestDifficulty', 'QuestCategory', 'QuestStatus',
+    'ActivityType', 'ActivitySource', 'RewardType', 'MilestoneType', 'MotivationType',
 ]

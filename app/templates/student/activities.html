@@ -1,0 +1,587 @@
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_css %}
+<style>
+/* ========================================================
+   Shalaby Verse - Student Activities Page
+   ======================================================== */
+
+/* -- Progress Header ------------------------------------ */
+.act-progress-section {
+    background: linear-gradient(135deg, #640D5F 0%, #8B1A85 30%, #4a0945 70%, #1a0a2e 100%);
+    border-radius: 20px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.75rem;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 6px 30px rgba(0,0,0,0.35);
+    position: relative;
+    overflow: hidden;
+}
+.act-progress-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(255,215,0,0.08) 0%, transparent 50%),
+                radial-gradient(circle at 80% 30%, rgba(235,91,0,0.06) 0%, transparent 40%);
+    pointer-events: none;
+}
+.act-progress-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    position: relative;
+    z-index: 1;
+}
+.act-progress-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #FFD700;
+    margin: 0;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+.act-progress-count {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+}
+.act-progress-count span {
+    color: #FFD700;
+    font-weight: 800;
+}
+.act-progress-bar-track {
+    height: 14px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+    z-index: 1;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+}
+.act-progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #EB5B00, #FFD700);
+    border-radius: 20px;
+    transition: width 1s ease;
+    box-shadow: 0 0 12px rgba(255,215,0,0.4);
+    position: relative;
+}
+.act-progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    left: 4px;
+    height: 4px;
+    background: rgba(255,255,255,0.3);
+    border-radius: 10px;
+}
+.act-progress-pct {
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.8);
+    margin-top: 0.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* -- Filter Tabs ---------------------------------------- */
+.act-filter-tabs {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+.act-filter-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1.2rem;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: all 0.25s ease;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.75);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+.act-filter-tab:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+.act-filter-tab.active {
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 3px 12px rgba(235,91,0,0.4);
+    border-bottom: 2px solid #B84700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* -- Activity Card Grid --------------------------------- */
+.act-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+}
+
+/* -- Activity Card -------------------------------------- */
+.act-card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-radius: 18px;
+    padding: 1.25rem;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+    overflow: hidden;
+}
+.act-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #640D5F, #EB5B00, #FFD700);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+.act-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 32px rgba(100,13,95,0.25);
+}
+.act-card:hover::before {
+    opacity: 1;
+}
+
+/* Card Header Row */
+.act-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.act-card-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    line-height: 1.4;
+    flex: 1;
+}
+
+/* Type Badge */
+.act-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 20px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.act-type-badge.coding {
+    background: rgba(235,91,0,0.15);
+    color: #FF8C2E;
+    border: 1px solid rgba(235,91,0,0.25);
+}
+.act-type-badge.game {
+    background: rgba(16,185,129,0.15);
+    color: #34D399;
+    border: 1px solid rgba(16,185,129,0.25);
+}
+.act-type-badge.quiz {
+    background: rgba(59,130,246,0.15);
+    color: #60A5FA;
+    border: 1px solid rgba(59,130,246,0.25);
+}
+.act-type-badge.drag_drop {
+    background: rgba(168,85,247,0.15);
+    color: #C084FC;
+    border: 1px solid rgba(168,85,247,0.25);
+}
+.act-type-badge.reading {
+    background: rgba(251,191,36,0.15);
+    color: #FBBF24;
+    border: 1px solid rgba(251,191,36,0.25);
+}
+.act-type-badge.project {
+    background: rgba(244,114,182,0.15);
+    color: #F472B6;
+    border: 1px solid rgba(244,114,182,0.25);
+}
+.act-type-icon {
+    font-size: 0.85rem;
+}
+
+/* Card Meta Row */
+.act-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.act-meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.65);
+}
+.act-meta-item svg {
+    width: 14px;
+    height: 14px;
+    opacity: 0.7;
+}
+.act-meta-item.xp {
+    color: #FFD700;
+    font-weight: 700;
+}
+.act-meta-item.coins {
+    color: #EB5B00;
+    font-weight: 700;
+}
+
+/* Difficulty Badge */
+.act-difficulty {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+.act-difficulty.easy {
+    background: rgba(16,185,129,0.15);
+    color: #34D399;
+}
+.act-difficulty.medium {
+    background: rgba(251,191,36,0.15);
+    color: #FBBF24;
+}
+.act-difficulty.hard {
+    background: rgba(239,68,68,0.15);
+    color: #F87171;
+}
+
+/* Card Footer */
+.act-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+/* Status Badge */
+.act-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.act-status.pending {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.6);
+}
+.act-status.in_progress {
+    background: rgba(59,130,246,0.15);
+    color: #60A5FA;
+    border: 1px solid rgba(59,130,246,0.2);
+}
+.act-status.completed {
+    background: rgba(16,185,129,0.15);
+    color: #34D399;
+    border: 1px solid rgba(16,185,129,0.2);
+}
+.act-status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+}
+.act-status.pending .act-status-dot { background: rgba(255,255,255,0.5); }
+.act-status.in_progress .act-status-dot { background: #60A5FA; }
+.act-status.completed .act-status-dot { background: #34D399; }
+
+/* Card Action Arrow */
+.act-card-arrow {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.25s ease;
+}
+.act-card:hover .act-card-arrow {
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 100%);
+    box-shadow: 0 3px 10px rgba(235,91,0,0.35);
+}
+.act-card-arrow svg {
+    width: 14px;
+    height: 14px;
+    stroke: rgba(255,255,255,0.5);
+    transition: stroke 0.25s ease;
+}
+.act-card:hover .act-card-arrow svg {
+    stroke: #fff;
+}
+
+/* Due Date */
+.act-due-date {
+    font-size: 0.7rem;
+    color: rgba(255,255,255,0.5);
+    font-weight: 600;
+}
+.act-due-date.overdue {
+    color: #F87171;
+}
+
+/* Empty State */
+.act-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: rgba(255,255,255,0.5);
+}
+.act-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.4;
+}
+.act-empty-text {
+    font-size: 1rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+/* -- Responsive ----------------------------------------- */
+@media (max-width: 768px) {
+    .act-progress-section { padding: 1.25rem; }
+    .act-grid { grid-template-columns: 1fr; }
+    .act-filter-tabs { gap: 0.35rem; }
+    .act-filter-tab { padding: 0.4rem 0.9rem; font-size: 0.75rem; }
+}
+</style>
+{% endblock %}
+
+{% block topbar_title %}الأنشطة{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.activities') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الأنشطة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.rewards') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+{# ── Type icon and label mappings ──────────────────────── #}
+{% set type_icons = {
+    'coding': '</>',
+    'game': '&#x1F3AE;',
+    'quiz': '?',
+    'drag_drop': '&#x2B50;',
+    'reading': '&#x1F4D6;',
+    'project': '&#x1F680;'
+} %}
+{% set type_labels = {
+    'coding': 'برمجة',
+    'game': 'لعبة',
+    'quiz': 'اختبار',
+    'drag_drop': 'سحب وإفلات',
+    'reading': 'قراءة',
+    'project': 'مشروع'
+} %}
+{% set source_labels = {
+    'all': 'الكل',
+    'live_class': 'الفصل المباشر',
+    'assigned': 'مُكلّف',
+    'self_paced': 'ذاتي',
+    'quest': 'مهمة'
+} %}
+{% set difficulty_labels = {
+    'easy': 'سهل',
+    'medium': 'متوسط',
+    'hard': 'صعب'
+} %}
+{% set status_labels = {
+    'pending': 'لم يبدأ',
+    'in_progress': 'جاري',
+    'completed': 'مكتمل'
+} %}
+
+{# ── Calculate percentage ──────────────────────────────── #}
+{% set pct = ((completed_count / total_count * 100) | int) if total_count > 0 else 0 %}
+
+<!-- ============================================================
+     1. PROGRESS HEADER
+     ============================================================ -->
+<div class="act-progress-section">
+    <div class="act-progress-top">
+        <h2 class="act-progress-title">تقدمك في الأنشطة</h2>
+        <div class="act-progress-count">
+            <span>{{ completed_count }}</span> / {{ total_count }} مكتمل
+        </div>
+    </div>
+    <div class="act-progress-bar-track">
+        <div class="act-progress-bar-fill" style="width: {{ pct }}%;"></div>
+    </div>
+    <div class="act-progress-pct">{{ pct }}%</div>
+</div>
+
+<!-- ============================================================
+     2. FILTER TABS
+     ============================================================ -->
+<div class="act-filter-tabs">
+    <a class="act-filter-tab {{ 'active' if not source_filter or source_filter == 'all' }}"
+       href="{{ url_for('student.activities') }}">
+        {{ source_labels['all'] }}
+    </a>
+    <a class="act-filter-tab {{ 'active' if source_filter == 'live_class' }}"
+       href="{{ url_for('student.activities', source='live_class') }}">
+        {{ source_labels['live_class'] }}
+    </a>
+    <a class="act-filter-tab {{ 'active' if source_filter == 'assigned' }}"
+       href="{{ url_for('student.activities', source='assigned') }}">
+        {{ source_labels['assigned'] }}
+    </a>
+    <a class="act-filter-tab {{ 'active' if source_filter == 'self_paced' }}"
+       href="{{ url_for('student.activities', source='self_paced') }}">
+        {{ source_labels['self_paced'] }}
+    </a>
+    <a class="act-filter-tab {{ 'active' if source_filter == 'quest' }}"
+       href="{{ url_for('student.activities', source='quest') }}">
+        {{ source_labels['quest'] }}
+    </a>
+</div>
+
+<!-- ============================================================
+     3. ACTIVITY CARD GRID
+     ============================================================ -->
+{% if activities %}
+<div class="act-grid">
+    {% for activity in activities %}
+    {% set progress = student_progress.get(activity.id) %}
+    {% set status = progress.status if progress else 'pending' %}
+
+    <a href="{{ url_for('student.activity_detail', activity_id=activity.id) }}" class="act-card">
+        <!-- Header: Title + Type Badge -->
+        <div class="act-card-header">
+            <h3 class="act-card-title">{{ activity.title_ar }}</h3>
+            <span class="act-type-badge {{ activity.activity_type.value }}">
+                <span class="act-type-icon">{{ type_icons.get(activity.activity_type.value, '?') | safe }}</span>
+                {{ type_labels.get(activity.activity_type.value, activity.activity_type.value) }}
+            </span>
+        </div>
+
+        <!-- Meta: Difficulty, XP, Coins, Time -->
+        <div class="act-card-meta">
+            {% if activity.difficulty %}
+            <span class="act-difficulty {{ activity.difficulty.value }}">
+                {{ difficulty_labels.get(activity.difficulty.value, activity.difficulty.value) }}
+            </span>
+            {% endif %}
+
+            {% if activity.xp_reward %}
+            <span class="act-meta-item xp">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                {{ activity.xp_reward }} XP
+            </span>
+            {% endif %}
+
+            {% if activity.coin_reward %}
+            <span class="act-meta-item coins">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M8 14h8"/></svg>
+                {{ activity.coin_reward }}
+            </span>
+            {% endif %}
+
+            {% if activity.estimated_minutes %}
+            <span class="act-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                {{ activity.estimated_minutes }} د
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Footer: Status + Due Date + Arrow -->
+        <div class="act-card-footer">
+            <span class="act-status {{ status }}">
+                <span class="act-status-dot"></span>
+                {{ status_labels.get(status, status) }}
+            </span>
+
+            {% if activity.due_date %}
+            <span class="act-due-date">
+                {{ activity.due_date.strftime('%m/%d') }}
+            </span>
+            {% endif %}
+
+            <div class="act-card-arrow">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"/>
+                </svg>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="act-empty">
+    <div class="act-empty-icon">&#x1F4DA;</div>
+    <p class="act-empty-text">لا توجد أنشطة حالياً</p>
+</div>
+{% endif %}
+
+{% endblock %}

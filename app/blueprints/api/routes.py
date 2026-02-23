@@ -144,6 +144,8 @@ def end_session(session_id):
 
     # Award XP to attending students
     from app.models.classroom import Attendance, AttendanceStatus
+    from app.utils.wallet import get_or_create_wallet
+    from app.utils.gamification_service import update_student_streak, check_and_award_badges
     attendees = Attendance.query.filter_by(
         session_id=session_id, status=AttendanceStatus.PRESENT
     ).all()
@@ -151,7 +153,18 @@ def end_session(session_id):
         xp = StudentXP(student_id=att.student_id, amount=50,
                         reason='حضور جلسة', session_id=session_id)
         db.session.add(xp)
+        # Award coins for session attendance
+        wallet = get_or_create_wallet(att.student_id)
+        wallet.coins += 10
     db.session.commit()
+
+    # Update streaks and badges for attendees
+    for att in attendees:
+        try:
+            update_student_streak(att.student_id)
+            check_and_award_badges(att.student_id)
+        except Exception:
+            pass
 
     return jsonify({'ok': True})
 
@@ -307,7 +320,7 @@ def teacher_grade_submission():
     submission.graded_at = datetime.now(timezone.utc)
     db.session.commit()
 
-    # Award XP based on grade
+    # Award XP and coins based on grade
     if grade >= 50:
         xp_amount = 10 + (grade // 10) * 5  # 10-60 XP based on grade
         xp = StudentXP(
@@ -316,6 +329,11 @@ def teacher_grade_submission():
             reason=f'تقييم واجب: {submission.homework.title}',
         )
         db.session.add(xp)
+        # Award coins based on grade tier
+        from app.utils.wallet import get_or_create_wallet
+        coin_amount = 5 + (grade // 20) * 5  # 5-30 coins
+        wallet = get_or_create_wallet(submission.student_id)
+        wallet.coins += coin_amount
         db.session.commit()
 
     return jsonify({'ok': True, 'grade': grade, 'feedback': feedback})

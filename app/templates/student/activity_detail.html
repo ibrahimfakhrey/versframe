@@ -1,0 +1,514 @@
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_css %}
+<style>
+/* ========================================================
+   Shalaby Verse - Activity Detail Page
+   ======================================================== */
+
+/* -- Detail Container ----------------------------------- */
+.actd-container {
+    max-width: 760px;
+    margin: 0 auto;
+}
+
+/* -- Back Link ------------------------------------------ */
+.actd-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: rgba(255,255,255,0.65);
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-decoration: none;
+    margin-bottom: 1.25rem;
+    transition: color 0.2s ease;
+}
+.actd-back:hover {
+    color: #FFD700;
+}
+.actd-back svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* -- Main Card ------------------------------------------ */
+.actd-card {
+    background: rgba(255,255,255,0.08);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 22px;
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 6px 30px rgba(0,0,0,0.2);
+    overflow: hidden;
+    position: relative;
+}
+.actd-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #640D5F, #EB5B00, #FFD700);
+}
+
+/* -- Card Header ---------------------------------------- */
+.actd-header {
+    padding: 2rem 2rem 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.actd-header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.actd-title {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    line-height: 1.4;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    flex: 1;
+}
+
+/* Type Badge */
+.actd-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.actd-type-badge.coding {
+    background: rgba(235,91,0,0.15);
+    color: #FF8C2E;
+    border: 1px solid rgba(235,91,0,0.25);
+}
+.actd-type-badge.game {
+    background: rgba(16,185,129,0.15);
+    color: #34D399;
+    border: 1px solid rgba(16,185,129,0.25);
+}
+.actd-type-badge.quiz {
+    background: rgba(59,130,246,0.15);
+    color: #60A5FA;
+    border: 1px solid rgba(59,130,246,0.25);
+}
+.actd-type-badge.drag_drop {
+    background: rgba(168,85,247,0.15);
+    color: #C084FC;
+    border: 1px solid rgba(168,85,247,0.25);
+}
+.actd-type-badge.reading {
+    background: rgba(251,191,36,0.15);
+    color: #FBBF24;
+    border: 1px solid rgba(251,191,36,0.25);
+}
+.actd-type-badge.project {
+    background: rgba(244,114,182,0.15);
+    color: #F472B6;
+    border: 1px solid rgba(244,114,182,0.25);
+}
+.actd-type-icon {
+    font-size: 0.95rem;
+}
+
+/* -- Meta Stats Row ------------------------------------- */
+.actd-meta-row {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+.actd-meta-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 14px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.actd-meta-chip svg {
+    width: 16px;
+    height: 16px;
+}
+.actd-meta-chip.xp {
+    color: #FFD700;
+}
+.actd-meta-chip.coins {
+    color: #EB5B00;
+}
+.actd-meta-chip.time {
+    color: rgba(255,255,255,0.7);
+}
+.actd-meta-chip.difficulty {
+    color: rgba(255,255,255,0.7);
+}
+.actd-meta-chip.difficulty.easy { color: #34D399; }
+.actd-meta-chip.difficulty.medium { color: #FBBF24; }
+.actd-meta-chip.difficulty.hard { color: #F87171; }
+
+.actd-meta-chip.source {
+    color: rgba(255,255,255,0.6);
+}
+
+/* -- Divider -------------------------------------------- */
+.actd-divider {
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+    margin: 0;
+    border: none;
+}
+
+/* -- Description Section -------------------------------- */
+.actd-body {
+    padding: 1.5rem 2rem;
+}
+.actd-section-title {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #FFD700;
+    margin: 0 0 0.75rem 0;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.actd-description {
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.85;
+    margin: 0;
+    white-space: pre-wrap;
+}
+
+/* -- Due Date ------------------------------------------- */
+.actd-due {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.55);
+    margin-top: 1rem;
+}
+.actd-due svg {
+    width: 15px;
+    height: 15px;
+    opacity: 0.6;
+}
+
+/* -- Action Footer -------------------------------------- */
+.actd-footer {
+    padding: 1.25rem 2rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+/* Complete Button */
+.actd-complete-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-decoration: none;
+    border: none;
+    border-bottom: 4px solid #B84700;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 18px rgba(235,91,0,0.4);
+}
+.actd-complete-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(235,91,0,0.5);
+}
+.actd-complete-btn:active {
+    transform: translateY(0);
+}
+.actd-complete-btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* Completed Badge */
+.actd-completed-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.75rem 2rem;
+    border-radius: 50px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    background: rgba(16,185,129,0.15);
+    color: #34D399;
+    border: 2px solid rgba(16,185,129,0.3);
+    box-shadow: 0 4px 18px rgba(16,185,129,0.15);
+}
+.actd-completed-badge svg {
+    width: 20px;
+    height: 20px;
+}
+
+/* In Progress Badge */
+.actd-inprogress-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.55rem 1.4rem;
+    border-radius: 50px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    background: rgba(59,130,246,0.12);
+    color: #60A5FA;
+    border: 1px solid rgba(59,130,246,0.2);
+}
+
+/* -- Rewards Summary ------------------------------------ */
+.actd-rewards-summary {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+}
+.actd-reward-item {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.88rem;
+    font-weight: 800;
+}
+.actd-reward-item.xp { color: #FFD700; }
+.actd-reward-item.coins { color: #EB5B00; }
+.actd-reward-item svg {
+    width: 18px;
+    height: 18px;
+}
+
+/* -- Responsive ----------------------------------------- */
+@media (max-width: 768px) {
+    .actd-header { padding: 1.5rem 1.25rem 1rem; }
+    .actd-body { padding: 1.25rem; }
+    .actd-footer { padding: 1rem 1.25rem 1.5rem; }
+    .actd-title { font-size: 1.2rem; }
+    .actd-meta-row { gap: 0.6rem; }
+    .actd-meta-chip { padding: 0.3rem 0.65rem; font-size: 0.75rem; }
+}
+</style>
+{% endblock %}
+
+{% block topbar_title %}تفاصيل النشاط{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.activities') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الأنشطة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.rewards') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+{# ── Type icon and label mappings ──────────────────────── #}
+{% set type_icons = {
+    'coding': '</>',
+    'game': '&#x1F3AE;',
+    'quiz': '?',
+    'drag_drop': '&#x2B50;',
+    'reading': '&#x1F4D6;',
+    'project': '&#x1F680;'
+} %}
+{% set type_labels = {
+    'coding': 'برمجة',
+    'game': 'لعبة',
+    'quiz': 'اختبار',
+    'drag_drop': 'سحب وإفلات',
+    'reading': 'قراءة',
+    'project': 'مشروع'
+} %}
+{% set source_labels = {
+    'live_class': 'الفصل المباشر',
+    'assigned': 'مُكلّف',
+    'self_paced': 'ذاتي',
+    'quest': 'مهمة'
+} %}
+{% set difficulty_labels = {
+    'easy': 'سهل',
+    'medium': 'متوسط',
+    'hard': 'صعب'
+} %}
+
+{% set status = student_activity.status if student_activity else 'pending' %}
+
+<div class="actd-container">
+
+    <!-- Back Link -->
+    <a href="{{ url_for('student.activities') }}" class="actd-back">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="9 18 15 12 9 6"/>
+        </svg>
+        العودة للأنشطة
+    </a>
+
+    <!-- Main Detail Card -->
+    <div class="actd-card">
+
+        <!-- Header -->
+        <div class="actd-header">
+            <div class="actd-header-top">
+                <h1 class="actd-title">{{ activity.title_ar }}</h1>
+                <span class="actd-type-badge {{ activity.activity_type.value }}">
+                    <span class="actd-type-icon">{{ type_icons.get(activity.activity_type.value, '?') | safe }}</span>
+                    {{ type_labels.get(activity.activity_type.value, activity.activity_type.value) }}
+                </span>
+            </div>
+
+            <!-- Meta Chips -->
+            <div class="actd-meta-row">
+                {% if activity.xp_reward %}
+                <span class="actd-meta-chip xp">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    {{ activity.xp_reward }} XP
+                </span>
+                {% endif %}
+
+                {% if activity.coin_reward %}
+                <span class="actd-meta-chip coins">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M8 14h8"/></svg>
+                    {{ activity.coin_reward }} عملة
+                </span>
+                {% endif %}
+
+                {% if activity.estimated_minutes %}
+                <span class="actd-meta-chip time">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    {{ activity.estimated_minutes }} دقيقة
+                </span>
+                {% endif %}
+
+                {% if activity.difficulty %}
+                <span class="actd-meta-chip difficulty {{ activity.difficulty.value }}">
+                    {{ difficulty_labels.get(activity.difficulty.value, activity.difficulty.value) }}
+                </span>
+                {% endif %}
+
+                {% if activity.source %}
+                <span class="actd-meta-chip source">
+                    {{ source_labels.get(activity.source.value, activity.source.value) }}
+                </span>
+                {% endif %}
+            </div>
+        </div>
+
+        <hr class="actd-divider">
+
+        <!-- Description -->
+        <div class="actd-body">
+            {% if activity.description %}
+            <h3 class="actd-section-title">وصف النشاط</h3>
+            <p class="actd-description">{{ activity.description }}</p>
+            {% endif %}
+
+            {% if activity.due_date %}
+            <div class="actd-due">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+                موعد التسليم: {{ activity.due_date.strftime('%Y-%m-%d') }}
+            </div>
+            {% endif %}
+        </div>
+
+        <hr class="actd-divider">
+
+        <!-- Action Footer -->
+        <div class="actd-footer">
+            {% if status == 'completed' %}
+                <div class="actd-completed-badge">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                        <polyline points="22 4 12 14.01 9 11.01"/>
+                    </svg>
+                    مكتمل
+                </div>
+            {% else %}
+                <form method="POST" action="{{ url_for('student.complete_activity', activity_id=activity.id) }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="actd-complete-btn">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                            <polyline points="20 6 9 17 4 12"/>
+                        </svg>
+                        أكمل النشاط
+                    </button>
+                </form>
+                {% if status == 'in_progress' %}
+                <span class="actd-inprogress-badge">جاري التنفيذ</span>
+                {% endif %}
+            {% endif %}
+
+            <div class="actd-rewards-summary">
+                {% if activity.xp_reward %}
+                <div class="actd-reward-item xp">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    +{{ activity.xp_reward }}
+                </div>
+                {% endif %}
+                {% if activity.coin_reward %}
+                <div class="actd-reward-item coins">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v12M8 10h8M8 14h8"/></svg>
+                    +{{ activity.coin_reward }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

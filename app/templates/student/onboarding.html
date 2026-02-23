@@ -1,0 +1,643 @@
+{% extends "base.html" %}
+
+{% block title %}مرحباً بك{% endblock %}
+
+{% block extra_css %}
+<style>
+/* ========================================================
+   Shalaby Verse - Student Onboarding Wizard
+   Full-screen galaxy-themed multi-step onboarding
+   ======================================================== */
+
+/* -- Reset & Base ---------------------------------------- */
+body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Tajawal', sans-serif;
+    direction: rtl;
+    overflow-x: hidden;
+}
+
+/* -- Galaxy Background ----------------------------------- */
+.onboarding-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(135deg, #0a0015 0%, #1a0a2e 25%, #640D5F 50%, #2d0a3e 75%, #0a0015 100%);
+    overflow: hidden;
+}
+.onboarding-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+        radial-gradient(2px 2px at 10% 20%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(2px 2px at 25% 60%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 40% 15%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(2px 2px at 55% 80%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 70% 30%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(2px 2px at 85% 55%, rgba(255,255,255,0.8), transparent),
+        radial-gradient(1px 1px at 90% 85%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(2px 2px at 15% 90%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 50% 45%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(2px 2px at 65% 10%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 30% 35%, rgba(255,255,255,0.4), transparent),
+        radial-gradient(2px 2px at 80% 70%, rgba(255,255,255,0.6), transparent),
+        radial-gradient(1px 1px at 45% 95%, rgba(255,255,255,0.5), transparent),
+        radial-gradient(2px 2px at 5% 50%, rgba(255,255,255,0.7), transparent),
+        radial-gradient(1px 1px at 95% 40%, rgba(255,255,255,0.4), transparent);
+    animation: starsFloat 60s linear infinite;
+}
+@keyframes starsFloat {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-20px); }
+}
+.onboarding-bg::after {
+    content: '';
+    position: absolute;
+    width: 500px;
+    height: 500px;
+    border-radius: 50%;
+    top: -150px;
+    right: -100px;
+    background: radial-gradient(circle, rgba(235,91,0,0.15) 0%, transparent 70%);
+    animation: nebulaGlow 8s ease-in-out infinite alternate;
+}
+@keyframes nebulaGlow {
+    0%   { opacity: 0.4; transform: scale(1); }
+    100% { opacity: 0.8; transform: scale(1.15); }
+}
+
+/* -- Main Container -------------------------------------- */
+.onboarding-container {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+}
+
+/* -- Wizard Card ----------------------------------------- */
+.wizard-card {
+    width: 100%;
+    max-width: 600px;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 28px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 8px 60px rgba(0, 0, 0, 0.4);
+    overflow: hidden;
+}
+
+/* -- Step Panels ----------------------------------------- */
+.wizard-step {
+    display: none;
+    padding: 2.5rem 2.5rem 2rem;
+    text-align: center;
+    animation: stepFadeIn 0.4s ease;
+}
+.wizard-step.active {
+    display: block;
+}
+@keyframes stepFadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* -- Step 1: Welcome ------------------------------------- */
+.welcome-rocket {
+    font-size: 4.5rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+    animation: rocketFloat 3s ease-in-out infinite;
+}
+@keyframes rocketFloat {
+    0%, 100% { transform: translateY(0) rotate(-5deg); }
+    50%      { transform: translateY(-15px) rotate(5deg); }
+}
+.welcome-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: #FFD700;
+    margin: 0 0 0.5rem 0;
+    text-shadow: 0 2px 12px rgba(255,215,0,0.3);
+}
+.welcome-subtitle {
+    font-size: 1rem;
+    color: rgba(255,255,255,0.75);
+    margin: 0 0 0.5rem 0;
+    line-height: 1.6;
+}
+.welcome-desc {
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.55);
+    margin: 0;
+    line-height: 1.6;
+}
+
+/* -- Step 2: Archetype Cards ----------------------------- */
+.step-title {
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 0.4rem 0;
+}
+.step-subtitle {
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.6);
+    margin: 0 0 1.5rem 0;
+}
+.archetype-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    text-align: center;
+}
+.archetype-card {
+    position: relative;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 1.25rem 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.archetype-card:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.25);
+    transform: translateY(-3px);
+}
+.archetype-card.selected {
+    background: rgba(235,91,0,0.15);
+    border-color: #EB5B00;
+    box-shadow: 0 0 20px rgba(235,91,0,0.25);
+}
+.archetype-card.selected::after {
+    content: '\2713';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #EB5B00;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.archetype-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+.archetype-name {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 0.2rem 0;
+}
+.archetype-desc {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.55);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* -- Step 3: Bio Input ----------------------------------- */
+.bio-textarea {
+    width: 100%;
+    min-height: 120px;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 1rem 1.25rem;
+    font-size: 0.92rem;
+    font-family: 'Tajawal', sans-serif;
+    color: #fff;
+    direction: rtl;
+    resize: vertical;
+    transition: border-color 0.3s;
+    outline: none;
+}
+.bio-textarea::placeholder {
+    color: rgba(255,255,255,0.35);
+}
+.bio-textarea:focus {
+    border-color: #EB5B00;
+    box-shadow: 0 0 16px rgba(235,91,0,0.15);
+}
+.bio-char-count {
+    text-align: left;
+    font-size: 0.75rem;
+    color: rgba(255,255,255,0.4);
+    margin-top: 0.4rem;
+}
+
+/* -- Step 4: Track Selection ----------------------------- */
+.track-select-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    text-align: center;
+}
+.track-select-card {
+    position: relative;
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 1.25rem 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+.track-select-card:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: rgba(255,255,255,0.25);
+    transform: translateY(-3px);
+}
+.track-select-card.selected {
+    background: rgba(100,13,95,0.2);
+    border-color: #8B1A85;
+    box-shadow: 0 0 20px rgba(100,13,95,0.3);
+}
+.track-select-card.selected::after {
+    content: '\2713';
+    position: absolute;
+    top: 8px;
+    left: 8px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #640D5F;
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.track-select-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    display: block;
+}
+.track-select-name {
+    font-size: 0.92rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 0.2rem 0;
+}
+.track-select-desc {
+    font-size: 0.72rem;
+    color: rgba(255,255,255,0.55);
+    margin: 0;
+    line-height: 1.4;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* -- Wizard Footer: Buttons & Dots ----------------------- */
+.wizard-footer {
+    padding: 0 2.5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.25rem;
+}
+.wizard-buttons {
+    display: flex;
+    gap: 0.75rem;
+    width: 100%;
+}
+.wizard-btn {
+    flex: 1;
+    padding: 0.75rem 1.5rem;
+    border-radius: 16px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    border: none;
+    text-decoration: none;
+    text-align: center;
+}
+.wizard-btn-next {
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    border-bottom: 3px solid #B84700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 16px rgba(235,91,0,0.4);
+}
+.wizard-btn-next:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(235,91,0,0.55);
+}
+.wizard-btn-next:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 2px 8px rgba(235,91,0,0.2);
+}
+.wizard-btn-back {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.8);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-bottom: 3px solid rgba(255,255,255,0.1);
+}
+.wizard-btn-back:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+.wizard-btn-submit {
+    background: linear-gradient(180deg, #8B1A85 0%, #640D5F 55%, #4a0945 100%);
+    color: #fff;
+    border-bottom: 3px solid #3a0735;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 16px rgba(100,13,95,0.4);
+}
+.wizard-btn-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(100,13,95,0.55);
+}
+
+/* -- Progress Dots --------------------------------------- */
+.wizard-dots {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+.wizard-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transition: all 0.3s ease;
+}
+.wizard-dot.active {
+    background: #EB5B00;
+    box-shadow: 0 0 10px rgba(235,91,0,0.5);
+    transform: scale(1.2);
+}
+.wizard-dot.completed {
+    background: #FFD700;
+}
+
+/* -- Responsive ------------------------------------------ */
+@media (max-width: 600px) {
+    .wizard-card {
+        margin: 0;
+        border-radius: 20px;
+    }
+    .wizard-step {
+        padding: 2rem 1.5rem 1.5rem;
+    }
+    .wizard-footer {
+        padding: 0 1.5rem 1.5rem;
+    }
+    .welcome-title {
+        font-size: 1.4rem;
+    }
+    .archetype-grid,
+    .track-select-grid {
+        grid-template-columns: 1fr;
+    }
+    .welcome-rocket {
+        font-size: 3.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="onboarding-bg"></div>
+
+<div class="onboarding-container">
+    <div class="wizard-card">
+        <form id="onboardingForm" method="POST" action="{{ url_for('student.onboarding_submit') }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="motivation" id="motivationInput" value="">
+            <input type="hidden" name="first_track" id="firstTrackInput" value="">
+
+            <!-- ═══════════════════════════════════════════════════
+                 Step 1: Welcome
+                 ═══════════════════════════════════════════════════ -->
+            <div class="wizard-step active" data-step="1">
+                <div class="welcome-rocket">&#128640;</div>
+                <h1 class="welcome-title">مرحباً بك في شلبي فيرس!</h1>
+                <p class="welcome-subtitle">رحلتك في عالم التكنولوجيا تبدأ الآن</p>
+                <p class="welcome-desc">سنساعدك على اكتشاف عوالم البرمجة والبيانات والأمان الرقمي بطريقة ممتعة وتفاعلية.</p>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════
+                 Step 2: Motivation Archetype
+                 ═══════════════════════════════════════════════════ -->
+            <div class="wizard-step" data-step="2">
+                <h2 class="step-title">ما الذي يحفزك؟</h2>
+                <p class="step-subtitle">اختر الأسلوب الذي يناسبك في التعلم</p>
+
+                <div class="archetype-grid">
+                    <div class="archetype-card" data-value="competition" onclick="selectArchetype(this)">
+                        <span class="archetype-icon">&#127942;</span>
+                        <h3 class="archetype-name">منافسة</h3>
+                        <p class="archetype-desc">أحب التحدي والتنافس مع الآخرين للوصول إلى القمة</p>
+                    </div>
+                    <div class="archetype-card" data-value="adventure" onclick="selectArchetype(this)">
+                        <span class="archetype-icon">&#127759;</span>
+                        <h3 class="archetype-name">مغامرة</h3>
+                        <p class="archetype-desc">أحب استكشاف عوالم جديدة واكتشاف المجهول</p>
+                    </div>
+                    <div class="archetype-card" data-value="mastery" onclick="selectArchetype(this)">
+                        <span class="archetype-icon">&#127775;</span>
+                        <h3 class="archetype-name">إتقان</h3>
+                        <p class="archetype-desc">أحب إتقان المهارات والوصول لأعلى مستوى</p>
+                    </div>
+                    <div class="archetype-card" data-value="social" onclick="selectArchetype(this)">
+                        <span class="archetype-icon">&#129309;</span>
+                        <h3 class="archetype-name">تواصل</h3>
+                        <p class="archetype-desc">أحب التعلم مع الأصدقاء والعمل كفريق</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════
+                 Step 3: Bio
+                 ═══════════════════════════════════════════════════ -->
+            <div class="wizard-step" data-step="3">
+                <h2 class="step-title">حدثنا عن نفسك</h2>
+                <p class="step-subtitle">اكتب نبذة قصيرة عنك (اختياري)</p>
+
+                <textarea class="bio-textarea" name="bio" id="bioInput"
+                          placeholder="مثال: أنا أحب البرمجة وألعاب الفيديو، وأريد أن أصنع لعبتي الخاصة!"
+                          maxlength="300"></textarea>
+                <div class="bio-char-count"><span id="bioCharCount">0</span>/300</div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════
+                 Step 4: Pick First Track
+                 ═══════════════════════════════════════════════════ -->
+            <div class="wizard-step" data-step="4">
+                <h2 class="step-title">اختر عالمك الأول</h2>
+                <p class="step-subtitle">يمكنك استكشاف العوالم الأخرى لاحقاً</p>
+
+                <div class="track-select-grid">
+                    {% for track in tracks %}
+                    <div class="track-select-card" data-value="{{ track.id }}" onclick="selectTrack(this)">
+                        <span class="track-select-icon">{{ track.icon if track.icon else '&#128640;' }}</span>
+                        <h3 class="track-select-name">{{ track.name_ar }}</h3>
+                        {% if track.description_ar %}
+                        <p class="track-select-desc">{{ track.description_ar }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════
+                 Footer: Navigation Buttons & Progress Dots
+                 ═══════════════════════════════════════════════════ -->
+            <div class="wizard-footer">
+                <div class="wizard-buttons">
+                    <button type="button" class="wizard-btn wizard-btn-back" id="btnBack" style="display:none;" onclick="prevStep()">السابق</button>
+                    <button type="button" class="wizard-btn wizard-btn-next" id="btnNext" onclick="nextStep()">التالي</button>
+                    <button type="submit" class="wizard-btn wizard-btn-submit" id="btnSubmit" style="display:none;">ابدأ الرحلة &#128640;</button>
+                </div>
+
+                <div class="wizard-dots">
+                    <div class="wizard-dot active" data-dot="1"></div>
+                    <div class="wizard-dot" data-dot="2"></div>
+                    <div class="wizard-dot" data-dot="3"></div>
+                    <div class="wizard-dot" data-dot="4"></div>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var currentStep = 1;
+    var totalSteps = 4;
+    var selectedMotivation = '';
+    var selectedTrack = '';
+
+    var btnBack = document.getElementById('btnBack');
+    var btnNext = document.getElementById('btnNext');
+    var btnSubmit = document.getElementById('btnSubmit');
+    var bioInput = document.getElementById('bioInput');
+    var bioCharCount = document.getElementById('bioCharCount');
+    var motivationInput = document.getElementById('motivationInput');
+    var firstTrackInput = document.getElementById('firstTrackInput');
+
+    /* Bio character counter */
+    if (bioInput) {
+        bioInput.addEventListener('input', function() {
+            bioCharCount.textContent = bioInput.value.length;
+        });
+    }
+
+    /* Archetype selection */
+    window.selectArchetype = function(card) {
+        var cards = document.querySelectorAll('.archetype-card');
+        for (var i = 0; i < cards.length; i++) {
+            cards[i].classList.remove('selected');
+        }
+        card.classList.add('selected');
+        selectedMotivation = card.getAttribute('data-value');
+        motivationInput.value = selectedMotivation;
+    };
+
+    /* Track selection */
+    window.selectTrack = function(card) {
+        var cards = document.querySelectorAll('.track-select-card');
+        for (var i = 0; i < cards.length; i++) {
+            cards[i].classList.remove('selected');
+        }
+        card.classList.add('selected');
+        selectedTrack = card.getAttribute('data-value');
+        firstTrackInput.value = selectedTrack;
+    };
+
+    /* Show a specific step */
+    function showStep(step) {
+        var steps = document.querySelectorAll('.wizard-step');
+        var dots = document.querySelectorAll('.wizard-dot');
+
+        for (var i = 0; i < steps.length; i++) {
+            steps[i].classList.remove('active');
+        }
+        steps[step - 1].classList.add('active');
+
+        /* Update dots */
+        for (var j = 0; j < dots.length; j++) {
+            dots[j].classList.remove('active');
+            dots[j].classList.remove('completed');
+            var dotNum = parseInt(dots[j].getAttribute('data-dot'));
+            if (dotNum === step) {
+                dots[j].classList.add('active');
+            } else if (dotNum < step) {
+                dots[j].classList.add('completed');
+            }
+        }
+
+        /* Show/hide buttons */
+        btnBack.style.display = (step > 1) ? '' : 'none';
+
+        if (step === totalSteps) {
+            btnNext.style.display = 'none';
+            btnSubmit.style.display = '';
+        } else {
+            btnNext.style.display = '';
+            btnSubmit.style.display = 'none';
+        }
+    }
+
+    /* Next step */
+    window.nextStep = function() {
+        /* Validation per step */
+        if (currentStep === 2 && !selectedMotivation) {
+            /* Shake the archetype grid to indicate selection needed */
+            var grid = document.querySelector('.archetype-grid');
+            grid.style.animation = 'none';
+            grid.offsetHeight; /* trigger reflow */
+            grid.style.animation = 'shake 0.4s ease';
+            return;
+        }
+
+        if (currentStep < totalSteps) {
+            currentStep++;
+            showStep(currentStep);
+        }
+    };
+
+    /* Previous step */
+    window.prevStep = function() {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+        }
+    };
+
+    /* Initialize */
+    showStep(1);
+})();
+</script>
+<style>
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    50% { transform: translateX(6px); }
+    75% { transform: translateX(-4px); }
+}
+</style>
+{% endblock %}

@@ -77,6 +77,7 @@ class Badge(db.Model):
     description_ar = db.Column(db.String(300), nullable=False, default='')
     criteria_type = db.Column(db.Enum(BadgeCriteria), nullable=False)
     criteria_value = db.Column(db.Integer, nullable=False, default=1)
+    tier = db.Column(db.Integer, nullable=False, default=1)  # 1=bronze, 2=silver, 3=gold, 4=diamond
 
     def __repr__(self):
         return f'<Badge {self.name}>'

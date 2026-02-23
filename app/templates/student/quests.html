@@ -1,0 +1,612 @@
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_css %}
+<style>
+/* ========================================================
+   Shalaby Verse - Student Quests Page
+   ======================================================== */
+
+/* -- Filter Bar ------------------------------------------ */
+.quest-filter-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    align-items: center;
+    margin-bottom: 1.75rem;
+}
+.quest-filter-group {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+.quest-filter-group-label {
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: rgba(255,255,255,0.85);
+    align-self: center;
+    margin-left: 0.5rem;
+}
+.quest-filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 1rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    border: 2px solid rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.12);
+    color: rgba(255,255,255,0.85);
+    cursor: pointer;
+    transition: all 0.25s ease;
+    text-decoration: none;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+.quest-filter-btn:hover {
+    background: rgba(255,255,255,0.22);
+    color: #fff;
+    border-color: rgba(255,255,255,0.4);
+}
+.quest-filter-btn.active {
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 3px 12px rgba(235,91,0,0.4);
+}
+.quest-filter-divider {
+    width: 1px;
+    height: 28px;
+    background: rgba(255,255,255,0.2);
+    margin: 0 0.5rem;
+}
+
+/* -- Difficulty Colors ----------------------------------- */
+.quest-filter-btn[data-diff="beginner"].active {
+    background: linear-gradient(180deg, #34D399, #10B981);
+    box-shadow: 0 3px 12px rgba(16,185,129,0.4);
+}
+.quest-filter-btn[data-diff="intermediate"].active {
+    background: linear-gradient(180deg, #FBBF24, #F59E0B);
+    box-shadow: 0 3px 12px rgba(245,158,11,0.4);
+    color: #4a3600;
+}
+.quest-filter-btn[data-diff="advanced"].active {
+    background: linear-gradient(180deg, #F87171, #EF4444);
+    box-shadow: 0 3px 12px rgba(239,68,68,0.4);
+}
+
+/* -- Quest Grid ------------------------------------------ */
+.quest-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+/* -- Quest Card ------------------------------------------ */
+.quest-card {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 3px 16px rgba(100,13,95,0.07);
+    border: 1px solid rgba(255,255,255,0.5);
+    transition: transform 0.3s, box-shadow 0.3s;
+    display: flex;
+    flex-direction: column;
+}
+.quest-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(100,13,95,0.14);
+}
+.quest-card.locked {
+    opacity: 0.7;
+}
+.quest-card.locked .quest-card-body {
+    filter: grayscale(0.3);
+}
+.quest-card-header {
+    padding: 1rem 1.15rem 0.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+}
+.quest-card-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary, #2D3436);
+    margin: 0;
+    line-height: 1.35;
+    flex: 1;
+}
+.quest-card-body {
+    padding: 0 1.15rem;
+    flex: 1;
+}
+.quest-card-desc {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #636E72);
+    line-height: 1.55;
+    margin: 0 0 0.75rem 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+/* -- Difficulty Badge ------------------------------------ */
+.quest-diff-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.25rem 0.65rem;
+    border-radius: 12px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.quest-diff-badge.beginner {
+    background: rgba(16,185,129,0.12);
+    color: #059669;
+}
+.quest-diff-badge.intermediate {
+    background: rgba(245,158,11,0.12);
+    color: #D97706;
+}
+.quest-diff-badge.advanced {
+    background: rgba(239,68,68,0.12);
+    color: #DC2626;
+}
+
+/* -- Status Indicator ------------------------------------ */
+.quest-status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+.quest-status-badge.available {
+    background: rgba(16,185,129,0.1);
+    color: #059669;
+}
+.quest-status-badge.in_progress {
+    background: rgba(245,158,11,0.1);
+    color: #D97706;
+}
+.quest-status-badge.completed {
+    background: rgba(100,13,95,0.1);
+    color: #640D5F;
+}
+.quest-status-badge.locked {
+    background: rgba(107,114,128,0.1);
+    color: #6B7280;
+}
+
+/* -- Rewards Row ----------------------------------------- */
+.quest-card-rewards {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    padding: 0 1.15rem;
+    margin-bottom: 0.65rem;
+}
+.quest-reward-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+}
+.quest-reward-chip.xp {
+    color: #EB5B00;
+}
+.quest-reward-chip.coins {
+    color: #F59E0B;
+}
+.quest-reward-chip.gems {
+    color: #8B5CF6;
+}
+.quest-reward-chip img {
+    width: 18px;
+    height: 18px;
+}
+.quest-reward-chip svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* -- Card Meta ------------------------------------------- */
+.quest-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0 1.15rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.72rem;
+    color: var(--text-secondary, #636E72);
+}
+.quest-card-meta svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+.quest-meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+/* -- Card Footer ----------------------------------------- */
+.quest-card-footer {
+    padding: 0.75rem 1.15rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(100,13,95,0.06);
+    margin-top: auto;
+}
+.quest-start-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    border-bottom: 2px solid #B84700;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    text-shadow: 0 1px 1px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px rgba(235,91,0,0.3);
+}
+.quest-start-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(235,91,0,0.45);
+    color: #fff;
+}
+.quest-start-btn.locked-btn {
+    background: #aaa;
+    border-bottom-color: #888;
+    pointer-events: none;
+    box-shadow: none;
+}
+.quest-start-btn.completed-btn {
+    background: linear-gradient(180deg, #A78BFA, #7C3AED);
+    border-bottom-color: #5B21B6;
+    box-shadow: 0 2px 8px rgba(124,58,237,0.3);
+    pointer-events: none;
+}
+.quest-start-btn.progress-btn {
+    background: linear-gradient(180deg, #FBBF24, #F59E0B);
+    border-bottom-color: #D97706;
+    box-shadow: 0 2px 8px rgba(245,158,11,0.3);
+    color: #4a3600;
+    text-shadow: none;
+}
+
+/* -- Lock Overlay ---------------------------------------- */
+.quest-lock-overlay {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: #9CA3AF;
+}
+.quest-lock-overlay svg {
+    width: 14px;
+    height: 14px;
+}
+
+/* -- Empty State ----------------------------------------- */
+.quest-empty {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.5);
+}
+.quest-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    opacity: 0.5;
+}
+.quest-empty-text {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text-secondary, #636E72);
+    margin: 0;
+}
+
+/* -- Page Header ----------------------------------------- */
+.quest-page-header {
+    margin-bottom: 1.5rem;
+}
+.quest-page-title {
+    font-size: 1.35rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0 0 0.35rem 0;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+.quest-page-subtitle {
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.8);
+    margin: 0;
+}
+
+/* -- Category Labels ------------------------------------- */
+{% set category_labels = {
+    'coding': 'برمجة',
+    'ai': 'ذكاء اصطناعي',
+    'robotics': 'روبوتات',
+    'data': 'بيانات',
+    'security': 'أمان'
+} %}
+
+/* -- Responsive ------------------------------------------ */
+@media (max-width: 900px) {
+    .quest-grid {
+        grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+}
+@media (max-width: 600px) {
+    .quest-grid {
+        grid-template-columns: 1fr;
+    }
+    .quest-filter-bar {
+        gap: 0.5rem;
+    }
+    .quest-filter-divider {
+        display: none;
+    }
+}
+</style>
+{% endblock %}
+
+{% block topbar_title %}المهمات{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.activities') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الأنشطة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.rewards') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block content %}
+{# -- Category / Difficulty label maps -- #}
+{% set diff_labels = {'beginner': 'مبتدئ', 'intermediate': 'متوسط', 'advanced': 'متقدم'} %}
+{% set cat_labels = {'coding': 'برمجة', 'ai': 'ذكاء اصطناعي', 'robotics': 'روبوتات', 'data': 'بيانات', 'security': 'أمان'} %}
+
+<!-- Page Header -->
+<div class="quest-page-header">
+    <h1 class="quest-page-title">المهمات</h1>
+    <p class="quest-page-subtitle">أكمل المهمات واحصل على مكافآت رائعة!</p>
+</div>
+
+<!-- ============================================================
+     FILTER BAR
+     ============================================================ -->
+<div class="quest-filter-bar">
+    <!-- Difficulty filters -->
+    <span class="quest-filter-group-label">الصعوبة:</span>
+    <div class="quest-filter-group">
+        <a href="{{ url_for('student.quests', category=category) }}"
+           class="quest-filter-btn {{ 'active' if not difficulty else '' }}">
+            الكل
+        </a>
+        <a href="{{ url_for('student.quests', difficulty='beginner', category=category) }}"
+           class="quest-filter-btn {{ 'active' if difficulty == 'beginner' else '' }}" data-diff="beginner">
+            مبتدئ
+        </a>
+        <a href="{{ url_for('student.quests', difficulty='intermediate', category=category) }}"
+           class="quest-filter-btn {{ 'active' if difficulty == 'intermediate' else '' }}" data-diff="intermediate">
+            متوسط
+        </a>
+        <a href="{{ url_for('student.quests', difficulty='advanced', category=category) }}"
+           class="quest-filter-btn {{ 'active' if difficulty == 'advanced' else '' }}" data-diff="advanced">
+            متقدم
+        </a>
+    </div>
+
+    <div class="quest-filter-divider"></div>
+
+    <!-- Category filters -->
+    <span class="quest-filter-group-label">التصنيف:</span>
+    <div class="quest-filter-group">
+        <a href="{{ url_for('student.quests', difficulty=difficulty) }}"
+           class="quest-filter-btn {{ 'active' if not category else '' }}">
+            الكل
+        </a>
+        <a href="{{ url_for('student.quests', difficulty=difficulty, category='coding') }}"
+           class="quest-filter-btn {{ 'active' if category == 'coding' else '' }}">
+            برمجة
+        </a>
+        <a href="{{ url_for('student.quests', difficulty=difficulty, category='ai') }}"
+           class="quest-filter-btn {{ 'active' if category == 'ai' else '' }}">
+            ذكاء اصطناعي
+        </a>
+        <a href="{{ url_for('student.quests', difficulty=difficulty, category='robotics') }}"
+           class="quest-filter-btn {{ 'active' if category == 'robotics' else '' }}">
+            روبوتات
+        </a>
+        <a href="{{ url_for('student.quests', difficulty=difficulty, category='data') }}"
+           class="quest-filter-btn {{ 'active' if category == 'data' else '' }}">
+            بيانات
+        </a>
+        <a href="{{ url_for('student.quests', difficulty=difficulty, category='security') }}"
+           class="quest-filter-btn {{ 'active' if category == 'security' else '' }}">
+            أمان
+        </a>
+    </div>
+</div>
+
+<!-- ============================================================
+     QUEST CARD GRID
+     ============================================================ -->
+{% if quests %}
+<div class="quest-grid">
+    {% for quest in quests %}
+    {% set sq = student_progress.get(quest.id) %}
+    {% set status = sq.status.value if sq else ('locked' if quest.required_level > level else 'available') %}
+    {% set is_locked = (status == 'locked') %}
+
+    <div class="quest-card {{ 'locked' if is_locked else '' }}">
+        <!-- Card Header: Title + Difficulty Badge -->
+        <div class="quest-card-header">
+            <h3 class="quest-card-title">{{ quest.title_ar }}</h3>
+            <span class="quest-diff-badge {{ quest.difficulty.value }}">
+                {{ diff_labels.get(quest.difficulty.value, quest.difficulty.value) }}
+            </span>
+        </div>
+
+        <!-- Description -->
+        <div class="quest-card-body">
+            <p class="quest-card-desc">{{ quest.description_ar }}</p>
+        </div>
+
+        <!-- Rewards -->
+        <div class="quest-card-rewards">
+            {% if quest.xp_reward %}
+            <div class="quest-reward-chip xp">
+                <img src="{{ url_for('static', filename='img/icons/xp-bolt.png') }}" alt="">
+                <span>+{{ quest.xp_reward }} XP</span>
+            </div>
+            {% endif %}
+            {% if quest.coin_reward %}
+            <div class="quest-reward-chip coins">
+                <img src="{{ url_for('static', filename='img/icons/coin.png') }}" alt="">
+                <span>+{{ quest.coin_reward }}</span>
+            </div>
+            {% endif %}
+            {% if quest.gem_reward %}
+            <div class="quest-reward-chip gems">
+                <svg viewBox="0 0 24 24" fill="#8B5CF6" stroke="none"><path d="M12 2L2 9l10 13L22 9z"/></svg>
+                <span>+{{ quest.gem_reward }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Meta: Time + Category -->
+        <div class="quest-card-meta">
+            {% if quest.estimated_minutes %}
+            <span class="quest-meta-item">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+                {{ quest.estimated_minutes }} دقيقة
+            </span>
+            {% endif %}
+            {% if quest.category %}
+            <span class="quest-meta-item">
+                {{ cat_labels.get(quest.category.value, quest.category.value) }}
+            </span>
+            {% endif %}
+            {% if quest.required_level > 1 %}
+            <span class="quest-meta-item">
+                المستوى {{ quest.required_level }}+
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Footer: Status + Action Button -->
+        <div class="quest-card-footer">
+            <!-- Status badge -->
+            {% if status == 'completed' %}
+            <span class="quest-status-badge completed">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                مكتملة
+            </span>
+            {% elif status == 'in_progress' %}
+            <span class="quest-status-badge in_progress">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+                قيد التنفيذ
+            </span>
+            {% elif status == 'locked' %}
+            <span class="quest-status-badge locked">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                مقفلة
+            </span>
+            {% else %}
+            <span class="quest-status-badge available">
+                متاحة
+            </span>
+            {% endif %}
+
+            <!-- Action button -->
+            {% if is_locked %}
+            <span class="quest-lock-overlay">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                المستوى {{ quest.required_level }}
+            </span>
+            {% elif status == 'completed' %}
+            <a href="{{ url_for('student.quest_detail', quest_id=quest.id) }}" class="quest-start-btn completed-btn">
+                مكتملة
+            </a>
+            {% elif status == 'in_progress' %}
+            <a href="{{ url_for('student.quest_detail', quest_id=quest.id) }}" class="quest-start-btn progress-btn">
+                أكمل المهمة
+            </a>
+            {% else %}
+            <a href="{{ url_for('student.quest_detail', quest_id=quest.id) }}" class="quest-start-btn">
+                ابدأ المهمة
+            </a>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="quest-empty">
+    <div class="quest-empty-icon">
+        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(100,13,95,0.3)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+    </div>
+    <p class="quest-empty-text">لا توجد مهمات متاحة حالياً</p>
+</div>
+{% endif %}
+
+{% endblock %}

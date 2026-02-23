@@ -1,0 +1,554 @@
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_css %}
+<style>
+/* ========================================================
+   Shalaby Verse - Quest Detail Page
+   ======================================================== */
+
+/* -- Back Link ------------------------------------------- */
+.quest-back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: rgba(255,255,255,0.8);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1.25rem;
+    transition: color 0.2s;
+}
+.quest-back-link:hover {
+    color: #fff;
+}
+.quest-back-link svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* -- Detail Layout --------------------------------------- */
+.quest-detail-layout {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+/* -- Main Card ------------------------------------------- */
+.quest-detail-card {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 3px 16px rgba(100,13,95,0.07);
+    border: 1px solid rgba(255,255,255,0.5);
+}
+.quest-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+}
+.quest-detail-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: var(--text-primary, #2D3436);
+    margin: 0;
+    line-height: 1.4;
+}
+.quest-detail-desc {
+    font-size: 0.92rem;
+    color: var(--text-secondary, #636E72);
+    line-height: 1.75;
+    margin: 0 0 1.5rem 0;
+}
+
+/* -- Difficulty Badge (Detail) --------------------------- */
+.quest-diff-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.3rem 0.8rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.quest-diff-badge.beginner {
+    background: rgba(16,185,129,0.12);
+    color: #059669;
+}
+.quest-diff-badge.intermediate {
+    background: rgba(245,158,11,0.12);
+    color: #D97706;
+}
+.quest-diff-badge.advanced {
+    background: rgba(239,68,68,0.12);
+    color: #DC2626;
+}
+
+/* -- Reward Chips Row ------------------------------------ */
+.quest-detail-rewards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+.quest-reward-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 14px;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+.quest-reward-chip.xp {
+    background: rgba(235,91,0,0.08);
+    color: #EB5B00;
+}
+.quest-reward-chip.coins {
+    background: rgba(245,158,11,0.08);
+    color: #D97706;
+}
+.quest-reward-chip.gems {
+    background: rgba(139,92,246,0.08);
+    color: #7C3AED;
+}
+.quest-reward-chip img {
+    width: 20px;
+    height: 20px;
+}
+.quest-reward-chip svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* -- Meta Info ------------------------------------------- */
+.quest-detail-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    padding: 1rem 0;
+    border-top: 1px solid rgba(100,13,95,0.06);
+    border-bottom: 1px solid rgba(100,13,95,0.06);
+    margin-bottom: 1.5rem;
+}
+.quest-meta-block {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+.quest-meta-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-secondary, #636E72);
+}
+.quest-meta-value {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary, #2D3436);
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+.quest-meta-value svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* -- Action Buttons -------------------------------------- */
+.quest-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+.quest-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.7rem 2rem;
+    border-radius: 26px;
+    font-size: 0.95rem;
+    font-weight: 800;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+}
+.quest-action-btn.start {
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    border-bottom: 4px solid #B84700;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.25);
+    box-shadow: 0 4px 16px rgba(235,91,0,0.4);
+}
+.quest-action-btn.start:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(235,91,0,0.5);
+}
+.quest-action-btn.complete {
+    background: linear-gradient(180deg, #34D399 0%, #10B981 55%, #059669 100%);
+    color: #fff;
+    border-bottom: 4px solid #047857;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    box-shadow: 0 4px 16px rgba(16,185,129,0.4);
+}
+.quest-action-btn.complete:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(16,185,129,0.5);
+}
+.quest-action-btn.completed-badge {
+    background: linear-gradient(180deg, #A78BFA, #7C3AED);
+    color: #fff;
+    border-bottom: 4px solid #5B21B6;
+    box-shadow: 0 4px 16px rgba(124,58,237,0.3);
+    pointer-events: none;
+}
+
+/* -- Sidebar Panel --------------------------------------- */
+.quest-sidebar-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* -- Related Activities Card ----------------------------- */
+.quest-related-card {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 1.25rem;
+    box-shadow: 0 3px 16px rgba(100,13,95,0.07);
+    border: 1px solid rgba(255,255,255,0.5);
+}
+.quest-related-title {
+    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary, #2D3436);
+    margin: 0 0 1rem 0;
+}
+.quest-related-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.quest-related-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 0.75rem;
+    background: #f9f6ff;
+    border-radius: 12px;
+    border: 1px solid rgba(100,13,95,0.06);
+    text-decoration: none;
+    color: var(--text-primary, #2D3436);
+    transition: background 0.2s, transform 0.2s;
+}
+.quest-related-item:hover {
+    background: #f0ebff;
+    transform: translateX(-3px);
+}
+.quest-related-item-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #EB5B00, #FFD700);
+    flex-shrink: 0;
+}
+.quest-related-item-name {
+    font-size: 0.82rem;
+    font-weight: 700;
+    flex: 1;
+}
+.quest-related-item-arrow {
+    color: var(--text-secondary, #636E72);
+    font-size: 0.75rem;
+}
+.quest-related-empty {
+    font-size: 0.82rem;
+    color: var(--text-secondary, #636E72);
+    text-align: center;
+    padding: 1rem 0;
+}
+
+/* -- Status Info Card ------------------------------------ */
+.quest-status-card {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 1.25rem;
+    box-shadow: 0 3px 16px rgba(100,13,95,0.07);
+    border: 1px solid rgba(255,255,255,0.5);
+    text-align: center;
+}
+.quest-status-icon {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 0.75rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.quest-status-icon.available {
+    background: rgba(16,185,129,0.12);
+    color: #059669;
+}
+.quest-status-icon.in_progress {
+    background: rgba(245,158,11,0.12);
+    color: #D97706;
+}
+.quest-status-icon.completed {
+    background: rgba(100,13,95,0.1);
+    color: #640D5F;
+}
+.quest-status-text {
+    font-size: 0.88rem;
+    font-weight: 700;
+    color: var(--text-primary, #2D3436);
+    margin: 0 0 0.25rem 0;
+}
+.quest-status-hint {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #636E72);
+    margin: 0;
+}
+
+/* -- Responsive ------------------------------------------ */
+@media (max-width: 900px) {
+    .quest-detail-layout {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 600px) {
+    .quest-detail-card {
+        padding: 1.25rem;
+    }
+    .quest-detail-title {
+        font-size: 1.2rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block topbar_title %}تفاصيل المهمة{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.activities') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الأنشطة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.rewards') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block content %}
+{% set diff_labels = {'beginner': 'مبتدئ', 'intermediate': 'متوسط', 'advanced': 'متقدم'} %}
+{% set cat_labels = {'coding': 'برمجة', 'ai': 'ذكاء اصطناعي', 'robotics': 'روبوتات', 'data': 'بيانات', 'security': 'أمان'} %}
+{% set status = student_quest.status.value if student_quest else 'available' %}
+
+<!-- Back Link -->
+<a href="{{ url_for('student.quests') }}" class="quest-back-link">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    العودة للمهمات
+</a>
+
+<div class="quest-detail-layout">
+    <!-- ============================================================
+         MAIN CONTENT CARD
+         ============================================================ -->
+    <div class="quest-detail-card">
+        <!-- Header: Title + Difficulty -->
+        <div class="quest-detail-header">
+            <h1 class="quest-detail-title">{{ quest.title_ar }}</h1>
+            <span class="quest-diff-badge {{ quest.difficulty.value }}">
+                {{ diff_labels.get(quest.difficulty.value, quest.difficulty.value) }}
+            </span>
+        </div>
+
+        <!-- Description -->
+        <p class="quest-detail-desc">{{ quest.description_ar }}</p>
+
+        <!-- Reward Chips -->
+        <div class="quest-detail-rewards">
+            {% if quest.xp_reward %}
+            <div class="quest-reward-chip xp">
+                <img src="{{ url_for('static', filename='img/icons/xp-bolt.png') }}" alt="">
+                <span>+{{ quest.xp_reward }} XP</span>
+            </div>
+            {% endif %}
+            {% if quest.coin_reward %}
+            <div class="quest-reward-chip coins">
+                <img src="{{ url_for('static', filename='img/icons/coin.png') }}" alt="">
+                <span>+{{ quest.coin_reward }} عملة</span>
+            </div>
+            {% endif %}
+            {% if quest.gem_reward %}
+            <div class="quest-reward-chip gems">
+                <svg viewBox="0 0 24 24" fill="#8B5CF6" stroke="none"><path d="M12 2L2 9l10 13L22 9z"/></svg>
+                <span>+{{ quest.gem_reward }} جوهرة</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Meta Info -->
+        <div class="quest-detail-meta">
+            {% if quest.estimated_minutes %}
+            <div class="quest-meta-block">
+                <span class="quest-meta-label">الوقت المقدر</span>
+                <span class="quest-meta-value">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                    </svg>
+                    {{ quest.estimated_minutes }} دقيقة
+                </span>
+            </div>
+            {% endif %}
+
+            {% if quest.category %}
+            <div class="quest-meta-block">
+                <span class="quest-meta-label">التصنيف</span>
+                <span class="quest-meta-value">
+                    {{ cat_labels.get(quest.category.value, quest.category.value) }}
+                </span>
+            </div>
+            {% endif %}
+
+            {% if quest.required_level > 1 %}
+            <div class="quest-meta-block">
+                <span class="quest-meta-label">المستوى المطلوب</span>
+                <span class="quest-meta-value">
+                    المستوى {{ quest.required_level }}
+                </span>
+            </div>
+            {% endif %}
+
+            <div class="quest-meta-block">
+                <span class="quest-meta-label">الصعوبة</span>
+                <span class="quest-meta-value">
+                    {{ diff_labels.get(quest.difficulty.value, quest.difficulty.value) }}
+                </span>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="quest-actions">
+            {% if status == 'completed' %}
+            <span class="quest-action-btn completed-badge">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                مكتملة
+            </span>
+
+            {% elif status == 'in_progress' %}
+            <form method="POST" action="{{ url_for('student.complete_quest', quest_id=quest.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="quest-action-btn complete">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    أكمل المهمة
+                </button>
+            </form>
+
+            {% else %}
+            <form method="POST" action="{{ url_for('student.start_quest', quest_id=quest.id) }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="quest-action-btn start">
+                    ابدأ المهمة
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                </button>
+            </form>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ============================================================
+         SIDEBAR PANEL
+         ============================================================ -->
+    <div class="quest-sidebar-panel">
+        <!-- Status Card -->
+        <div class="quest-status-card">
+            {% if status == 'completed' %}
+            <div class="quest-status-icon completed">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <p class="quest-status-text">تم إكمال المهمة</p>
+            <p class="quest-status-hint">أحسنت! حصلت على المكافآت</p>
+
+            {% elif status == 'in_progress' %}
+            <div class="quest-status-icon in_progress">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            </div>
+            <p class="quest-status-text">قيد التنفيذ</p>
+            <p class="quest-status-hint">أكمل المهمة للحصول على المكافآت</p>
+
+            {% else %}
+            <div class="quest-status-icon available">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </div>
+            <p class="quest-status-text">المهمة متاحة</p>
+            <p class="quest-status-hint">ابدأ المهمة الآن واكسب المكافآت!</p>
+            {% endif %}
+        </div>
+
+        <!-- Related Activities -->
+        <div class="quest-related-card">
+            <h3 class="quest-related-title">الأنشطة المرتبطة</h3>
+
+            {% if related_activities %}
+            <ul class="quest-related-list">
+                {% for activity in related_activities %}
+                <li>
+                    <a href="#" class="quest-related-item">
+                        <span class="quest-related-item-dot"></span>
+                        <span class="quest-related-item-name">{{ activity.title_ar if activity.title_ar else activity.title }}</span>
+                        <span class="quest-related-item-arrow">&lt;</span>
+                    </a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="quest-related-empty">لا توجد أنشطة مرتبطة</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

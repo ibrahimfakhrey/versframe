@@ -174,21 +174,25 @@
     <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
     <span>الرئيسية</span>
 </a>
+<a class="sidebar-link" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.activities') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الأنشطة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
 <a class="sidebar-link" href="{{ url_for('student.sessions') }}">
     <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
     <span>الجلسات</span>
 </a>
-<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
-    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
-    <span>المكتبة</span>
-</a>
-<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+<a class="sidebar-link" href="{{ url_for('student.rewards') }}">
     <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
-    <span>المكافآت اليومية</span>
-</a>
-<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
-    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
-    <span>التقويم</span>
+    <span>المكافآت</span>
 </a>
 <a class="sidebar-link active" href="{{ url_for('student.leaderboard') }}">
     <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">

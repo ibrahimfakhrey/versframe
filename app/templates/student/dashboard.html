@@ -656,6 +656,92 @@
     filter: brightness(3);
 }
 
+/* -- Adventure Map --------------------------------------- */
+.sv-adventure-section {
+    margin-bottom: 1.75rem;
+}
+.sv-adventure-stat {
+    font-size: 0.82rem;
+    color: rgba(255,255,255,0.8);
+    font-weight: 600;
+}
+.sv-adventure-map {
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(10px);
+    border-radius: 18px;
+    padding: 1.5rem;
+    margin-bottom: 0.75rem;
+    overflow-x: auto;
+}
+.sv-adventure-path {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-width: max-content;
+    padding: 0.5rem 0;
+}
+.sv-adventure-node {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+.sv-adventure-node-circle {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.85rem;
+    transition: all 0.3s;
+    flex-shrink: 0;
+}
+.sv-adventure-node--completed .sv-adventure-node-circle {
+    background: linear-gradient(135deg, #10B981, #34D399);
+    box-shadow: 0 3px 12px rgba(16,185,129,0.4);
+    color: white;
+}
+.sv-adventure-node--current .sv-adventure-node-circle {
+    background: linear-gradient(135deg, #EB5B00, #FF7A2E);
+    box-shadow: 0 0 0 4px rgba(235,91,0,0.2), 0 3px 16px rgba(235,91,0,0.5);
+    color: white;
+    animation: adventurePulse 2s ease-in-out infinite;
+}
+.sv-adventure-node--locked .sv-adventure-node-circle {
+    background: rgba(150,150,150,0.3);
+    color: rgba(255,255,255,0.5);
+}
+.sv-adventure-node-num {
+    font-size: 0.9rem;
+    font-weight: 900;
+}
+.sv-adventure-connector {
+    width: 32px;
+    height: 3px;
+    background: rgba(150,150,150,0.25);
+    flex-shrink: 0;
+}
+.sv-adventure-connector--done {
+    background: linear-gradient(90deg, #10B981, #34D399);
+}
+.sv-adventure-progress-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.sv-adventure-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10B981, #FFD700);
+    border-radius: 10px;
+    transition: width 1s ease;
+}
+@keyframes adventurePulse {
+    0%, 100% { box-shadow: 0 0 0 4px rgba(235,91,0,0.2), 0 3px 16px rgba(235,91,0,0.5); }
+    50% { box-shadow: 0 0 0 8px rgba(235,91,0,0.1), 0 3px 20px rgba(235,91,0,0.6); }
+}
+
 /* -- Responsive ------------------------------------------ */
 @media (max-width: 1200px) {
     .sv-bottom-grid {
@@ -710,21 +796,25 @@
     <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
     <span>الرئيسية</span>
 </a>
+<a class="sidebar-link" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.activities') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الأنشطة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
 <a class="sidebar-link" href="{{ url_for('student.sessions') }}">
     <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
     <span>الجلسات</span>
 </a>
-<a class="sidebar-link" href="{{ url_for('curriculum.home') }}">
-    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
-    <span>المكتبة</span>
-</a>
-<a class="sidebar-link" href="{{ url_for('student.badges') }}">
+<a class="sidebar-link" href="{{ url_for('student.rewards') }}">
     <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
-    <span>المكافآت اليومية</span>
-</a>
-<a class="sidebar-link" href="{{ url_for('student.timetable') }}">
-    <img src="{{ url_for('static', filename='img/sidebar/calendar.png') }}" alt="" class="sidebar-icon-img">
-    <span>التقويم</span>
+    <span>المكافآت</span>
 </a>
 <a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
     <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
@@ -844,6 +934,41 @@
         <img src="{{ url_for('static', filename='img/home/treasure-chest.png') }}" alt="" class="sv-hero-treasure">
     </div>
 </div>
+
+<!-- ============================================================
+     1.5. ADVENTURE MAP
+     ============================================================ -->
+{% if adventure_nodes %}
+<div class="sv-adventure-section">
+    <div class="sv-section-header">
+        <h2 class="sv-section-title">خريطة المغامرة</h2>
+        <span class="sv-adventure-stat">{{ adventure_completed }}/{{ adventure_total }} مكتملة ({{ (adventure_completed / adventure_total * 100)|int }}%)</span>
+    </div>
+    <div class="sv-adventure-map">
+        <div class="sv-adventure-path">
+            {% for node in adventure_nodes %}
+            <div class="sv-adventure-node sv-adventure-node--{{ node.status }}" title="{{ node.unit_id }}">
+                <div class="sv-adventure-node-circle">
+                    {% if node.status == 'completed' %}
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    {% elif node.status == 'current' %}
+                    <span class="sv-adventure-node-num">{{ loop.index }}</span>
+                    {% else %}
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="rgba(255,255,255,0.5)"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                    {% endif %}
+                </div>
+                {% if not loop.last %}
+                <div class="sv-adventure-connector {{ 'sv-adventure-connector--done' if node.status == 'completed' else '' }}"></div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="sv-adventure-progress-bar">
+        <div class="sv-adventure-progress-fill" style="width: {{ (adventure_completed / adventure_total * 100)|int }}%"></div>
+    </div>
+</div>
+{% endif %}
 
 <!-- ============================================================
      2. YOUR UNIVERSES (Horizontal Scrolling Track Cards)
@@ -1090,4 +1215,5 @@
 
 {% block dashboard_js %}
 <script src="{{ url_for('static', filename='js/gamification.js') }}"></script>
+<script src="{{ url_for('static', filename='js/adventure-map.js') }}"></script>
 {% endblock %}

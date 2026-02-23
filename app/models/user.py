@@ -33,6 +33,9 @@ class User(UserMixin, db.Model):
     phone = db.Column(db.String(20), nullable=True)
     is_active = db.Column(db.Boolean, default=True, nullable=False)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    bio = db.Column(db.Text, nullable=True)
+    motivation_type = db.Column(db.String(20), nullable=True)  # competition/adventure/mastery/social
+    onboarding_completed = db.Column(db.Boolean, default=False, nullable=False)
 
     # Parent-Student relationship
     children = db.relationship(

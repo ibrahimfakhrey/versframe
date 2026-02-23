@@ -1,0 +1,574 @@
+{% extends "base_dashboard.html" %}
+
+{% block page_title %}المكافآت - شلبي فيرس{% endblock %}
+
+{% block topbar_title %}المكافآت اليومية{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.activities') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الأنشطة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.rewards') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block dashboard_css %}
+<style>
+/* ===== Daily Rewards Section ===== */
+.rewards-page {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl, 2rem);
+}
+
+.daily-rewards-card {
+    background: linear-gradient(135deg, rgba(100, 13, 95, 0.85) 0%, rgba(74, 9, 69, 0.9) 40%, rgba(26, 10, 46, 0.95) 100%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    padding: 2rem 2.5rem;
+    position: relative;
+    overflow: hidden;
+    color: #fff;
+}
+
+.daily-rewards-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 30%, rgba(235, 91, 0, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.daily-rewards-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    position: relative;
+    z-index: 1;
+}
+
+.daily-rewards-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+    background: linear-gradient(135deg, #FFD700, #EB5B00);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.streak-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(235, 91, 0, 0.2);
+    border: 1px solid rgba(235, 91, 0, 0.4);
+    border-radius: 50px;
+    padding: 0.35rem 1rem;
+    font-size: 0.9rem;
+    color: #FFD700;
+}
+
+.streak-indicator .streak-flame {
+    font-size: 1.1rem;
+}
+
+/* ===== Day Track ===== */
+.daily-track {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    position: relative;
+    z-index: 1;
+    padding: 1.5rem 0;
+    direction: ltr; /* LTR for day progression */
+}
+
+.day-connector {
+    width: 60px;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.15);
+    flex-shrink: 0;
+}
+
+.day-connector.completed {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
+}
+
+.day-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    flex-shrink: 0;
+    position: relative;
+}
+
+.day-circle {
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.8rem;
+    border: 3px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.06);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.day-circle .day-number {
+    font-size: 0.7rem;
+    opacity: 0.7;
+    margin-bottom: 2px;
+}
+
+.day-circle .reward-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.day-circle .reward-amount {
+    font-size: 0.65rem;
+    opacity: 0.8;
+}
+
+/* Claimed day */
+.day-node.claimed .day-circle {
+    border-color: #22c55e;
+    background: rgba(34, 197, 94, 0.15);
+    opacity: 0.6;
+}
+
+.day-node.claimed .day-check {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 22px;
+    height: 22px;
+    background: #22c55e;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.5);
+}
+
+/* Current day (claimable) */
+.day-node.current .day-circle {
+    border-color: #EB5B00;
+    background: rgba(235, 91, 0, 0.2);
+    box-shadow: 0 0 20px rgba(235, 91, 0, 0.4), 0 0 40px rgba(235, 91, 0, 0.15);
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(235, 91, 0, 0.4), 0 0 40px rgba(235, 91, 0, 0.15);
+        transform: scale(1);
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(235, 91, 0, 0.6), 0 0 60px rgba(235, 91, 0, 0.25);
+        transform: scale(1.05);
+    }
+}
+
+/* Locked day */
+.day-node.locked .day-circle {
+    border-color: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.03);
+    opacity: 0.4;
+}
+
+.day-node.locked .lock-icon {
+    font-size: 1.3rem;
+    opacity: 0.5;
+}
+
+/* Claim button */
+.claim-btn {
+    background: linear-gradient(135deg, #EB5B00, #FF8C00);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 0.4rem 1.2rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(235, 91, 0, 0.4);
+    animation: pulse-btn 2s ease-in-out infinite;
+}
+
+.claim-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(235, 91, 0, 0.6);
+}
+
+@keyframes pulse-btn {
+    0%, 100% { box-shadow: 0 4px 15px rgba(235, 91, 0, 0.4); }
+    50% { box-shadow: 0 4px 25px rgba(235, 91, 0, 0.7); }
+}
+
+.day-label {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.5);
+    text-align: center;
+    min-height: 1.5rem;
+}
+
+/* ===== Badge Collection Section ===== */
+.badges-card {
+    background: rgba(26, 10, 46, 0.7);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    padding: 2rem 2.5rem;
+    color: #fff;
+}
+
+.badges-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+}
+
+.badges-header h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.badges-count {
+    background: rgba(139, 92, 246, 0.2);
+    border: 1px solid rgba(139, 92, 246, 0.4);
+    border-radius: 50px;
+    padding: 0.3rem 1rem;
+    font-size: 0.9rem;
+    color: #a78bfa;
+    font-weight: 600;
+}
+
+.badges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 1.25rem;
+}
+
+.badge-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 1.25rem 0.75rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 2px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.3s ease;
+    position: relative;
+    cursor: default;
+}
+
+.badge-item.earned {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.badge-item.earned:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+/* Tier border colors */
+.badge-item.tier-1.earned { border-color: #CD7F32; box-shadow: 0 0 12px rgba(205, 127, 50, 0.2); }
+.badge-item.tier-2.earned { border-color: #C0C0C0; box-shadow: 0 0 12px rgba(192, 192, 192, 0.2); }
+.badge-item.tier-3.earned { border-color: #FFD700; box-shadow: 0 0 12px rgba(255, 215, 0, 0.25); }
+.badge-item.tier-4.earned { border-color: #B9F2FF; box-shadow: 0 0 15px rgba(185, 242, 255, 0.3); }
+
+.badge-item.unearned {
+    opacity: 0.35;
+    filter: grayscale(100%);
+}
+
+.badge-icon {
+    font-size: 2.2rem;
+    line-height: 1;
+}
+
+.badge-name {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    line-height: 1.3;
+}
+
+.badge-tier-label {
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 50px;
+    font-weight: 600;
+}
+
+.tier-1 .badge-tier-label { background: rgba(205, 127, 50, 0.2); color: #CD7F32; }
+.tier-2 .badge-tier-label { background: rgba(192, 192, 192, 0.2); color: #C0C0C0; }
+.tier-3 .badge-tier-label { background: rgba(255, 215, 0, 0.2); color: #FFD700; }
+.tier-4 .badge-tier-label { background: rgba(185, 242, 255, 0.2); color: #B9F2FF; }
+
+/* Badge tooltip */
+.badge-item .badge-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(26, 10, 46, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 10px;
+    padding: 0.6rem 0.9rem;
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.85);
+    white-space: nowrap;
+    z-index: 10;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.badge-item .badge-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: rgba(26, 10, 46, 0.95);
+}
+
+.badge-item:hover .badge-tooltip {
+    display: block;
+}
+
+/* ===== Stars Background ===== */
+.stars-decoration {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.stars-decoration .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    background: #fff;
+    border-radius: 50%;
+    opacity: 0.5;
+    animation: twinkle 3s ease-in-out infinite;
+}
+
+@keyframes twinkle {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
+
+/* ===== Responsive ===== */
+@media (max-width: 768px) {
+    .daily-rewards-card,
+    .badges-card {
+        padding: 1.5rem 1rem;
+    }
+
+    .daily-track {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        padding: 1rem 0.5rem;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .day-connector {
+        width: 30px;
+    }
+
+    .day-circle {
+        width: 58px;
+        height: 58px;
+    }
+
+    .badges-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .badge-icon {
+        font-size: 1.8rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rewards-page">
+
+    <!-- ===== Daily Rewards Track ===== -->
+    <div class="daily-rewards-card">
+        <div class="stars-decoration">
+            <span class="star" style="top:10%;right:15%;animation-delay:0s;"></span>
+            <span class="star" style="top:25%;right:70%;animation-delay:0.8s;"></span>
+            <span class="star" style="top:60%;right:40%;animation-delay:1.5s;"></span>
+            <span class="star" style="top:80%;right:85%;animation-delay:0.3s;"></span>
+            <span class="star" style="top:15%;right:55%;animation-delay:2s;"></span>
+            <span class="star" style="top:45%;right:90%;animation-delay:1.2s;"></span>
+            <span class="star" style="top:70%;right:20%;animation-delay:0.6s;"></span>
+        </div>
+
+        <div class="daily-rewards-header">
+            <h2>المكافآت اليومية</h2>
+            {% if streak %}
+            <div class="streak-indicator">
+                <span class="streak-flame">&#x1F525;</span>
+                <span>{{ streak.current_streak if streak.current_streak is defined else streak }} يوم متتالي</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="daily-track">
+            {% for reward in daily_rewards %}
+                {# Connector before each day except the first #}
+                {% if not loop.first %}
+                <div class="day-connector {{ 'completed' if reward.day_number <= current_day and reward.day_number in claimed_days else '' }}"></div>
+                {% endif %}
+
+                {% if reward.day_number in claimed_days %}
+                {# ---- CLAIMED ---- #}
+                <div class="day-node claimed">
+                    <div class="day-circle">
+                        <span class="day-check">&#x2713;</span>
+                        <span class="day-number">اليوم {{ reward.day_number }}</span>
+                        <span class="reward-icon">
+                            {% if reward.reward_type.value == 'coins' %}&#x1FA99;
+                            {% elif reward.reward_type.value == 'gems' %}&#x1F48E;
+                            {% elif reward.reward_type.value == 'xp' %}&#x26A1;
+                            {% elif reward.reward_type.value == 'mystery' %}&#x2753;
+                            {% elif reward.reward_type.value == 'chest' %}&#x1F381;
+                            {% endif %}
+                        </span>
+                        <span class="reward-amount">+{{ reward.amount }}</span>
+                    </div>
+                    <div class="day-label">{{ reward.label_ar }}</div>
+                </div>
+
+                {% elif reward.day_number == current_day %}
+                {# ---- CURRENT / CLAIMABLE ---- #}
+                <div class="day-node current">
+                    <div class="day-circle">
+                        <span class="day-number">اليوم {{ reward.day_number }}</span>
+                        <span class="reward-icon">
+                            {% if reward.reward_type.value == 'coins' %}&#x1FA99;
+                            {% elif reward.reward_type.value == 'gems' %}&#x1F48E;
+                            {% elif reward.reward_type.value == 'xp' %}&#x26A1;
+                            {% elif reward.reward_type.value == 'mystery' %}&#x2753;
+                            {% elif reward.reward_type.value == 'chest' %}&#x1F381;
+                            {% endif %}
+                        </span>
+                        <span class="reward-amount">+{{ reward.amount }}</span>
+                    </div>
+                    <form method="POST" action="{{ url_for('student.claim_daily_reward') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <input type="hidden" name="day_number" value="{{ reward.day_number }}">
+                        <button type="submit" class="claim-btn">احصل</button>
+                    </form>
+                </div>
+
+                {% else %}
+                {# ---- LOCKED ---- #}
+                <div class="day-node locked">
+                    <div class="day-circle">
+                        <span class="day-number">اليوم {{ reward.day_number }}</span>
+                        <span class="lock-icon">&#x1F512;</span>
+                    </div>
+                    <div class="day-label">{{ reward.label_ar }}</div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- ===== Badge Collection ===== -->
+    <div class="badges-card">
+        <div class="badges-header">
+            <h2>مجموعة الشارات</h2>
+            <span class="badges-count">{{ badges_earned|length }} / {{ all_badges|length }}</span>
+        </div>
+
+        <div class="badges-grid">
+            {% for badge in all_badges %}
+            {% set is_earned = badge.id in earned_ids %}
+            <div class="badge-item tier-{{ badge.tier }} {{ 'earned' if is_earned else 'unearned' }}">
+                <div class="badge-icon">
+                    {% if badge.icon == 'star' %}&#x2B50;
+                    {% elif badge.icon == 'rocket' %}&#x1F680;
+                    {% elif badge.icon == 'calendar' %}&#x1F4C5;
+                    {% elif badge.icon == 'fire' or badge.icon == 'flame' %}&#x1F525;
+                    {% elif badge.icon == 'sword' %}&#x2694;&#xFE0F;
+                    {% elif badge.icon == 'crown' %}&#x1F451;
+                    {% elif badge.icon == 'question' %}&#x2753;
+                    {% elif badge.icon == 'gem' %}&#x1F48E;
+                    {% elif badge.icon == 'trophy' %}&#x1F3C6;
+                    {% else %}&#x1F3C5;
+                    {% endif %}
+                </div>
+                <div class="badge-name">{{ badge.name_ar }}</div>
+                <span class="badge-tier-label">
+                    {% if badge.tier == 1 %}برونزي
+                    {% elif badge.tier == 2 %}فضي
+                    {% elif badge.tier == 3 %}ذهبي
+                    {% elif badge.tier == 4 %}ماسي
+                    {% endif %}
+                </span>
+                {% if badge.description_ar %}
+                <div class="badge-tooltip">{{ badge.description_ar }}</div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+</div>
+{% endblock %}

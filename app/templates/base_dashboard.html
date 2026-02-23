@@ -122,6 +122,12 @@
                     <img src="{{ url_for('static', filename='img/icons/coin.png') }}" alt="" class="topbar-stat-icon">
                     <span>{{ coins|default(0) }}</span>
                 </div>
+
+                <!-- Gems display -->
+                <div class="topbar-gems">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="#8B5CF6" stroke="none"><path d="M12 2L2 9l10 13L22 9z"/></svg>
+                    <span>{{ gems|default(0) }}</span>
+                </div>
                 {% endif %}
 
                 <!-- Profile avatar in topbar -->

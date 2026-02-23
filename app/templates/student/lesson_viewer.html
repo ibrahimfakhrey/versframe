@@ -1,0 +1,552 @@
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+/* ========================================================
+   Shalaby Verse - Lesson Viewer
+   ======================================================== */
+
+/* -- Three-Panel Layout ---------------------------------- */
+.lesson-layout {
+    display: grid;
+    grid-template-columns: 240px 1fr 220px;
+    gap: 1.25rem;
+    min-height: calc(100vh - 120px);
+    align-items: start;
+}
+
+/* -- Left Sidebar: Sibling Units ------------------------- */
+.lesson-units-panel {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 1rem 0;
+    position: sticky;
+    top: 1rem;
+    max-height: calc(100vh - 140px);
+    overflow-y: auto;
+}
+.lesson-units-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.6);
+    padding: 0 1rem 0.75rem;
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+.lesson-unit-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 1rem;
+    text-decoration: none;
+    color: rgba(255,255,255,0.75);
+    font-size: 0.82rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    border-right: 3px solid transparent;
+}
+.lesson-unit-item:hover {
+    background: rgba(255,255,255,0.08);
+    color: #fff;
+}
+.lesson-unit-item.current {
+    background: rgba(235,91,0,0.15);
+    border-right-color: #EB5B00;
+    color: #FFD700;
+    font-weight: 800;
+}
+.lesson-unit-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.3);
+    flex-shrink: 0;
+}
+.lesson-unit-item.current .lesson-unit-dot {
+    background: #EB5B00;
+    box-shadow: 0 0 8px rgba(235,91,0,0.5);
+}
+.lesson-unit-item.completed .lesson-unit-dot {
+    background: #10B981;
+}
+
+/* -- Main Content Area ----------------------------------- */
+.lesson-main {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* -- Breadcrumb ------------------------------------------ */
+.lesson-breadcrumb {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.55);
+    flex-wrap: wrap;
+}
+.lesson-breadcrumb a {
+    color: rgba(255,255,255,0.7);
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.2s;
+}
+.lesson-breadcrumb a:hover {
+    color: #FFD700;
+}
+.lesson-breadcrumb-sep {
+    color: rgba(255,255,255,0.3);
+}
+
+/* -- Chapter Tabs ---------------------------------------- */
+.lesson-tabs {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(100,13,95,0.15) transparent;
+}
+.lesson-tab {
+    padding: 0.55rem 1.2rem;
+    border-radius: 12px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+    text-decoration: none;
+}
+.lesson-tab:hover {
+    background: rgba(255,255,255,0.12);
+    color: #fff;
+}
+.lesson-tab.active {
+    background: linear-gradient(135deg, #640D5F, #8B1A85);
+    border-color: rgba(139,26,133,0.5);
+    color: #fff;
+    box-shadow: 0 2px 12px rgba(100,13,95,0.3);
+}
+.lesson-tab-check {
+    color: #10B981;
+    margin-right: 0.3rem;
+    font-weight: 800;
+}
+
+/* -- Lesson Content Card (Frosted Glass) ----------------- */
+.lesson-content-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 2rem 2.25rem;
+    min-height: 400px;
+    line-height: 1.8;
+    color: rgba(255,255,255,0.92);
+    font-size: 0.95rem;
+}
+.lesson-content-card h1,
+.lesson-content-card h2,
+.lesson-content-card h3 {
+    color: #FFD700;
+    font-weight: 800;
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+}
+.lesson-content-card h1 { font-size: 1.4rem; }
+.lesson-content-card h2 { font-size: 1.2rem; }
+.lesson-content-card h3 { font-size: 1.05rem; }
+.lesson-content-card p {
+    margin-bottom: 1rem;
+}
+.lesson-content-card code {
+    background: rgba(0,0,0,0.3);
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.88rem;
+    font-family: 'Courier New', monospace;
+    direction: ltr;
+    display: inline-block;
+}
+.lesson-content-card pre {
+    background: rgba(0,0,0,0.35);
+    border-radius: 12px;
+    padding: 1.25rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+    direction: ltr;
+    text-align: left;
+    border: 1px solid rgba(255,255,255,0.1);
+}
+.lesson-content-card pre code {
+    background: none;
+    padding: 0;
+    font-size: 0.85rem;
+    line-height: 1.6;
+}
+.lesson-content-card ul,
+.lesson-content-card ol {
+    padding-right: 1.5rem;
+    margin-bottom: 1rem;
+}
+.lesson-content-card li {
+    margin-bottom: 0.4rem;
+}
+.lesson-content-card img {
+    max-width: 100%;
+    border-radius: 12px;
+    margin: 1rem 0;
+}
+.lesson-content-card blockquote {
+    border-right: 4px solid #EB5B00;
+    padding: 0.75rem 1.25rem;
+    margin: 1rem 0;
+    background: rgba(235,91,0,0.08);
+    border-radius: 0 12px 12px 0;
+    color: rgba(255,255,255,0.85);
+    font-style: italic;
+}
+
+/* -- Placeholder (No Content) ---------------------------- */
+.lesson-placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4rem 2rem;
+}
+.lesson-placeholder-icon {
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+}
+.lesson-placeholder-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.8);
+    margin: 0 0 0.5rem 0;
+}
+.lesson-placeholder-desc {
+    font-size: 0.88rem;
+    color: rgba(255,255,255,0.55);
+    margin: 0;
+    max-width: 400px;
+    line-height: 1.6;
+}
+
+/* -- Right Panel: Navigation ----------------------------- */
+.lesson-nav-panel {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 1.25rem;
+    position: sticky;
+    top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+.lesson-nav-title {
+    font-size: 0.82rem;
+    font-weight: 800;
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+    letter-spacing: 0.5px;
+}
+.lesson-nav-unit-name {
+    font-size: 1rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    line-height: 1.4;
+}
+.lesson-nav-unit-desc {
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.6);
+    margin: 0;
+    line-height: 1.5;
+}
+.lesson-nav-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    background: rgba(0,0,0,0.15);
+    border-radius: 12px;
+}
+.lesson-nav-stat {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.78rem;
+}
+.lesson-nav-stat-label {
+    color: rgba(255,255,255,0.55);
+    font-weight: 600;
+}
+.lesson-nav-stat-value {
+    color: #FFD700;
+    font-weight: 800;
+}
+.lesson-nav-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    width: 100%;
+    padding: 0.6rem 1rem;
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+}
+.lesson-nav-btn-primary {
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff;
+    border-bottom: 3px solid #B84700;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+    box-shadow: 0 3px 12px rgba(235,91,0,0.35);
+}
+.lesson-nav-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 18px rgba(235,91,0,0.5);
+    color: #fff;
+}
+.lesson-nav-btn-outline {
+    background: rgba(255,255,255,0.08);
+    color: rgba(255,255,255,0.8);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+.lesson-nav-btn-outline:hover {
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+}
+
+/* -- Responsive ------------------------------------------ */
+@media (max-width: 1024px) {
+    .lesson-layout {
+        grid-template-columns: 1fr;
+    }
+    .lesson-units-panel {
+        position: static;
+        max-height: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+        padding: 0.75rem;
+    }
+    .lesson-units-title {
+        width: 100%;
+        padding-bottom: 0.5rem;
+    }
+    .lesson-unit-item {
+        border-right: none;
+        border-bottom: 2px solid transparent;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.78rem;
+    }
+    .lesson-unit-item.current {
+        border-bottom-color: #EB5B00;
+        border-right-color: transparent;
+    }
+    .lesson-nav-panel {
+        position: static;
+        flex-direction: row;
+        flex-wrap: wrap;
+    }
+    .lesson-nav-title,
+    .lesson-nav-unit-name,
+    .lesson-nav-unit-desc {
+        display: none;
+    }
+    .lesson-nav-stats { flex: 1; min-width: 150px; }
+    .lesson-nav-btn { flex: 1; min-width: 120px; }
+}
+</style>
+{% endblock %}
+
+{% block topbar_title %}{{ unit.name }}{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.activities') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الأنشطة</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.sessions') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>الجلسات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.rewards') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<div class="lesson-breadcrumb">
+    <a href="{{ url_for('student.library') }}">المكتبة</a>
+    <span class="lesson-breadcrumb-sep">/</span>
+    <a href="{{ url_for('curriculum.track', track_id=track.id) }}">{{ track.name_ar }}</a>
+    <span class="lesson-breadcrumb-sep">/</span>
+    {% if level %}
+    <a href="{{ url_for('curriculum.track', track_id=track.id) }}">{{ level.name if level.name else 'المستوى' }}</a>
+    <span class="lesson-breadcrumb-sep">/</span>
+    {% endif %}
+    <span>{{ unit.name }}</span>
+</div>
+
+<div class="lesson-layout">
+
+    <!-- ─── Left Panel: Sibling Units ──────────────────────── -->
+    <div class="lesson-units-panel">
+        <h3 class="lesson-units-title">الوحدات</h3>
+        {% for sib in sibling_units %}
+        <a href="{{ url_for('student.lesson_viewer', track_id=sib.track_id, level_id=sib.level_id, unit_id=sib.id) if sib.id != unit.id else '#' }}"
+           class="lesson-unit-item {{ 'current' if sib.id == unit.id else '' }}">
+            <span class="lesson-unit-dot"></span>
+            <span>{{ sib.name }}</span>
+        </a>
+        {% endfor %}
+    </div>
+
+    <!-- ─── Main Content ───────────────────────────────────── -->
+    <div class="lesson-main">
+        {% if lessons %}
+            <!-- Chapter Tabs (shown if multiple lessons) -->
+            {% if lessons|length > 1 %}
+            <div class="lesson-tabs">
+                {% for lesson in lessons %}
+                <button class="lesson-tab {{ 'active' if loop.first else '' }}"
+                        data-chapter="{{ loop.index0 }}"
+                        onclick="showChapter({{ loop.index0 }})">
+                    {% if lesson.id in completed_ids %}
+                    <span class="lesson-tab-check">&#10003;</span>
+                    {% endif %}
+                    {{ lesson.title_ar if lesson.title_ar else 'الفصل ' ~ lesson.chapter_number }}
+                </button>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <!-- Lesson Content Panels -->
+            {% for lesson in lessons %}
+            <div class="lesson-content-card lesson-chapter-panel" id="chapter-{{ loop.index0 }}"
+                 style="{{ '' if loop.first else 'display:none;' }}">
+                {% if lesson.title_ar %}
+                <h1>{{ lesson.title_ar }}</h1>
+                {% endif %}
+                {{ lesson.content_html|safe }}
+            </div>
+            {% endfor %}
+
+        {% else %}
+            <!-- No Content Placeholder -->
+            <div class="lesson-content-card lesson-placeholder">
+                <div class="lesson-placeholder-icon">&#128214;</div>
+                <h2 class="lesson-placeholder-title">المحتوى قيد التحضير</h2>
+                {% if unit.description %}
+                <p class="lesson-placeholder-desc">{{ unit.description }}</p>
+                {% else %}
+                <p class="lesson-placeholder-desc">يتم حالياً إعداد محتوى هذه الوحدة. عد قريباً!</p>
+                {% endif %}
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ─── Right Panel: Navigation ────────────────────────── -->
+    <div class="lesson-nav-panel">
+        <h3 class="lesson-nav-title">الوحدة الحالية</h3>
+        <h4 class="lesson-nav-unit-name">{{ unit.name }}</h4>
+        {% if unit.description %}
+        <p class="lesson-nav-unit-desc">{{ unit.description }}</p>
+        {% endif %}
+
+        <!-- Stats -->
+        <div class="lesson-nav-stats">
+            <div class="lesson-nav-stat">
+                <span class="lesson-nav-stat-label">الدروس</span>
+                <span class="lesson-nav-stat-value">{{ lessons|length }}</span>
+            </div>
+            <div class="lesson-nav-stat">
+                <span class="lesson-nav-stat-label">المكتملة</span>
+                <span class="lesson-nav-stat-value">{{ completed_ids|length }}</span>
+            </div>
+            {% if lessons|length > 0 %}
+            <div class="lesson-nav-stat">
+                <span class="lesson-nav-stat-label">التقدم</span>
+                <span class="lesson-nav-stat-value">{{ ((completed_ids|length / lessons|length) * 100)|int }}%</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Navigation Buttons -->
+        <a href="{{ url_for('curriculum.track', track_id=track.id) }}" class="lesson-nav-btn lesson-nav-btn-outline">
+            العودة للمسار
+        </a>
+        <a href="{{ url_for('student.library') }}" class="lesson-nav-btn lesson-nav-btn-outline">
+            المكتبة
+        </a>
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+/* Chapter tab switching */
+function showChapter(idx) {
+    var panels = document.querySelectorAll('.lesson-chapter-panel');
+    var tabs = document.querySelectorAll('.lesson-tab');
+
+    for (var i = 0; i < panels.length; i++) {
+        panels[i].style.display = (i === idx) ? '' : 'none';
+    }
+    for (var j = 0; j < tabs.length; j++) {
+        if (j === idx) {
+            tabs[j].classList.add('active');
+        } else {
+            tabs[j].classList.remove('active');
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -646,6 +646,22 @@
     color: var(--text-secondary, #636E72);
 }
 
+/* ── Topbar Gems ────────────────────────────────────────────────── */
+.topbar-gems {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    background: rgba(139, 92, 246, 0.08);
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    color: #8B5CF6;
+}
+.topbar-gems svg {
+    flex-shrink: 0;
+}
+
 /* ── Topbar Streak ───────────────────────────────────────────────── */
 .topbar-streak {
     display: flex;
