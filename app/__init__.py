@@ -61,7 +61,11 @@ def create_app(config_name='development'):
     # Create tables and auto-seed if empty (first deploy)
     with app.app_context():
         db.create_all()
-        _auto_seed_if_empty()
+        try:
+            _auto_seed_if_empty()
+        except Exception as e:
+            db.session.rollback()
+            print(f"[SEED] Skipped seeding (migration pending?): {e}")
 
     # Register blueprints
     _register_blueprints(app)
