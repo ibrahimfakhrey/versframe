@@ -58,8 +58,9 @@ def create_app(config_name='development'):
     # Import models so they are registered with SQLAlchemy
     from app import models  # noqa: F401
 
-    # Create tables and auto-seed if empty (first deploy)
+    # Ensure journey columns/tables exist before ORM touches them
     with app.app_context():
+        _ensure_journey_schema()
         db.create_all()
         try:
             _auto_seed_if_empty()
@@ -105,6 +106,46 @@ def create_app(config_name='development'):
         return {}
 
     return app
+
+
+def _ensure_journey_schema():
+    """Add journey columns/tables directly via SQL so the ORM doesn't crash on old DBs."""
+    from sqlalchemy import text
+    try:
+        conn = db.engine.connect()
+        dialect = db.engine.dialect.name
+
+        if dialect == 'postgresql':
+            # Add columns to existing tables
+            for sql in [
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS bio TEXT",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS motivation_type VARCHAR(20)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE",
+                "ALTER TABLE badges ADD COLUMN IF NOT EXISTS tier INTEGER NOT NULL DEFAULT 1",
+            ]:
+                conn.execute(text(sql))
+            conn.execute(text("COMMIT"))
+            print("[SCHEMA] Journey columns ensured on PostgreSQL")
+        else:
+            # SQLite: check if columns exist first
+            result = conn.execute(text("PRAGMA table_info(users)"))
+            existing = {row[1] for row in result}
+            if 'bio' not in existing:
+                conn.execute(text("ALTER TABLE users ADD COLUMN bio TEXT"))
+            if 'motivation_type' not in existing:
+                conn.execute(text("ALTER TABLE users ADD COLUMN motivation_type VARCHAR(20)"))
+            if 'onboarding_completed' not in existing:
+                conn.execute(text("ALTER TABLE users ADD COLUMN onboarding_completed BOOLEAN NOT NULL DEFAULT 0"))
+            result2 = conn.execute(text("PRAGMA table_info(badges)"))
+            existing2 = {row[1] for row in result2}
+            if 'tier' not in existing2:
+                conn.execute(text("ALTER TABLE badges ADD COLUMN tier INTEGER NOT NULL DEFAULT 1"))
+            conn.execute(text("COMMIT"))
+            print("[SCHEMA] Journey columns ensured on SQLite")
+
+        conn.close()
+    except Exception as e:
+        print(f"[SCHEMA] Could not ensure journey columns: {e}")
 
 
 def _auto_seed_if_empty():
