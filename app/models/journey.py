@@ -155,6 +155,8 @@ class Activity(db.Model):
     xp_reward = db.Column(db.Integer, nullable=False, default=20)
     coin_reward = db.Column(db.Integer, nullable=False, default=10)
     track_id = db.Column(db.String(50), db.ForeignKey('tracks.id'), nullable=True)
+    level_id = db.Column(db.String(50), nullable=True)
+    unit_id = db.Column(db.String(50), nullable=True)
     quest_id = db.Column(db.Integer, db.ForeignKey('quests.id'), nullable=True)
     session_id = db.Column(db.Integer, db.ForeignKey('sessions.id'), nullable=True)
     due_date = db.Column(db.DateTime, nullable=True)

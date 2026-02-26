@@ -334,6 +334,22 @@ def complete_activity(activity_id):
 
     db.session.commit()
     award_activity_rewards(current_user.id, activity_id)
+
+    # If called via fetch/AJAX (from verses page), return JSON
+    wants_json = (request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+                  or 'application/json' in (request.accept_mimetypes or ''))
+    if wants_json:
+        total_xp = StudentXP.total_xp(current_user.id)
+        wallet = get_or_create_wallet(current_user.id)
+        return jsonify({
+            'success': True,
+            'total_xp': total_xp,
+            'total_coins': wallet.coins,
+            'total_gems': wallet.gems,
+            'xp_earned': activity.xp_reward,
+            'coins_earned': activity.coin_reward,
+        })
+
     flash('أحسنت! أكملت النشاط', 'success')
     return redirect(url_for('student.activities'))
 
@@ -506,6 +522,277 @@ def lesson_viewer(track_id, level_id, unit_id):
     return render_template('student/lesson_viewer.html',
                            unit=unit, lessons=lessons, completed_ids=completed_ids,
                            track=track, level=level, sibling_units=sibling_units)
+
+
+# ─── Verses Adventure Map ────────────────────────────────────────────
+
+@bp.route('/verses')
+@student_required
+def verses_map():
+    student_id = current_user.id
+    tracks = Track.query.order_by(Track.sort_order).all()
+
+    track_progress = {}
+    for track in tracks:
+        total_units = Unit.query.filter_by(track_id=track.id).count()
+        completed_units = StudentUnitProgress.query.filter_by(
+            student_id=student_id, track_id=track.id, status='completed'
+        ).count()
+        pct = (completed_units / total_units * 100) if total_units > 0 else 0
+        track_progress[track.id] = {
+            'total': total_units, 'completed': completed_units, 'pct': int(pct)
+        }
+
+    return render_template('student/verses_map.html',
+                           tracks=tracks, track_progress=track_progress)
+
+
+@bp.route('/verses/<track_id>')
+@student_required
+def verse_adventure(track_id):
+    student_id = current_user.id
+    track = Track.query.get(track_id)
+    if not track:
+        flash('العالم غير موجود', 'error')
+        return redirect(url_for('student.verses_map'))
+
+    # Get all levels and units for this track, ordered
+    levels = Level.query.filter_by(track_id=track_id).order_by(Level.sort_order).all()
+    units = Unit.query.filter_by(track_id=track_id).order_by(Unit.level_id, Unit.sort_order).all()
+
+    if not units:
+        flash('لا توجد وحدات في هذا العالم', 'error')
+        return redirect(url_for('student.verses_map'))
+
+    # Lazy-initialize StudentUnitProgress on first visit
+    existing = StudentUnitProgress.query.filter_by(
+        student_id=student_id, track_id=track_id
+    ).all()
+    existing_keys = {(p.level_id, p.unit_id) for p in existing}
+
+    if not existing:
+        # First visit: create all progress records
+        for idx, unit in enumerate(units):
+            status = 'current' if idx == 0 else 'locked'
+            db.session.add(StudentUnitProgress(
+                student_id=student_id, track_id=track_id,
+                level_id=unit.level_id, unit_id=unit.id, status=status,
+            ))
+        db.session.commit()
+        existing = StudentUnitProgress.query.filter_by(
+            student_id=student_id, track_id=track_id
+        ).all()
+    else:
+        # Add missing units (in case new units were added to curriculum)
+        added = False
+        for unit in units:
+            if (unit.level_id, unit.id) not in existing_keys:
+                db.session.add(StudentUnitProgress(
+                    student_id=student_id, track_id=track_id,
+                    level_id=unit.level_id, unit_id=unit.id, status='locked',
+                ))
+                added = True
+        if added:
+            db.session.commit()
+            existing = StudentUnitProgress.query.filter_by(
+                student_id=student_id, track_id=track_id
+            ).all()
+
+    # Build progress lookup
+    progress_map = {(p.level_id, p.unit_id): p for p in existing}
+
+    # Build ordered node list
+    nodes = []
+    current_node_index = 0
+    for idx, unit in enumerate(units):
+        prog = progress_map.get((unit.level_id, unit.id))
+        status = prog.status if prog else 'locked'
+        if status == 'current':
+            current_node_index = idx
+        nodes.append({
+            'index': idx + 1,
+            'unit': unit,
+            'level_id': unit.level_id,
+            'unit_id': unit.id,
+            'status': status,
+        })
+
+    # Level info lookup
+    level_map = {l.id: l for l in levels}
+
+    # Stats
+    completed_count = sum(1 for n in nodes if n['status'] == 'completed')
+    total_count = len(nodes)
+
+    # XP earned in this track
+    from app.models.gamification import StudentXP
+    track_xp = db.session.query(func.coalesce(func.sum(StudentXP.amount), 0)).filter(
+        StudentXP.student_id == student_id,
+        StudentXP.reason.like(f'%{track.name_ar}%')
+    ).scalar() or 0
+
+    return render_template('student/verse_adventure.html',
+                           track=track, nodes=nodes, levels=levels,
+                           level_map=level_map,
+                           current_node_index=current_node_index,
+                           completed_count=completed_count,
+                           total_count=total_count,
+                           track_xp=track_xp)
+
+
+@bp.route('/verses/<track_id>/<level_id>/<unit_id>')
+@student_required
+def verse_unit(track_id, level_id, unit_id):
+    student_id = current_user.id
+
+    unit = Unit.query.filter_by(
+        track_id=track_id, level_id=level_id, id=unit_id
+    ).first()
+    if not unit:
+        flash('الوحدة غير موجودة', 'error')
+        return redirect(url_for('student.verse_adventure', track_id=track_id))
+
+    # Check progress - must be current or completed
+    progress = StudentUnitProgress.query.filter_by(
+        student_id=student_id, track_id=track_id,
+        level_id=level_id, unit_id=unit_id
+    ).first()
+    if not progress or progress.status == 'locked':
+        flash('هذه الوحدة مقفلة', 'error')
+        return redirect(url_for('student.verse_adventure', track_id=track_id))
+
+    track = Track.query.get(track_id)
+    level = Level.query.filter_by(track_id=track_id, id=level_id).first()
+
+    # Get unit activities
+    unit_activities = Activity.query.filter_by(
+        track_id=track_id, level_id=level_id, unit_id=unit_id
+    ).order_by(Activity.sort_order).all()
+
+    # Get lessons for this unit
+    lessons = LessonContent.query.filter_by(
+        track_id=track_id, level_id=level_id, unit_id=unit_id
+    ).order_by(LessonContent.chapter_number).all()
+
+    # Student progress for activities
+    activity_ids = [a.id for a in unit_activities]
+    student_act_progress = {}
+    if activity_ids:
+        for sa in StudentActivity.query.filter(
+            StudentActivity.student_id == student_id,
+            StudentActivity.activity_id.in_(activity_ids)
+        ).all():
+            student_act_progress[sa.activity_id] = sa
+
+    # Check if all activities are completed
+    all_completed = len(unit_activities) > 0 and all(
+        student_act_progress.get(a.id) and student_act_progress[a.id].status == 'completed'
+        for a in unit_activities
+    )
+    can_complete_unit = all_completed and progress.status == 'current'
+
+    return render_template('student/verse_unit.html',
+                           track=track, level=level, unit=unit,
+                           unit_activities=unit_activities,
+                           lessons=lessons,
+                           student_act_progress=student_act_progress,
+                           progress=progress,
+                           can_complete_unit=can_complete_unit)
+
+
+@bp.route('/verses/complete-unit', methods=['POST'])
+@student_required
+def complete_verse_unit():
+    student_id = current_user.id
+    track_id = request.form.get('track_id') or request.json.get('track_id', '')
+    level_id = request.form.get('level_id') or request.json.get('level_id', '')
+    unit_id = request.form.get('unit_id') or request.json.get('unit_id', '')
+
+    if not all([track_id, level_id, unit_id]):
+        return jsonify({'error': 'Missing parameters'}), 400
+
+    progress = StudentUnitProgress.query.filter_by(
+        student_id=student_id, track_id=track_id,
+        level_id=level_id, unit_id=unit_id
+    ).first()
+
+    if not progress or progress.status != 'current':
+        return jsonify({'error': 'Cannot complete this unit'}), 400
+
+    # Mark as completed
+    progress.status = 'completed'
+    progress.completed_at = datetime.now(timezone.utc)
+
+    # Unlock next unit
+    units = Unit.query.filter_by(track_id=track_id).order_by(
+        Unit.level_id, Unit.sort_order
+    ).all()
+    unit_ids = [(u.level_id, u.id) for u in units]
+    current_idx = None
+    for i, (lid, uid) in enumerate(unit_ids):
+        if lid == level_id and uid == unit_id:
+            current_idx = i
+            break
+
+    next_unlocked = False
+    if current_idx is not None and current_idx + 1 < len(unit_ids):
+        next_lid, next_uid = unit_ids[current_idx + 1]
+        next_progress = StudentUnitProgress.query.filter_by(
+            student_id=student_id, track_id=track_id,
+            level_id=next_lid, unit_id=next_uid
+        ).first()
+        if next_progress and next_progress.status == 'locked':
+            next_progress.status = 'current'
+            next_unlocked = True
+
+    # Award XP + coins
+    xp_amount = 50
+    coin_amount = 25
+    bonus_xp = 0
+    bonus_coins = 0
+
+    # Level boundary bonus (every 4 units)
+    completed_count = StudentUnitProgress.query.filter_by(
+        student_id=student_id, track_id=track_id, status='completed'
+    ).count()
+    if completed_count % 4 == 0:
+        bonus_xp = 100
+        bonus_coins = 50
+
+    from app.models.gamification import StudentXP
+    track = Track.query.get(track_id)
+    track_name = track.name_ar if track else track_id
+
+    db.session.add(StudentXP(
+        student_id=student_id, amount=xp_amount + bonus_xp,
+        reason=f'إكمال وحدة في {track_name}'
+    ))
+    wallet = get_or_create_wallet(student_id)
+    wallet.coins += coin_amount + bonus_coins
+
+    record_milestone(student_id, MilestoneType.QUEST_COMPLETED,
+                     f'أكملت وحدة في {track_name}',
+                     f'Completed unit in {track_id}')
+
+    db.session.commit()
+    check_and_award_badges(student_id)
+
+    # Return updated totals for topbar
+    from app.models.gamification import StudentXP as SXP
+    new_total_xp = SXP.total_xp(student_id)
+    updated_wallet = get_or_create_wallet(student_id)
+
+    return jsonify({
+        'success': True,
+        'xp_earned': xp_amount + bonus_xp,
+        'coins_earned': coin_amount + bonus_coins,
+        'is_level_boundary': bonus_xp > 0,
+        'next_unlocked': next_unlocked,
+        'completed_count': completed_count,
+        'total_xp': new_total_xp,
+        'total_coins': updated_wallet.coins,
+        'total_gems': updated_wallet.gems,
+    })
 
 
 # ─── Onboarding ─────────────────────────────────────────────────────────────

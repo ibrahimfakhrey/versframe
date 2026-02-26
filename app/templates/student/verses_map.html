@@ -1,0 +1,118 @@
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/verses-map.css') }}">
+{% endblock %}
+
+{% block topbar_title %}خريطة العوالم{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.verses_map') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>خريطة العوالم</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.rewards') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+{# ── Verse image & color mapping ── #}
+{% set verse_images = {
+    'coding-verse': 'coding-verse.png',
+    'computer-basics': 'compute-verse.png',
+    'digital-safety': 'security-verse.png',
+    'data-verse': 'data-verse.png'
+} %}
+{% set verse_names = {
+    'coding-verse': 'عالم البرمجة',
+    'computer-basics': 'عالم الحاسوب',
+    'digital-safety': 'عالم الأمان الرقمي',
+    'data-verse': 'عالم البيانات'
+} %}
+{% set verse_colors = {
+    'coding-verse': {'btn': 'btn-orange', 'fill': 'fill-orange', 'stroke': '#EB5B00'},
+    'computer-basics': {'btn': 'btn-green', 'fill': 'fill-green', 'stroke': '#10B981'},
+    'digital-safety': {'btn': 'btn-teal', 'fill': 'fill-teal', 'stroke': '#14B8A6'},
+    'data-verse': {'btn': 'btn-purple', 'fill': 'fill-purple', 'stroke': '#7C3AED'}
+} %}
+
+<!-- Page Header -->
+<div class="sv-section-header" style="margin-bottom: 1.5rem;">
+    <h2 class="sv-section-title" style="font-size: 1.35rem;">اختر عالمك</h2>
+    <span style="color: rgba(255,255,255,0.7); font-size: 0.85rem;">4 عوالم في انتظارك</span>
+</div>
+
+<!-- 2x2 Island Grid -->
+<div class="sv-verses-grid">
+    {% for track in tracks %}
+    {% set img = verse_images.get(track.id, 'coding-verse.png') %}
+    {% set name = verse_names.get(track.id, track.name_ar or track.name) %}
+    {% set colors = verse_colors.get(track.id, {'btn': 'btn-orange', 'fill': 'fill-orange', 'stroke': '#EB5B00'}) %}
+    {% set prog = track_progress.get(track.id, {'total': 0, 'completed': 0, 'pct': 0}) %}
+
+    <div class="sv-verse-island">
+        <img src="{{ url_for('static', filename='img/verses/' ~ img) }}" alt="{{ name }}" class="sv-verse-island-img">
+
+        <div class="sv-verse-island-body">
+            <h3 class="sv-verse-island-name">{{ name }}</h3>
+
+            <div class="sv-verse-island-stats">
+                <!-- Circular progress -->
+                <div class="sv-verse-island-circle">
+                    <svg viewBox="0 0 56 56">
+                        <circle class="sv-verse-island-circle-bg" cx="28" cy="28" r="24"/>
+                        <circle class="sv-verse-island-circle-fill"
+                                cx="28" cy="28" r="24"
+                                stroke="{{ colors.stroke }}"
+                                data-pct="{{ prog.pct }}"/>
+                    </svg>
+                    <span class="sv-verse-island-circle-text">{{ prog.pct }}%</span>
+                </div>
+
+                <!-- Text stats -->
+                <div class="sv-verse-island-progress">
+                    <div>{{ prog.completed }}/{{ prog.total }} وحدة</div>
+                    <div class="sv-verse-island-progress-bar">
+                        <div class="sv-verse-island-progress-fill {{ colors.fill }}" style="width: {{ prog.pct }}%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <a href="{{ url_for('student.verse_adventure', track_id=track.id) }}" class="sv-verse-island-btn {{ colors.btn }}">
+                ادخل العالم <span>&gt;</span>
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/gamification.js') }}"></script>
+<script src="{{ url_for('static', filename='js/verses-map.js') }}"></script>
+{% endblock %}

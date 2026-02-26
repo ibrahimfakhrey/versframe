@@ -1,0 +1,146 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}إدارة الأنشطة{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.activities') }}">🎮 الأنشطة</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+
+{% set type_labels = {
+    'coding': 'برمجة',
+    'quiz': 'اختبار',
+    'game': 'لعبة',
+    'drag_drop': 'سحب وإفلات',
+    'reading': 'قراءة',
+    'project': 'مشروع'
+} %}
+{% set type_colors = {
+    'coding': 'rgba(59,130,246,0.1);color:#3B82F6',
+    'quiz': 'rgba(139,92,246,0.1);color:#8B5CF6',
+    'game': 'rgba(16,185,129,0.1);color:#10B981',
+    'drag_drop': 'rgba(236,72,153,0.1);color:#EC4899',
+    'reading': 'rgba(245,158,11,0.1);color:#F59E0B',
+    'project': 'rgba(235,91,0,0.1);color:#EB5B00'
+} %}
+{% set difficulty_labels = {
+    'beginner': 'مبتدئ',
+    'intermediate': 'متوسط',
+    'advanced': 'متقدم'
+} %}
+
+<!-- Filters + Create Button -->
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-lg);flex-wrap:wrap;gap:var(--space-md);">
+    <div style="display:flex;gap:var(--space-sm);flex-wrap:wrap;align-items:center;">
+        <a href="{{ url_for('admin.activities') }}" class="btn {{ 'btn-primary' if not type_filter else 'btn-outline' }} btn-sm">الكل</a>
+        <a href="{{ url_for('admin.activities', type='coding', track_id=track_filter, has_unit=unit_filter) }}" class="btn {{ 'btn-primary' if type_filter=='coding' else 'btn-outline' }} btn-sm">برمجة</a>
+        <a href="{{ url_for('admin.activities', type='quiz', track_id=track_filter, has_unit=unit_filter) }}" class="btn {{ 'btn-primary' if type_filter=='quiz' else 'btn-outline' }} btn-sm">اختبار</a>
+        <a href="{{ url_for('admin.activities', type='game', track_id=track_filter, has_unit=unit_filter) }}" class="btn {{ 'btn-primary' if type_filter=='game' else 'btn-outline' }} btn-sm">لعبة</a>
+        <a href="{{ url_for('admin.activities', type='reading', track_id=track_filter, has_unit=unit_filter) }}" class="btn {{ 'btn-primary' if type_filter=='reading' else 'btn-outline' }} btn-sm">قراءة</a>
+        <a href="{{ url_for('admin.activities', type='project', track_id=track_filter, has_unit=unit_filter) }}" class="btn {{ 'btn-primary' if type_filter=='project' else 'btn-outline' }} btn-sm">مشروع</a>
+
+        <select onchange="filterActivities('track_id', this.value)" style="padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);font-family:var(--font-ar);font-size:var(--text-sm);">
+            <option value="">كل المسارات</option>
+            {% for t in tracks %}
+            <option value="{{ t.id }}" {{ 'selected' if track_filter == t.id else '' }}>{{ t.name_ar }}</option>
+            {% endfor %}
+        </select>
+
+        <select onchange="filterActivities('has_unit', this.value)" style="padding:4px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);font-family:var(--font-ar);font-size:var(--text-sm);">
+            <option value="">كل الأنشطة</option>
+            <option value="yes" {{ 'selected' if unit_filter == 'yes' }}>مرتبطة بوحدة</option>
+            <option value="no" {{ 'selected' if unit_filter == 'no' }}>غير مرتبطة</option>
+        </select>
+    </div>
+    <a href="{{ url_for('admin.activity_create') }}" class="btn btn-primary">+ إضافة نشاط</a>
+</div>
+
+<!-- Activities Table -->
+<div class="card">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>النشاط</th>
+                <th>النوع</th>
+                <th>المسار / الوحدة</th>
+                <th>المكافآت</th>
+                <th>الصعوبة</th>
+                <th>إجراءات</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for a in items %}
+            <tr>
+                <td>
+                    <div style="font-weight:600;">{{ a.title_ar }}</div>
+                    <div class="text-xs text-muted">{{ a.title }}</div>
+                </td>
+                <td>
+                    <span class="badge" style="background:{{ type_colors.get(a.activity_type.value, 'rgba(100,100,100,0.1);color:#666') }}">
+                        {{ type_labels.get(a.activity_type.value, a.activity_type.value) }}
+                    </span>
+                </td>
+                <td class="text-sm">
+                    {% if a.track %}
+                    <div>{{ a.track.name_ar }}</div>
+                    {% endif %}
+                    {% if a.unit_id %}
+                    <div class="text-xs text-muted">{{ a.level_id }} / {{ a.unit_id }}</div>
+                    {% else %}
+                    <span class="text-xs text-muted">—</span>
+                    {% endif %}
+                </td>
+                <td class="text-sm">
+                    <span style="color:#EB5B00;font-weight:700;">{{ a.xp_reward }} XP</span>
+                    <span style="margin:0 2px;">·</span>
+                    <span style="color:#F59E0B;font-weight:700;">{{ a.coin_reward }} 🪙</span>
+                </td>
+                <td>
+                    <span class="text-sm">{{ difficulty_labels.get(a.difficulty.value, a.difficulty.value) }}</span>
+                </td>
+                <td>
+                    <a href="{{ url_for('admin.activity_edit', activity_id=a.id) }}" class="btn btn-ghost btn-sm">تعديل</a>
+                    <form method="POST" action="{{ url_for('admin.activity_delete', activity_id=a.id) }}" style="display:inline;" onsubmit="return confirm('حذف هذا النشاط؟')">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--status-error);">حذف</button>
+                    </form>
+                </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center text-muted" style="padding:var(--space-xl);">لا توجد أنشطة</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if pages > 1 %}
+<div class="pagination">
+    {% for p in range(1, pages + 1) %}
+    <a href="{{ url_for('admin.activities', page=p, type=type_filter, track_id=track_filter, has_unit=unit_filter) }}"
+       class="pagination-item {{ 'active' if p == page else '' }}">{{ p }}</a>
+    {% endfor %}
+</div>
+{% endif %}
+
+<script>
+function filterActivities(key, value) {
+    var params = new URLSearchParams(window.location.search);
+    if (value) {
+        params.set(key, value);
+    } else {
+        params.delete(key);
+    }
+    params.delete('page');
+    window.location.search = params.toString();
+}
+</script>
+{% endblock %}

@@ -6,8 +6,9 @@ from app.extensions import db
 from app.models.user import User, Role
 from app.models.classroom import Group, GroupStudent, Session, SessionStatus, SessionResource
 from app.models.resource import Resource, ResourceType
-from app.models.curriculum import Track, Level
+from app.models.curriculum import Track, Level, Unit
 from app.models.gamification import StudentXP
+from app.models.journey import Activity, ActivityType, ActivitySource, QuestDifficulty
 from app.utils.decorators import admin_required
 from app.utils.helpers import paginate, safe_int
 from app.utils.uploads import (save_upload, get_upload_url, delete_upload,
@@ -524,6 +525,154 @@ def api_group_detail(group_id):
         'track_id': group.track_id,
         'teacher_id': group.teacher_id,
     })
+
+
+# --- Activities Management ---
+
+@bp.route('/activities')
+@admin_required
+def activities():
+    page = safe_int(request.args.get('page', 1))
+    type_filter = request.args.get('type', '')
+    track_filter = request.args.get('track_id', '')
+    unit_filter = request.args.get('has_unit', '')
+
+    query = Activity.query.order_by(Activity.sort_order)
+    if type_filter:
+        try:
+            query = query.filter(Activity.activity_type == ActivityType(type_filter))
+        except ValueError:
+            pass
+    if track_filter:
+        query = query.filter_by(track_id=track_filter)
+    if unit_filter == 'yes':
+        query = query.filter(Activity.unit_id.isnot(None))
+    elif unit_filter == 'no':
+        query = query.filter(Activity.unit_id.is_(None))
+
+    result = paginate(query, page, per_page=20)
+    tracks = Track.query.order_by(Track.sort_order).all()
+    return render_template('admin/activities.html', **result,
+                           type_filter=type_filter, track_filter=track_filter,
+                           unit_filter=unit_filter, tracks=tracks)
+
+
+@bp.route('/activities/new', methods=['GET', 'POST'])
+@admin_required
+def activity_create():
+    if request.method == 'POST':
+        title = request.form.get('title', '').strip()
+        title_ar = request.form.get('title_ar', '').strip()
+        type_str = request.form.get('activity_type', 'coding')
+        source_str = request.form.get('source', 'self_paced')
+        difficulty_str = request.form.get('difficulty', 'beginner')
+        track_id = request.form.get('track_id') or None
+        level_id = request.form.get('level_id') or None
+        unit_id = request.form.get('unit_id') or None
+        xp_reward = safe_int(request.form.get('xp_reward', 20), 20)
+        coin_reward = safe_int(request.form.get('coin_reward', 10), 10)
+        estimated_minutes = safe_int(request.form.get('estimated_minutes', 10), 10)
+        sort_order = safe_int(request.form.get('sort_order', 0), 0)
+
+        if not title_ar:
+            flash('يرجى إدخال اسم النشاط بالعربية', 'error')
+            tracks = Track.query.order_by(Track.sort_order).all()
+            return render_template('admin/activity_form.html', tracks=tracks)
+
+        try:
+            atype = ActivityType(type_str)
+        except ValueError:
+            atype = ActivityType.CODING
+        try:
+            source = ActivitySource(source_str)
+        except ValueError:
+            source = ActivitySource.SELF_PACED
+        try:
+            difficulty = QuestDifficulty(difficulty_str)
+        except ValueError:
+            difficulty = QuestDifficulty.BEGINNER
+
+        activity = Activity(
+            title=title or title_ar, title_ar=title_ar,
+            activity_type=atype, source=source, difficulty=difficulty,
+            track_id=track_id, level_id=level_id, unit_id=unit_id,
+            xp_reward=xp_reward, coin_reward=coin_reward,
+            estimated_minutes=estimated_minutes, sort_order=sort_order,
+        )
+        db.session.add(activity)
+        db.session.commit()
+        flash('تم إنشاء النشاط بنجاح', 'success')
+        return redirect(url_for('admin.activities'))
+
+    tracks = Track.query.order_by(Track.sort_order).all()
+    return render_template('admin/activity_form.html', tracks=tracks)
+
+
+@bp.route('/activities/<int:activity_id>', methods=['GET', 'POST'])
+@admin_required
+def activity_edit(activity_id):
+    activity = db.session.get(Activity, activity_id)
+    if not activity:
+        flash('النشاط غير موجود', 'error')
+        return redirect(url_for('admin.activities'))
+
+    if request.method == 'POST':
+        activity.title = request.form.get('title', activity.title).strip()
+        activity.title_ar = request.form.get('title_ar', activity.title_ar).strip()
+        activity.track_id = request.form.get('track_id') or None
+        activity.level_id = request.form.get('level_id') or None
+        activity.unit_id = request.form.get('unit_id') or None
+        activity.xp_reward = safe_int(request.form.get('xp_reward', 20), 20)
+        activity.coin_reward = safe_int(request.form.get('coin_reward', 10), 10)
+        activity.estimated_minutes = safe_int(request.form.get('estimated_minutes', 10), 10)
+        activity.sort_order = safe_int(request.form.get('sort_order', 0), 0)
+
+        try:
+            activity.activity_type = ActivityType(request.form.get('activity_type', activity.activity_type.value))
+        except ValueError:
+            pass
+        try:
+            activity.source = ActivitySource(request.form.get('source', activity.source.value))
+        except ValueError:
+            pass
+        try:
+            activity.difficulty = QuestDifficulty(request.form.get('difficulty', activity.difficulty.value))
+        except ValueError:
+            pass
+
+        db.session.commit()
+        flash('تم تحديث النشاط بنجاح', 'success')
+        return redirect(url_for('admin.activities'))
+
+    tracks = Track.query.order_by(Track.sort_order).all()
+    return render_template('admin/activity_form.html', activity=activity, tracks=tracks)
+
+
+@bp.route('/activities/<int:activity_id>/delete', methods=['POST'])
+@admin_required
+def activity_delete(activity_id):
+    activity = db.session.get(Activity, activity_id)
+    if activity:
+        db.session.delete(activity)
+        db.session.commit()
+        flash('تم حذف النشاط', 'success')
+    return redirect(url_for('admin.activities'))
+
+
+@bp.route('/api/levels/<track_id>')
+@admin_required
+def api_levels(track_id):
+    """Return levels and units for a given track (used by activity form cascading selects)."""
+    levels = Level.query.filter_by(track_id=track_id).order_by(Level.sort_order).all()
+    result = []
+    for lvl in levels:
+        units = Unit.query.filter_by(track_id=track_id, level_id=lvl.id).order_by(Unit.sort_order).all()
+        result.append({
+            'id': lvl.id,
+            'name_ar': lvl.name_ar,
+            'units': [{'id': u.id, 'name': u.name, 'name_en': u.name_en} for u in units],
+        })
+    return jsonify(result)
 
 
 # --- Reports ---

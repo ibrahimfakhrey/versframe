@@ -257,6 +257,47 @@ def seed_demo_classroom():
     print(f'  Created 4 resources linked to session {session1.id}')
 
 
+def seed_verse_activities():
+    """Create 2-3 activities per curriculum unit for the Verses Adventure Map."""
+    from app.models.journey import Activity, ActivityType, ActivitySource, QuestDifficulty
+    from app.models.curriculum import Track, Unit
+
+    # Check if already seeded (look for activities with unit_id set)
+    existing = Activity.query.filter(Activity.unit_id.isnot(None)).first()
+    if existing:
+        print('  Verse activities already exist.')
+        return
+
+    activity_templates = [
+        (ActivityType.CODING, 'تمرين برمجي', 'Coding Exercise', 20, 10),
+        (ActivityType.QUIZ, 'اختبار قصير', 'Quick Quiz', 15, 8),
+        (ActivityType.GAME, 'لعبة تفاعلية', 'Interactive Game', 25, 12),
+    ]
+    all_tracks = Track.query.all()
+    sort_order = 100
+    count = 0
+    for t in all_tracks:
+        units = Unit.query.filter_by(track_id=t.id).order_by(Unit.level_id, Unit.sort_order).all()
+        for unit in units:
+            for j, (atype, ar_label, en_label, xp, coins) in enumerate(activity_templates):
+                if j == 2 and hash(unit.id) % 3 == 0:
+                    continue
+                db.session.add(Activity(
+                    title=f'{en_label}: {unit.name_en or unit.name}',
+                    title_ar=f'{ar_label}: {unit.name}',
+                    activity_type=atype,
+                    source=ActivitySource.SELF_PACED,
+                    difficulty=QuestDifficulty.BEGINNER,
+                    xp_reward=xp, coin_reward=coins,
+                    track_id=t.id, level_id=unit.level_id, unit_id=unit.id,
+                    estimated_minutes=10, sort_order=sort_order,
+                ))
+                sort_order += 1
+                count += 1
+    db.session.commit()
+    print(f'  Created {count} verse activities across {len(all_tracks)} tracks.')
+
+
 if __name__ == '__main__':
     with app.app_context():
         print('Creating tables...')
@@ -277,5 +318,8 @@ if __name__ == '__main__':
 
             print('Seeding demo classroom...')
             seed_demo_classroom()
+
+        print('Seeding verse activities...')
+        seed_verse_activities()
 
         print('Done!')

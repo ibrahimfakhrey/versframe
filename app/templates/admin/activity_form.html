@@ -1,0 +1,187 @@
+{% extends "base_dashboard.html" %}
+
+{% set is_edit = activity is defined and activity %}
+
+{% block topbar_title %}{{ 'تعديل النشاط' if is_edit else 'إضافة نشاط جديد' }}{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.activities') }}">🎮 الأنشطة</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width:700px;">
+    <form method="POST">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- Title AR -->
+        <div class="form-group">
+            <label class="form-label">اسم النشاط بالعربية <span style="color:var(--status-error);">*</span></label>
+            <input type="text" name="title_ar" class="form-input" value="{{ activity.title_ar if is_edit else '' }}" required placeholder="مثال: تمرين برمجي: المتغيرات">
+        </div>
+
+        <!-- Title EN -->
+        <div class="form-group">
+            <label class="form-label">اسم النشاط بالإنجليزية</label>
+            <input type="text" name="title" class="form-input" value="{{ activity.title if is_edit else '' }}" dir="ltr" placeholder="e.g. Coding Exercise: Variables">
+        </div>
+
+        <!-- Type + Source + Difficulty Row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-md);">
+            <div class="form-group">
+                <label class="form-label">النوع <span style="color:var(--status-error);">*</span></label>
+                <select name="activity_type" class="form-select">
+                    {% set cur_type = activity.activity_type.value if is_edit else 'coding' %}
+                    <option value="coding" {{ 'selected' if cur_type=='coding' }}>💻 برمجة</option>
+                    <option value="quiz" {{ 'selected' if cur_type=='quiz' }}>❓ اختبار</option>
+                    <option value="game" {{ 'selected' if cur_type=='game' }}>🎮 لعبة</option>
+                    <option value="drag_drop" {{ 'selected' if cur_type=='drag_drop' }}>🤚 سحب وإفلات</option>
+                    <option value="reading" {{ 'selected' if cur_type=='reading' }}>📖 قراءة</option>
+                    <option value="project" {{ 'selected' if cur_type=='project' }}>🚀 مشروع</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">المصدر</label>
+                <select name="source" class="form-select">
+                    {% set cur_source = activity.source.value if is_edit else 'self_paced' %}
+                    <option value="self_paced" {{ 'selected' if cur_source=='self_paced' }}>ذاتي</option>
+                    <option value="assigned" {{ 'selected' if cur_source=='assigned' }}>معيّن</option>
+                    <option value="live_class" {{ 'selected' if cur_source=='live_class' }}>فصل مباشر</option>
+                    <option value="quest" {{ 'selected' if cur_source=='quest' }}>مهمة</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">الصعوبة</label>
+                <select name="difficulty" class="form-select">
+                    {% set cur_diff = activity.difficulty.value if is_edit else 'beginner' %}
+                    <option value="beginner" {{ 'selected' if cur_diff=='beginner' }}>مبتدئ</option>
+                    <option value="intermediate" {{ 'selected' if cur_diff=='intermediate' }}>متوسط</option>
+                    <option value="advanced" {{ 'selected' if cur_diff=='advanced' }}>متقدم</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Track / Level / Unit Cascading Selects -->
+        <div style="background:#F8F6FC;border-radius:var(--radius-md);padding:var(--space-md);margin-bottom:var(--space-md);border:1px solid rgba(100,13,95,0.08);">
+            <div style="font-weight:700;font-size:var(--text-sm);margin-bottom:var(--space-sm);color:var(--sv-purple,#640D5F);">ربط بالمنهج (اختياري)</div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:var(--space-md);">
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">المسار</label>
+                    <select name="track_id" id="trackSelect" class="form-select" onchange="onTrackChange(this.value)">
+                        <option value="">— بدون مسار —</option>
+                        {% for t in tracks %}
+                        <option value="{{ t.id }}" {{ 'selected' if is_edit and activity.track_id == t.id }}>{{ t.name_ar }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">المستوى</label>
+                    <select name="level_id" id="levelSelect" class="form-select" onchange="onLevelChange(this.value)">
+                        <option value="">— اختر المسار أولاً —</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom:0;">
+                    <label class="form-label">الوحدة</label>
+                    <select name="unit_id" id="unitSelect" class="form-select">
+                        <option value="">— اختر المستوى أولاً —</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Rewards Row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:var(--space-md);">
+            <div class="form-group">
+                <label class="form-label">مكافأة XP</label>
+                <input type="number" name="xp_reward" class="form-input" value="{{ activity.xp_reward if is_edit else 20 }}" min="0" max="500">
+            </div>
+            <div class="form-group">
+                <label class="form-label">مكافأة عملات</label>
+                <input type="number" name="coin_reward" class="form-input" value="{{ activity.coin_reward if is_edit else 10 }}" min="0" max="500">
+            </div>
+            <div class="form-group">
+                <label class="form-label">الوقت (دقائق)</label>
+                <input type="number" name="estimated_minutes" class="form-input" value="{{ activity.estimated_minutes if is_edit else 10 }}" min="1" max="120">
+            </div>
+            <div class="form-group">
+                <label class="form-label">ترتيب العرض</label>
+                <input type="number" name="sort_order" class="form-input" value="{{ activity.sort_order if is_edit else 0 }}" min="0">
+            </div>
+        </div>
+
+        <!-- Submit -->
+        <div style="display:flex;gap:var(--space-md);margin-top:var(--space-md);">
+            <button type="submit" class="btn btn-primary">{{ 'حفظ التعديلات' if is_edit else 'إنشاء النشاط' }}</button>
+            <a href="{{ url_for('admin.activities') }}" class="btn btn-outline">إلغاء</a>
+        </div>
+    </form>
+</div>
+
+<script>
+// Cascading Track → Level → Unit selects
+var levelsData = {};
+
+function onTrackChange(trackId) {
+    var levelSelect = document.getElementById('levelSelect');
+    var unitSelect = document.getElementById('unitSelect');
+    levelSelect.innerHTML = '<option value="">— اختر المستوى —</option>';
+    unitSelect.innerHTML = '<option value="">— اختر المستوى أولاً —</option>';
+
+    if (!trackId) return;
+
+    fetch('/admin/api/levels/' + trackId)
+        .then(function(r) { return r.json(); })
+        .then(function(levels) {
+            levelsData = {};
+            levels.forEach(function(lvl) {
+                levelsData[lvl.id] = lvl.units;
+                var opt = document.createElement('option');
+                opt.value = lvl.id;
+                opt.textContent = lvl.name_ar;
+                levelSelect.appendChild(opt);
+            });
+
+            // If editing, pre-select current level
+            {% if is_edit and activity.level_id %}
+            levelSelect.value = '{{ activity.level_id }}';
+            onLevelChange('{{ activity.level_id }}');
+            {% endif %}
+        });
+}
+
+function onLevelChange(levelId) {
+    var unitSelect = document.getElementById('unitSelect');
+    unitSelect.innerHTML = '<option value="">— اختر الوحدة —</option>';
+
+    if (!levelId || !levelsData[levelId]) return;
+
+    levelsData[levelId].forEach(function(u) {
+        var opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = u.name + (u.name_en ? ' (' + u.name_en + ')' : '');
+        unitSelect.appendChild(opt);
+    });
+
+    // If editing, pre-select current unit
+    {% if is_edit and activity.unit_id %}
+    unitSelect.value = '{{ activity.unit_id }}';
+    {% endif %}
+}
+
+// On page load, trigger cascade if track is already selected
+document.addEventListener('DOMContentLoaded', function() {
+    var trackSelect = document.getElementById('trackSelect');
+    if (trackSelect.value) {
+        onTrackChange(trackSelect.value);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,168 @@
+{% extends "base_dashboard.html" %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/verses-map.css') }}">
+{% endblock %}
+
+{% block topbar_title %}{{ track.name_ar or track.name }}{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-link" href="{{ url_for('student.profile') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/profile.png') }}" alt="" class="sidebar-icon-img">
+    <span>الملف الشخصي</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.dashboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
+    <span>الرئيسية</span>
+</a>
+<a class="sidebar-link active" href="{{ url_for('student.verses_map') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>خريطة العوالم</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.quests') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>المهمات</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.library') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/library.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكتبة</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.rewards') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/rewards.png') }}" alt="" class="sidebar-icon-img">
+    <span>المكافآت</span>
+</a>
+<a class="sidebar-link" href="{{ url_for('student.leaderboard') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/landing.png') }}" alt="" class="sidebar-icon-img">
+    <span>المتصدرين</span>
+</a>
+{% endblock %}
+
+{% block content %}
+
+{# ── Verse name mapping ── #}
+{% set verse_names = {
+    'coding-verse': 'Code Verse',
+    'computer-basics': 'Compute Verse',
+    'digital-safety': 'Security Verse',
+    'data-verse': 'Data Verse'
+} %}
+{% set verse_names_ar = {
+    'coding-verse': 'عالم البرمجة',
+    'computer-basics': 'عالم الحاسوب',
+    'digital-safety': 'عالم الأمان الرقمي',
+    'data-verse': 'عالم البيانات'
+} %}
+
+<!-- Back Button -->
+<a href="{{ url_for('student.verses_map') }}" class="sv-map-back-btn">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="15 18 9 12 15 6"/>
+    </svg>
+    خريطة العوالم
+</a>
+
+<div class="sv-map-container">
+
+    <!-- Stats Panel -->
+    <div class="sv-map-stats-panel">
+        <h3 class="sv-map-stats-title">{{ verse_names_ar.get(track.id, track.name_ar) }}</h3>
+        <div class="sv-map-stat-row">
+            <span>الوحدات المكتملة</span>
+            <span class="sv-map-stat-value">{{ completed_count }}/{{ total_count }}</span>
+        </div>
+        <div class="sv-map-stat-row">
+            <span>نسبة الإنجاز</span>
+            <span class="sv-map-stat-value">{{ (completed_count / total_count * 100)|int if total_count > 0 else 0 }}%</span>
+        </div>
+        <div class="sv-map-stat-row">
+            <span>XP في المسار</span>
+            <span class="sv-map-stat-value" style="color: #EB5B00;">{{ track_xp }}</span>
+        </div>
+        <div style="margin-top: 0.75rem;">
+            <div class="sv-verse-island-progress-bar">
+                <div class="sv-verse-island-progress-fill fill-orange" style="width: {{ (completed_count / total_count * 100)|int if total_count > 0 else 0 }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Winding S-Curve Path -->
+    <div class="sv-map-path">
+        {# Group nodes into rows of 4 #}
+        {% set ns = namespace(row_num=0) %}
+        {% for row_start in range(0, nodes|length, 4) %}
+        {% set row_nodes = nodes[row_start:row_start+4] %}
+        {% set is_reverse = (ns.row_num % 2 == 1) %}
+
+        {# Vertical connector between rows (except before first row) #}
+        {% if ns.row_num > 0 %}
+        <div style="display: flex; justify-content: {{ 'flex-start' if is_reverse else 'flex-end' }}; padding: 0 60px;">
+            <div class="sv-map-connector sv-map-connector--vertical {{ 'sv-map-connector--done' if row_nodes[0]['status'] == 'completed' or (not is_reverse and nodes[row_start-1]['status'] == 'completed') else '' }}"></div>
+        </div>
+        {% endif %}
+
+        <div class="sv-map-row {{ 'sv-map-row--reverse' if is_reverse else '' }}">
+            {# Level label #}
+            {% set first_node = row_nodes[0] %}
+            {% if first_node.level_id != (nodes[row_start-1].level_id if row_start > 0 else '') %}
+            {% set lvl = level_map.get(first_node.level_id) %}
+            {% if lvl %}
+            <div class="sv-map-level-label">{{ lvl.name_ar }}</div>
+            {% endif %}
+            {% endif %}
+
+            {% for node in row_nodes %}
+            {# Node #}
+            {% if node.status == 'locked' %}
+            <div class="sv-map-node sv-map-node--{{ node.status }}" title="{{ node.unit.name }}">
+            {% else %}
+            <a href="{{ url_for('student.verse_unit', track_id=track.id, level_id=node.level_id, unit_id=node.unit_id) }}"
+               class="sv-map-node sv-map-node--{{ node.status }}" title="{{ node.unit.name }}">
+            {% endif %}
+
+                <div class="sv-map-node-circle">
+                    {% if node.status == 'completed' %}
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    {% elif node.status == 'current' %}
+                    <span>{{ node.index }}</span>
+                    {% else %}
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(255,255,255,0.5)"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zM12 17c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg>
+                    {% endif %}
+
+                    {# Milestone marker at level boundaries (every 4th node) #}
+                    {% if node.index % 4 == 0 and node.index < total_count %}
+                    <div class="sv-map-milestone">&#x1F3C6;</div>
+                    {% endif %}
+                </div>
+                <span class="sv-map-node-label">{{ node.unit.name[:12] }}</span>
+
+            {% if node.status == 'locked' %}
+            </div>
+            {% else %}
+            </a>
+            {% endif %}
+
+            {# Connector between nodes (except last in row) #}
+            {% if not loop.last %}
+            <div class="sv-map-connector {{ 'sv-map-connector--done' if node.status == 'completed' else '' }}"></div>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+        {% set ns.row_num = ns.row_num + 1 %}
+        {% endfor %}
+    </div>
+
+    <!-- Track Title Badge -->
+    <div class="sv-map-track-title">
+        {{ verse_names.get(track.id, track.name) }}
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block dashboard_js %}
+<script src="{{ url_for('static', filename='js/gamification.js') }}"></script>
+<script src="{{ url_for('static', filename='js/verses-map.js') }}"></script>
+{% endblock %}

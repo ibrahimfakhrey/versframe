@@ -796,6 +796,10 @@
     <img src="{{ url_for('static', filename='img/sidebar/home.png') }}" alt="" class="sidebar-icon-img">
     <span>الرئيسية</span>
 </a>
+<a class="sidebar-link" href="{{ url_for('student.verses_map') }}">
+    <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
+    <span>خريطة العوالم</span>
+</a>
 <a class="sidebar-link" href="{{ url_for('student.quests') }}">
     <img src="{{ url_for('static', filename='img/sidebar/activities.png') }}" alt="" class="sidebar-icon-img">
     <span>المهمات</span>
@@ -918,7 +922,7 @@
             <span class="sv-hero-btn-arrow">&gt;</span>
         </a>
         {% else %}
-        <a href="{{ url_for('curriculum.home') }}" class="sv-hero-btn">
+        <a href="{{ url_for('student.verses_map') }}" class="sv-hero-btn">
             <span>استمر</span>
             <span class="sv-hero-btn-arrow">&gt;</span>
         </a>
@@ -942,7 +946,7 @@
 <div class="sv-adventure-section">
     <div class="sv-section-header">
         <h2 class="sv-section-title">خريطة المغامرة</h2>
-        <span class="sv-adventure-stat">{{ adventure_completed }}/{{ adventure_total }} مكتملة ({{ (adventure_completed / adventure_total * 100)|int }}%)</span>
+        <a href="{{ url_for('student.verses_map') }}" class="sv-section-link">عرض الكل</a>
     </div>
     <div class="sv-adventure-map">
         <div class="sv-adventure-path">
@@ -984,7 +988,7 @@
         {% set img_file = verse_images.get(track.name, verse_images.get(track.id, 'coding-verse.png')) %}
         {% set name_ar = verse_names_ar.get(track.name, verse_names_ar.get(track.id, track.name_ar if track.name_ar else track.name)) %}
         {% set is_locked = false %}
-        <a href="{{ url_for('curriculum.track', track_id=track.id) }}"
+        <a href="{{ url_for('student.verse_adventure', track_id=track.id) }}"
            class="sv-verse-card {{ 'locked' if is_locked else '' }}">
 
             <div class="sv-verse-card-img-wrap">

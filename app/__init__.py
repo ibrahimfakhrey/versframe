@@ -122,6 +122,8 @@ def _ensure_journey_schema():
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS motivation_type VARCHAR(20)",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN NOT NULL DEFAULT FALSE",
                 "ALTER TABLE badges ADD COLUMN IF NOT EXISTS tier INTEGER NOT NULL DEFAULT 1",
+                "ALTER TABLE activities ADD COLUMN IF NOT EXISTS level_id VARCHAR(50)",
+                "ALTER TABLE activities ADD COLUMN IF NOT EXISTS unit_id VARCHAR(50)",
             ]:
                 conn.execute(text(sql))
             conn.execute(text("COMMIT"))
@@ -140,6 +142,12 @@ def _ensure_journey_schema():
             existing2 = {row[1] for row in result2}
             if 'tier' not in existing2:
                 conn.execute(text("ALTER TABLE badges ADD COLUMN tier INTEGER NOT NULL DEFAULT 1"))
+            result3 = conn.execute(text("PRAGMA table_info(activities)"))
+            existing3 = {row[1] for row in result3}
+            if 'level_id' not in existing3:
+                conn.execute(text("ALTER TABLE activities ADD COLUMN level_id VARCHAR(50)"))
+            if 'unit_id' not in existing3:
+                conn.execute(text("ALTER TABLE activities ADD COLUMN unit_id VARCHAR(50)"))
             conn.execute(text("COMMIT"))
             print("[SCHEMA] Journey columns ensured on SQLite")
 
@@ -403,7 +411,7 @@ def _seed_journey_data():
             required_level=req_lvl, track_id=track_id, estimated_minutes=est_min, sort_order=i,
         ))
 
-    # Sample Activities
+    # Sample Activities (legacy, not linked to units)
     activities_data = [
         ('Drag & Drop Variables', 'سحب وإفلات المتغيرات', ActivityType.DRAG_DROP, ActivitySource.LIVE_CLASS, QuestDifficulty.BEGINNER, 15, 8, 10),
         ('Print Quiz', 'اختبار الطباعة', ActivityType.QUIZ, ActivitySource.ASSIGNED, QuestDifficulty.BEGINNER, 10, 5, 5),
@@ -424,6 +432,33 @@ def _seed_journey_data():
             difficulty=diff, xp_reward=xp, coin_reward=coins, track_id=track_id,
             estimated_minutes=est_min, sort_order=i,
         ))
+
+    # Per-unit activities for all tracks (2-3 per unit)
+    activity_templates = [
+        (ActivityType.CODING, 'تمرين برمجي', 'Coding Exercise', 20, 10),
+        (ActivityType.QUIZ, 'اختبار قصير', 'Quick Quiz', 15, 8),
+        (ActivityType.GAME, 'لعبة تفاعلية', 'Interactive Game', 25, 12),
+    ]
+    all_tracks = Track.query.all()
+    act_sort = 100
+    for t in all_tracks:
+        units = Unit.query.filter_by(track_id=t.id).order_by(Unit.level_id, Unit.sort_order).all()
+        for unit in units:
+            for j, (atype, ar_label, en_label, xp, coins) in enumerate(activity_templates):
+                # Alternate: 2 or 3 activities per unit
+                if j == 2 and hash(unit.id) % 3 == 0:
+                    continue
+                db.session.add(Activity(
+                    title=f'{en_label}: {unit.name_en or unit.name}',
+                    title_ar=f'{ar_label}: {unit.name}',
+                    activity_type=atype,
+                    source=ActivitySource.SELF_PACED,
+                    difficulty=QuestDifficulty.BEGINNER,
+                    xp_reward=xp, coin_reward=coins,
+                    track_id=t.id, level_id=unit.level_id, unit_id=unit.id,
+                    estimated_minutes=10, sort_order=act_sort,
+                ))
+                act_sort += 1
 
     # Student Unit Progress for demo students (adventure map backbone)
     if coding_track:
