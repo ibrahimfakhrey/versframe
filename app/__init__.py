@@ -124,6 +124,7 @@ def _ensure_journey_schema():
                 "ALTER TABLE badges ADD COLUMN IF NOT EXISTS tier INTEGER NOT NULL DEFAULT 1",
                 "ALTER TABLE activities ADD COLUMN IF NOT EXISTS level_id VARCHAR(50)",
                 "ALTER TABLE activities ADD COLUMN IF NOT EXISTS unit_id VARCHAR(50)",
+                "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_config TEXT",
             ]:
                 conn.execute(text(sql))
             conn.execute(text("COMMIT"))
@@ -148,6 +149,8 @@ def _ensure_journey_schema():
                 conn.execute(text("ALTER TABLE activities ADD COLUMN level_id VARCHAR(50)"))
             if 'unit_id' not in existing3:
                 conn.execute(text("ALTER TABLE activities ADD COLUMN unit_id VARCHAR(50)"))
+            if 'avatar_config' not in existing:
+                conn.execute(text("ALTER TABLE users ADD COLUMN avatar_config TEXT"))
             conn.execute(text("COMMIT"))
             print("[SCHEMA] Journey columns ensured on SQLite")
 
