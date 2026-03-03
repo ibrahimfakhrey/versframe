@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student-v2.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/dashboard.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+{% block dashboard_css %}{% endblock %}
+{% endblock %}
+
+{% block body %}
+<!-- Mobile toggle -->
+<button class="sv2-sidebar-toggle" onclick="document.querySelector('.sv2-sidebar').classList.toggle('open'); document.querySelector('.sv2-sidebar-overlay').classList.toggle('show');">
+    &#9776;
+</button>
+<div class="sv2-sidebar-overlay" onclick="document.querySelector('.sv2-sidebar').classList.remove('open'); this.classList.remove('show');"></div>
+
+<div class="sv2-app">
+
+    <!-- ═══ SIDEBAR ═══ -->
+    <div class="sv2-sidebar-container">
+        <div class="sv2-brand">
+            <div class="sv2-logo">
+                <img src="{{ url_for('static', filename='img/dashboard-v2/logo 01.webp') }}" alt="Shalaby Verse">
+            </div>
+        </div>
+        <aside class="sv2-sidebar">
+            <div class="sv2-sidebar-content">
+                <nav class="sv2-nav">
+                    {% block sidebar_nav %}
+                    <a href="{{ url_for('student.profile') }}" class="{{ 'active' if request.endpoint == 'student.profile' else '' }}">
+                        <div class="sv2-nav-left">
+                            <div class="sv2-nav-ico"><img src="{{ url_for('static', filename='img/dashboard-v2/icons-01.webp') }}" alt=""></div>
+                            الملف الشخصي
+                        </div>
+                    </a>
+                    <a href="{{ url_for('student.dashboard') }}" class="{{ 'active' if request.endpoint == 'student.dashboard' else '' }}">
+                        <div class="sv2-nav-left">
+                            <div class="sv2-nav-ico"><img src="{{ url_for('static', filename='img/dashboard-v2/icons-04.webp') }}" alt=""></div>
+                            الرئيسية
+                        </div>
+                        <div class="sv2-chev">&rsaquo;</div>
+                    </a>
+                    <a href="{{ url_for('student.activities') }}" class="{{ 'active' if request.endpoint == 'student.activities' else '' }}">
+                        <div class="sv2-nav-left">
+                            <div class="sv2-nav-ico"><img src="{{ url_for('static', filename='img/dashboard-v2/icons-07.webp') }}" alt=""></div>
+                            مركز الأنشطة
+                        </div>
+                    </a>
+                    <a href="{{ url_for('student.library') }}" class="{{ 'active' if request.endpoint == 'student.library' else '' }}">
+                        <div class="sv2-nav-left">
+                            <div class="sv2-nav-ico"><img src="{{ url_for('static', filename='img/dashboard-v2/icons-02.webp') }}" alt=""></div>
+                            المكتبة
+                        </div>
+                    </a>
+                    <a href="{{ url_for('student.rewards') }}" class="{{ 'active' if request.endpoint == 'student.rewards' else '' }}">
+                        <div class="sv2-nav-left">
+                            <div class="sv2-nav-ico"><img src="{{ url_for('static', filename='img/dashboard-v2/icons-03.webp') }}" alt=""></div>
+                            المكافآت اليومية
+                        </div>
+                    </a>
+                    <a href="{{ url_for('student.timetable') }}" class="{{ 'active' if request.endpoint == 'student.timetable' else '' }}">
+                        <div class="sv2-nav-left">
+                            <div class="sv2-nav-ico"><img src="{{ url_for('static', filename='img/dashboard-v2/icons-05.webp') }}" alt=""></div>
+                            الجدول
+                        </div>
+                    </a>
+                    <a href="{{ url_for('student.verses_map') }}" class="{{ 'active' if request.endpoint == 'student.verses_map' else '' }}">
+                        <div class="sv2-nav-left">
+                            <div class="sv2-nav-ico"><img src="{{ url_for('static', filename='img/dashboard-v2/icons-06.webp') }}" alt=""></div>
+                            خريطة العوالم
+                        </div>
+                    </a>
+                    {% endblock %}
+                </nav>
+            </div>
+
+            <!-- Bottom: profile + logout -->
+            <div class="sv2-sidebar-bottom">
+                <div class="sv2-sidebar-profile">
+                    <div class="sv2-sidebar-avatar">
+                        {% if current_user.avatar_url %}
+                        <img src="{{ current_user.avatar_url }}" alt="">
+                        {% else %}
+                        {{ current_user.name_ar[0] if current_user.name_ar else '?' }}
+                        {% endif %}
+                    </div>
+                    <span class="sv2-sidebar-profile-name">{{ current_user.name_ar }}</span>
+                    <a href="{{ url_for('auth.logout') }}" class="sv2-sidebar-logout" title="تسجيل الخروج">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                            <polyline points="16 17 21 12 16 7"/>
+                            <line x1="21" y1="12" x2="9" y2="12"/>
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- ═══ MAIN CONTENT ═══ -->
+    <main class="sv2-main">
+        <!-- Topbar -->
+        <header class="sv2-topbar">
+            <div class="sv2-topbar-right">
+                <div class="sv2-profile-chip">
+                    <div class="sv2-profile-avatar">
+                        {% if current_user.avatar_url %}
+                        <img src="{{ current_user.avatar_url }}" alt="">
+                        {% else %}
+                        {{ current_user.name_ar[0] if current_user.name_ar else '?' }}
+                        {% endif %}
+                    </div>
+                    <span class="sv2-profile-name">{{ current_user.name_ar }}</span>
+                    <span class="sv2-profile-arrow">&#x25BE;</span>
+                </div>
+            </div>
+
+            <div class="sv2-topbar-left">
+                {% block topbar_actions %}{% endblock %}
+
+                <!-- News -->
+                <div class="sv2-stat-pill sv2-news-pill">
+                    <span class="sv2-stat-icon">
+                        <img src="{{ url_for('static', filename='img/dashboard-v2/icons-014.webp') }}" alt="">
+                    </span>
+                    أخبار
+                    {% if unread_count is defined and unread_count > 0 %}
+                    <span class="sv2-news-badge">{{ unread_count }}</span>
+                    {% endif %}
+                </div>
+
+                <div class="sv2-stats-group">
+                    <!-- Coins -->
+                    <div class="sv2-stat-pill">
+                        <span class="sv2-stat-icon">
+                            <img src="{{ url_for('static', filename='img/dashboard-v2/icons-013.webp') }}" alt="">
+                        </span>
+                        <span id="sv2CoinsTop">{{ wallet.coins|default(0) if wallet is defined else 0 }}</span>
+                    </div>
+                    <!-- Gems -->
+                    <div class="sv2-stat-pill">
+                        <span class="sv2-stat-icon">
+                            <img src="{{ url_for('static', filename='img/dashboard-v2/icons-011.webp') }}" alt="">
+                        </span>
+                        <span id="sv2GemsTop">{{ wallet.gems|default(0) if wallet is defined else 0 }}</span>
+                    </div>
+                    <!-- Profile icon -->
+                    <div class="sv2-stat-pill">
+                        <span class="sv2-stat-icon">
+                            <img src="{{ url_for('static', filename='img/dashboard-v2/icons-01.webp') }}" alt="" style="width:18px">
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page Content -->
+        <div class="sv2-content">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+// Animate progress bars on load
+requestAnimationFrame(function() {
+    document.querySelectorAll('[data-progress]').forEach(function(el) {
+        var p = Math.max(0, Math.min(100, Number(el.dataset.progress || 0)));
+        el.style.width = p + '%';
+    });
+});
+</script>
+{% block page_js %}{% endblock %}
+{% block dashboard_js %}{% endblock %}
+{% endblock %}

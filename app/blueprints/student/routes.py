@@ -116,6 +116,15 @@ def dashboard():
     # Curriculum tracks (universes)
     tracks = Track.query.order_by(Track.sort_order).all()
 
+    # Per-track progress for universe cards
+    track_progress = {}
+    for track in tracks:
+        total_units = Unit.query.filter_by(track_id=track.id).count()
+        completed = StudentUnitProgress.query.filter_by(
+            student_id=student_id, track_id=track.id, status='completed').count()
+        pct = int((completed / total_units * 100)) if total_units > 0 else 0
+        track_progress[track.id] = {'total': total_units, 'completed': completed, 'pct': pct}
+
     # Live sessions the student can join now
     live_sessions = Session.query.filter(
         Session.group_id.in_(group_ids),
@@ -150,6 +159,7 @@ def dashboard():
                            xp_progress=min(xp_progress, 100),
                            next_threshold=next_threshold,
                            tracks=tracks,
+                           track_progress=track_progress,
                            my_groups=my_groups,
                            adventure_nodes=adventure_nodes,
                            adventure_completed=adventure_completed,
