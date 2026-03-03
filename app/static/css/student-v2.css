@@ -528,9 +528,9 @@ body:has(.sv2-app) {
     content: "";
     position: absolute;
     inset: 0;
-    background: radial-gradient(280px 160px at 20% 20%, rgba(255,255,255,.18), transparent 60%);
+    background: linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.15) 40%, rgba(0,0,0,.05) 60%, rgba(0,0,0,.35) 100%);
     pointer-events: none;
-    opacity: .9;
+    z-index: 1;
 }
 
 /* Theme backgrounds */
@@ -551,8 +551,14 @@ body:has(.sv2-app) {
 
 .sv2-ucard-title h3 {
     margin: 0;
-    font-size: 13px;
+    font-size: 14px;
+    font-weight: 900;
     letter-spacing: .2px;
+    color: #fff !important;
+    text-shadow: 0 2px 8px rgba(0,0,0,.9), 0 0 3px rgba(0,0,0,.7);
+}
+.sv2-ucard, .sv2-ucard:visited, .sv2-ucard:hover, .sv2-ucard:active {
+    color: #fff !important;
 }
 
 .sv2-ucard-badge {
@@ -583,10 +589,13 @@ body:has(.sv2-app) {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: var(--sv2-muted);
-    font-size: 12px;
+    color: #fff;
+    font-size: 11px;
     font-weight: 800;
     position: relative;
+}
+.sv2-ucard-meta span {
+    text-shadow: 0 2px 8px rgba(0,0,0,.9), 0 0 3px rgba(0,0,0,.7);
     z-index: 1;
 }
 
@@ -656,9 +665,10 @@ body:has(.sv2-app) {
 }
 
 .sv2-panel {
-    border: 1px solid var(--sv2-stroke);
-    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(100,13,95,.1);
+    background: rgba(255,255,255,.85);
     border-radius: var(--sv2-radius);
+    color: var(--sv2-text-dark);
     box-shadow: var(--sv2-shadow);
     padding: 14px;
     overflow: hidden;
@@ -669,11 +679,12 @@ body:has(.sv2-app) {
     font-size: 18px;
     letter-spacing: .2px;
     color: var(--sv2-text-dark);
+    color: var(--sv2-text-dark);
 }
 
 /* Focus item */
 .sv2-focus-item {
-    border: 1px solid rgba(255,255,255,.18);
+    border: 1px solid rgba(100,13,95,.08);
     border-radius: 18px;
     padding: 14px;
     display: flex;
@@ -683,6 +694,7 @@ body:has(.sv2-app) {
     background-repeat: no-repeat;
     background-position: center;
     background-size: cover;
+    background-color: rgba(100,13,95,.04);
 }
 
 .sv2-focus-img1 {
@@ -699,10 +711,19 @@ body:has(.sv2-app) {
 }
 
 .sv2-focus-item small {
-    color: var(--sv2-muted);
+    color: #7c5c8f;
     font-weight: 800;
     display: block;
     margin-top: 4px;
+}
+.sv2-focus-img1 small,
+.sv2-focus-img2 small,
+.sv2-focus-img1 .sv2-focus-time,
+.sv2-focus-img2 .sv2-focus-time,
+.sv2-focus-img1 .sv2-focus-rewards,
+.sv2-focus-img2 .sv2-focus-rewards {
+    color: rgba(255,255,255,.9);
+    text-shadow: 0 1px 4px rgba(0,0,0,.5);
 }
 
 .sv2-focus-progress {
@@ -714,7 +735,7 @@ body:has(.sv2-app) {
 
 .sv2-focus-time {
     font-size: 12px;
-    color: var(--sv2-muted);
+    color: #7c5c8f;
     font-weight: 700;
 }
 
@@ -723,14 +744,14 @@ body:has(.sv2-app) {
     gap: 8px;
     align-items: center;
     flex-wrap: wrap;
-    color: rgba(255,255,255,.85);
+    color: var(--sv2-text-dark);
     font-weight: 900;
     font-size: 12px;
 }
 
 .sv2-reward-pill {
-    border: 1px solid rgba(255,255,255,.18);
-    background: rgba(255,255,255,.10);
+    border: 1px solid rgba(100,13,95,.12);
+    background: rgba(100,13,95,.06);
     border-radius: 999px;
     padding: 8px 10px;
     display: flex;
@@ -750,8 +771,8 @@ body:has(.sv2-app) {
 }
 
 .sv2-task {
-    border: 1px solid rgba(255,255,255,.18);
-    background: rgba(0,0,0,.10);
+    border: 1px solid rgba(100,13,95,.08);
+    background: rgba(100,13,95,.03);
     border-radius: 18px;
     padding: 12px;
     display: flex;
@@ -765,6 +786,16 @@ body:has(.sv2-app) {
     background-size: cover;
     background-repeat: no-repeat;
 }
+.sv2-task-skill .sv2-task-title,
+.sv2-task-skill .sv2-task-meta,
+.sv2-task-skill .sv2-tag {
+    color: #fff !important;
+    text-shadow: 0 1px 4px rgba(0,0,0,.6);
+}
+.sv2-task-skill .sv2-tag {
+    background: rgba(0,0,0,.3);
+    border-color: rgba(255,255,255,.25);
+}
 
 .sv2-task-title {
     font-weight: 900;
@@ -772,7 +803,7 @@ body:has(.sv2-app) {
 }
 
 .sv2-task-meta {
-    color: var(--sv2-muted);
+    color: #7c5c8f;
     font-weight: 800;
     font-size: 12px;
     margin-top: 4px;
@@ -791,9 +822,9 @@ body:has(.sv2-app) {
     font-weight: 900;
     padding: 6px 10px;
     border-radius: 999px;
-    border: 1px solid rgba(255,255,255,.18);
-    background: rgba(255,255,255,.10);
-    color: rgba(255,255,255,.80);
+    border: 1px solid rgba(100,13,95,.15);
+    background: rgba(100,13,95,.08);
+    color: var(--sv2-text-dark);
     white-space: nowrap;
 }
 
@@ -801,8 +832,8 @@ body:has(.sv2-app) {
     width: 100%;
     height: 8px;
     border-radius: 999px;
-    background: rgba(255,255,255,.12);
-    border: 1px solid rgba(255,255,255,.14);
+    background: rgba(100,13,95,.08);
+    border: 1px solid rgba(100,13,95,.1);
     overflow: hidden;
 }
 
@@ -826,8 +857,8 @@ body:has(.sv2-app) {
     flex: 1;
     padding: 12px;
     border-radius: 16px;
-    border: 1px solid rgba(255,255,255,.18);
-    background: rgba(0,0,0,.10);
+    border: 1px solid rgba(100,13,95,.12);
+    background: rgba(100,13,95,.04);
     color: var(--sv2-text-dark);
     outline: none;
     font-weight: 800;
@@ -835,7 +866,7 @@ body:has(.sv2-app) {
 }
 
 .sv2-search input::placeholder {
-    color: var(--sv2-muted);
+    color: #a088ad;
 }
 
 /* ── Content area for sub-pages ──────────────────────────── */
