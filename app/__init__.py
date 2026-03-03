@@ -74,6 +74,28 @@ def create_app(config_name='development'):
     # Register error handlers
     _register_error_handlers(app)
 
+    # Context processor: inject voice page key for Arabic encouragement
+    VOICE_PAGE_MAP = {
+        'student.dashboard': 'dashboard',
+        'student.profile': 'profile',
+        'student.activities': 'activities',
+        'student.library': 'library',
+        'student.rewards': 'rewards',
+        'student.quests': 'quests',
+        'student.timetable': 'timetable',
+        'student.verses_map': 'verses_map',
+        'student.progress': 'progress',
+        'student.leaderboard': 'leaderboard',
+        'student.sessions': 'sessions',
+        'student.homework_list': 'homework',
+        'student.onboarding': 'onboarding_step1',
+    }
+
+    @app.context_processor
+    def inject_voice_page_key():
+        from flask import request
+        return dict(sv2_page_key=VOICE_PAGE_MAP.get(request.endpoint, ''))
+
     # Context processor: inject student gamification data into all templates
     @app.context_processor
     def inject_student_context():

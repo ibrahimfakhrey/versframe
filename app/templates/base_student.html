@@ -9,6 +9,9 @@
 {% endblock %}
 
 {% block body %}
+<!-- Voice page key data -->
+<div id="sv2PageData" data-page-key="{{ sv2_page_key|default('') }}" style="display:none;"></div>
+
 <!-- Mobile toggle -->
 <button class="sv2-sidebar-toggle" onclick="document.querySelector('.sv2-sidebar').classList.toggle('open'); document.querySelector('.sv2-sidebar-overlay').classList.toggle('show');">
     &#9776;
@@ -176,6 +179,9 @@
 
 <!-- Premium Effects Engine -->
 <script src="{{ url_for('static', filename='js/premium-fx.js') }}"></script>
+
+<!-- Arabic Voice Encouragement -->
+<script src="{{ url_for('static', filename='js/sv2-voice.js') }}"></script>
 
 <script>
 // Animate progress bars on load

@@ -707,6 +707,11 @@ body {
 {% endblock %}
 
 {% block extra_js %}
+<!-- Arabic Voice Encouragement (onboarding extends base.html, not base_student.html) -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student-v2.css') }}">
+<script src="{{ url_for('static', filename='js/sv2-voice.js') }}"></script>
+<div id="sv2PageData" data-page-key="onboarding_step1" style="display:none;"></div>
+
 <script>
 (function() {
     var currentStep = 1;
@@ -845,6 +850,13 @@ body {
         } else {
             btnNext.style.display = '';
             btnSubmit.style.display = 'none';
+        }
+
+        /* Play voice encouragement for this step */
+        var pageDataEl = document.getElementById('sv2PageData');
+        if (pageDataEl) pageDataEl.setAttribute('data-page-key', 'onboarding_step' + step);
+        if (window.SV2 && SV2.voice) {
+            SV2.voice.playOnboardingStep(step);
         }
     }
 
