@@ -980,3 +980,227 @@ body:has(.sv2-app) {
 @keyframes sv2FillIn {
     from { width: 0%; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   PREMIUM ANIMATIONS
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 1. Staggered Entrance Animations ───────────────────── */
+@keyframes sv2SlideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes sv2ScaleIn {
+    from { opacity: 0; transform: scale(.92); }
+    to   { opacity: 1; transform: scale(1); }
+}
+
+.sv2-hero {
+    animation: sv2ScaleIn .6s cubic-bezier(.34,1.56,.64,1) both;
+}
+.sv2-universes {
+    animation: sv2SlideUp .5s cubic-bezier(.34,1.56,.64,1) .15s both;
+}
+.sv2-ucard {
+    animation: sv2SlideUp .45s cubic-bezier(.34,1.56,.64,1) both;
+}
+.sv2-ucard:nth-child(1) { animation-delay: .25s; }
+.sv2-ucard:nth-child(2) { animation-delay: .35s; }
+.sv2-ucard:nth-child(3) { animation-delay: .45s; }
+.sv2-ucard:nth-child(4) { animation-delay: .55s; }
+.sv2-ucard:nth-child(5) { animation-delay: .65s; }
+
+.sv2-lower .sv2-panel {
+    animation: sv2SlideUp .5s cubic-bezier(.34,1.56,.64,1) both;
+}
+.sv2-lower .sv2-panel:nth-child(1) { animation-delay: .4s; }
+.sv2-lower .sv2-panel:nth-child(2) { animation-delay: .55s; }
+.sv2-lower .sv2-panel:nth-child(3) { animation-delay: .7s; }
+
+.sv2-topbar {
+    animation: sv2SlideUp .4s cubic-bezier(.34,1.56,.64,1) .05s both;
+}
+
+/* ── 2. 3D Tilt + Shimmer on Universe Cards ─────────────── */
+.sv2-ucard {
+    transform-style: preserve-3d;
+    perspective: 800px;
+    overflow: hidden;
+}
+.sv2-ucard:hover {
+    transform: translateY(-6px) rotateX(2deg) rotateY(-3deg);
+    box-shadow: 0 20px 50px rgba(0,0,0,.3), 0 0 30px rgba(100,13,95,.15);
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+}
+/* Holographic shimmer sweep */
+.sv2-ucard::after {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -60%;
+    width: 40%;
+    height: 200%;
+    background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.25) 45%, rgba(255,255,255,.4) 50%, rgba(255,255,255,.25) 55%, transparent 70%);
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s;
+}
+.sv2-ucard:hover::after {
+    opacity: 1;
+    animation: sv2Shimmer .7s ease forwards;
+}
+@keyframes sv2Shimmer {
+    from { left: -60%; }
+    to   { left: 120%; }
+}
+
+/* ── 3. Progress Bar Glow Shimmer ───────────────────────── */
+.sv2-ucard-fill,
+.sv2-tiny-fill {
+    position: relative;
+    overflow: hidden;
+}
+.sv2-ucard-fill::after,
+.sv2-tiny-fill::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,.45), transparent);
+    animation: sv2BarShimmer 2.5s ease-in-out infinite;
+}
+@keyframes sv2BarShimmer {
+    0%   { left: -100%; }
+    50%  { left: 150%; }
+    100% { left: 150%; }
+}
+
+/* ── 4. Floating Sparkle Particles in Hero ──────────────── */
+.sv2-hero {
+    overflow: hidden;
+}
+.sv2-hero::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background:
+        radial-gradient(1.5px 1.5px at 15% 25%, rgba(255,215,0,.8), transparent),
+        radial-gradient(1px 1px at 30% 70%, rgba(255,255,255,.7), transparent),
+        radial-gradient(2px 2px at 50% 15%, rgba(255,154,47,.6), transparent),
+        radial-gradient(1px 1px at 70% 55%, rgba(255,255,255,.8), transparent),
+        radial-gradient(1.5px 1.5px at 85% 30%, rgba(255,215,0,.5), transparent),
+        radial-gradient(1px 1px at 20% 85%, rgba(255,255,255,.6), transparent),
+        radial-gradient(2px 2px at 60% 80%, rgba(255,154,47,.4), transparent),
+        radial-gradient(1px 1px at 90% 75%, rgba(255,215,0,.7), transparent),
+        radial-gradient(1.5px 1.5px at 40% 45%, rgba(255,255,255,.5), transparent),
+        radial-gradient(1px 1px at 75% 10%, rgba(255,154,47,.6), transparent);
+    animation: sv2Sparkle 6s ease-in-out infinite alternate;
+}
+@keyframes sv2Sparkle {
+    0%   { opacity: .5; transform: translateY(0px); }
+    50%  { opacity: .9; transform: translateY(-6px); }
+    100% { opacity: .5; transform: translateY(0px); }
+}
+
+/* ── 5. Pulse Glow on Reward Pills & Tags ───────────────── */
+.sv2-reward-pill {
+    animation: sv2PulseGlow 3s ease-in-out infinite;
+}
+@keyframes sv2PulseGlow {
+    0%, 100% { box-shadow: 0 0 0px transparent; }
+    50%      { box-shadow: 0 0 12px rgba(255,154,47,.2); }
+}
+
+/* Live session tag blink */
+.sv2-tag-live {
+    animation: sv2LivePulse 1.5s ease-in-out infinite;
+}
+@keyframes sv2LivePulse {
+    0%, 100% { box-shadow: 0 0 4px rgba(255,68,68,.3); }
+    50%      { box-shadow: 0 0 16px rgba(255,68,68,.6); }
+}
+
+/* ── 6. Button Spring Bounce ────────────────────────────── */
+.sv2-btn,
+.sv2-ubtn {
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
+}
+.sv2-btn:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 10px 30px rgba(255,106,0,.35);
+}
+.sv2-ubtn:hover {
+    transform: translateY(-3px) scale(1.03);
+}
+.sv2-btn:active,
+.sv2-ubtn:active {
+    transform: translateY(0) scale(.97);
+    transition-duration: .1s;
+}
+
+/* ── 7. Hero Greeting Name Bounce ───────────────────────── */
+.sv2-hero h1 span {
+    display: inline-block;
+    animation: sv2NameBounce .6s cubic-bezier(.34,1.56,.64,1) .3s both;
+    color: #FFD700;
+}
+@keyframes sv2NameBounce {
+    from { opacity: 0; transform: scale(.7) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ── 8. Panel Hover Lift ────────────────────────────────── */
+.sv2-panel {
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+}
+.sv2-panel:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 24px 60px rgba(0,0,0,.15), 0 0 20px rgba(100,13,95,.08);
+}
+
+/* ── 9. Focus Item Hover ────────────────────────────────── */
+.sv2-focus-item {
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
+}
+.sv2-focus-item:hover {
+    transform: translateY(-3px) scale(1.01);
+    box-shadow: 0 12px 30px rgba(0,0,0,.15);
+}
+
+/* ── 10. Task Row Hover ─────────────────────────────────── */
+.sv2-task {
+    transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
+}
+.sv2-task:hover {
+    transform: translateX(-4px);
+    background: rgba(100,13,95,.06);
+    box-shadow: 4px 0 0 0 var(--sv2-orange);
+}
+.sv2-task-skill:hover {
+    background-image: url('../img/dashboard-v2/Skill_snapshot.webp');
+    background-position: center;
+    background-size: cover;
+    background-color: transparent;
+}
+
+/* ── Stat Pill Hover ────────────────────────────────────── */
+.sv2-stat-pill {
+    transition: transform .2s cubic-bezier(.34,1.56,.64,1);
+}
+.sv2-stat-pill:hover {
+    transform: scale(1.08);
+}
+
+/* ── Reduce motion for accessibility ────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}

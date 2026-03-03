@@ -135,14 +135,14 @@
                         <span class="sv2-stat-icon">
                             <img src="{{ url_for('static', filename='img/dashboard-v2/icons-013.webp') }}" alt="">
                         </span>
-                        <span id="sv2CoinsTop">{{ wallet.coins|default(0) if wallet is defined else 0 }}</span>
+                        <span id="sv2CoinsTop" data-countup="{{ wallet.coins|default(0) if wallet is defined else 0 }}">0</span>
                     </div>
                     <!-- Gems -->
                     <div class="sv2-stat-pill">
                         <span class="sv2-stat-icon">
                             <img src="{{ url_for('static', filename='img/dashboard-v2/icons-011.webp') }}" alt="">
                         </span>
-                        <span id="sv2GemsTop">{{ wallet.gems|default(0) if wallet is defined else 0 }}</span>
+                        <span id="sv2GemsTop" data-countup="{{ wallet.gems|default(0) if wallet is defined else 0 }}">0</span>
                     </div>
                     <!-- Profile icon -->
                     <div class="sv2-stat-pill">
