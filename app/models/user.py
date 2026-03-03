@@ -1,4 +1,5 @@
 import enum
+import json
 from datetime import datetime, timezone
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
@@ -36,6 +37,7 @@ class User(UserMixin, db.Model):
     bio = db.Column(db.Text, nullable=True)
     motivation_type = db.Column(db.String(20), nullable=True)  # competition/adventure/mastery/social
     onboarding_completed = db.Column(db.Boolean, default=False, nullable=False)
+    avatar_config = db.Column(db.Text, nullable=True)  # JSON config for DiceBear avatar
 
     # Parent-Student relationship
     children = db.relationship(
@@ -51,6 +53,39 @@ class User(UserMixin, db.Model):
                                      foreign_keys='Group.teacher_id')
     teaching_sessions = db.relationship('Session', backref='teacher', lazy='dynamic',
                                         foreign_keys='Session.teacher_id')
+
+    @staticmethod
+    def build_dicebear_url(config):
+        """Build a DiceBear Adventurer avatar URL from a config dict/JSON string."""
+        if isinstance(config, str):
+            try:
+                config = json.loads(config)
+            except (json.JSONDecodeError, TypeError):
+                return None
+        if not config or not isinstance(config, dict):
+            return None
+
+        base = 'https://api.dicebear.com/9.x/adventurer/svg'
+        params = []
+        # Seed for consistency
+        seed = config.get('seed', 'shalaby')
+        params.append(f'seed={seed}')
+
+        mapping = {
+            'skinColor': 'skinColor',
+            'hair': 'hair',
+            'hairColor': 'hairColor',
+            'eyes': 'eyes',
+            'mouth': 'mouth',
+            'glasses': 'glasses',
+            'glassesProbability': 'glassesProbability',
+        }
+        for key, param in mapping.items():
+            val = config.get(key)
+            if val is not None and val != '':
+                params.append(f'{param}={val}')
+
+        return f'{base}?{"&".join(params)}'
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')

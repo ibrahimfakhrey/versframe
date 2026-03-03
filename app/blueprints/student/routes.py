@@ -26,6 +26,7 @@ from app.utils.gamification_service import (
 )
 from datetime import datetime, date, timezone, timedelta
 from sqlalchemy import func
+import json
 
 
 # ─── Onboarding before_request ──────────────────────────────────────────────
@@ -824,6 +825,16 @@ def onboarding_submit():
     bio = request.form.get('bio', '').strip()
     first_track = request.form.get('first_track', '')
 
+    # Avatar config
+    avatar_config_raw = request.form.get('avatar_config', '').strip()
+    if avatar_config_raw:
+        try:
+            config = json.loads(avatar_config_raw)
+            current_user.avatar_config = avatar_config_raw
+            current_user.avatar_url = User.build_dicebear_url(config)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
     current_user.motivation_type = motivation
     current_user.bio = bio or None
     current_user.onboarding_completed = True
@@ -1006,16 +1017,15 @@ def profile():
         current_user.phone = request.form.get('phone', '').strip() or None
         current_user.bio = request.form.get('bio', '').strip() or None
 
-        avatar_file = request.files.get('avatar')
-        if avatar_file and avatar_file.filename:
-            saved_name = save_upload(avatar_file, 'avatars', ALLOWED_IMAGES)
-            if saved_name:
-                if current_user.avatar_url:
-                    old_filename = current_user.avatar_url.rsplit('/', 1)[-1]
-                    delete_upload(old_filename, 'avatars')
-                current_user.avatar_url = get_upload_url(saved_name, 'avatars')
-            else:
-                flash('فشل رفع الصورة. الأنواع المسموحة: PNG, JPG, GIF, WEBP (حد أقصى 10 ميجا)', 'error')
+        # Avatar config (DiceBear builder)
+        avatar_config_raw = request.form.get('avatar_config', '').strip()
+        if avatar_config_raw:
+            try:
+                config = json.loads(avatar_config_raw)
+                current_user.avatar_config = avatar_config_raw
+                current_user.avatar_url = User.build_dicebear_url(config)
+            except (json.JSONDecodeError, TypeError):
+                pass
 
         db.session.commit()
         flash('تم تحديث الملف الشخصي', 'success')

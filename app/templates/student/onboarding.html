@@ -139,7 +139,94 @@ body {
     line-height: 1.6;
 }
 
-/* -- Step 2: Archetype Cards ----------------------------- */
+/* -- Step 2: Avatar Builder ------------------------------ */
+.avatar-preview-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    margin: 0 auto 1.25rem;
+    background: rgba(255,255,255,0.1);
+    border: 3px solid rgba(235,91,0,0.5);
+    overflow: hidden;
+    box-shadow: 0 0 30px rgba(235,91,0,0.2);
+}
+.avatar-preview-circle img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.avatar-tabs {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+}
+.avatar-tab {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.7);
+    transition: all 0.2s;
+}
+.avatar-tab.active {
+    background: rgba(235,91,0,0.2);
+    border-color: #EB5B00;
+    color: #FFD700;
+}
+.avatar-options-panel {
+    display: none;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-height: 60px;
+}
+.avatar-options-panel.active {
+    display: flex;
+}
+.avatar-opt {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+.avatar-opt:hover {
+    border-color: rgba(255,255,255,0.3);
+    transform: scale(1.1);
+}
+.avatar-opt.selected {
+    border-color: #EB5B00;
+    box-shadow: 0 0 12px rgba(235,91,0,0.4);
+}
+.avatar-opt-color {
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+}
+.avatar-opt-label {
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.7);
+    font-weight: 600;
+}
+.avatar-opt img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* -- Step 3: Archetype Cards ----------------------------- */
 .step-title {
     font-size: 1.3rem;
     font-weight: 800;
@@ -438,9 +525,104 @@ body {
             </div>
 
             <!-- ═══════════════════════════════════════════════════
-                 Step 2: Motivation Archetype
+                 Step 2: Avatar Builder
                  ═══════════════════════════════════════════════════ -->
             <div class="wizard-step" data-step="2">
+                <h2 class="step-title">صمّم شخصيتك</h2>
+                <p class="step-subtitle">اختر شكل شخصيتك في عالم شلبي فيرس</p>
+
+                <div class="avatar-preview-circle" id="avatarPreview">
+                    <img id="avatarPreviewImg" src="https://api.dicebear.com/9.x/adventurer/svg?seed=shalaby&skinColor=f2d3b1&hair=short01&hairColor=2c1b18&eyes=variant01&mouth=variant01&glassesProbability=0" alt="Avatar">
+                </div>
+
+                <div class="avatar-tabs">
+                    <div class="avatar-tab active" data-panel="skinColor" onclick="showAvatarPanel(this)">لون البشرة</div>
+                    <div class="avatar-tab" data-panel="hair" onclick="showAvatarPanel(this)">الشعر</div>
+                    <div class="avatar-tab" data-panel="hairColor" onclick="showAvatarPanel(this)">لون الشعر</div>
+                    <div class="avatar-tab" data-panel="eyes" onclick="showAvatarPanel(this)">العيون</div>
+                    <div class="avatar-tab" data-panel="mouth" onclick="showAvatarPanel(this)">الفم</div>
+                    <div class="avatar-tab" data-panel="glasses" onclick="showAvatarPanel(this)">النظارات</div>
+                </div>
+
+                <!-- Skin Color -->
+                <div class="avatar-options-panel active" data-panel="skinColor">
+                    <div class="avatar-opt selected" data-key="skinColor" data-val="f2d3b1" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#f2d3b1"></div></div>
+                    <div class="avatar-opt" data-key="skinColor" data-val="ecad80" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#ecad80"></div></div>
+                    <div class="avatar-opt" data-key="skinColor" data-val="ffdbac" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#ffdbac"></div></div>
+                    <div class="avatar-opt" data-key="skinColor" data-val="e0a57a" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#e0a57a"></div></div>
+                    <div class="avatar-opt" data-key="skinColor" data-val="c68642" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#c68642"></div></div>
+                    <div class="avatar-opt" data-key="skinColor" data-val="8d5524" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#8d5524"></div></div>
+                </div>
+
+                <!-- Hair Style -->
+                <div class="avatar-options-panel" data-panel="hair">
+                    <div class="avatar-opt selected" data-key="hair" data-val="short01" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">1</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="short02" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">2</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="short03" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">3</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="short04" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">4</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="short05" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">5</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="short19" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">6</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="long01" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">7</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="long02" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">8</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="long03" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">9</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="long04" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">10</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="long09" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">11</span></div>
+                    <div class="avatar-opt" data-key="hair" data-val="long15" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">12</span></div>
+                </div>
+
+                <!-- Hair Color -->
+                <div class="avatar-options-panel" data-panel="hairColor">
+                    <div class="avatar-opt selected" data-key="hairColor" data-val="2c1b18" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#2c1b18"></div></div>
+                    <div class="avatar-opt" data-key="hairColor" data-val="090806" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#090806"></div></div>
+                    <div class="avatar-opt" data-key="hairColor" data-val="724133" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#724133"></div></div>
+                    <div class="avatar-opt" data-key="hairColor" data-val="b7632f" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#b7632f"></div></div>
+                    <div class="avatar-opt" data-key="hairColor" data-val="d6b370" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#d6b370"></div></div>
+                    <div class="avatar-opt" data-key="hairColor" data-val="cb6820" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#cb6820"></div></div>
+                    <div class="avatar-opt" data-key="hairColor" data-val="a52a2a" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#a52a2a"></div></div>
+                    <div class="avatar-opt" data-key="hairColor" data-val="4a4a4a" onclick="pickAvatarOpt(this)"><div class="avatar-opt-color" style="background:#4a4a4a"></div></div>
+                </div>
+
+                <!-- Eyes -->
+                <div class="avatar-options-panel" data-panel="eyes">
+                    <div class="avatar-opt selected" data-key="eyes" data-val="variant01" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">1</span></div>
+                    <div class="avatar-opt" data-key="eyes" data-val="variant02" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">2</span></div>
+                    <div class="avatar-opt" data-key="eyes" data-val="variant03" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">3</span></div>
+                    <div class="avatar-opt" data-key="eyes" data-val="variant04" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">4</span></div>
+                    <div class="avatar-opt" data-key="eyes" data-val="variant05" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">5</span></div>
+                    <div class="avatar-opt" data-key="eyes" data-val="variant12" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">6</span></div>
+                    <div class="avatar-opt" data-key="eyes" data-val="variant17" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">7</span></div>
+                    <div class="avatar-opt" data-key="eyes" data-val="variant26" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">8</span></div>
+                </div>
+
+                <!-- Mouth -->
+                <div class="avatar-options-panel" data-panel="mouth">
+                    <div class="avatar-opt selected" data-key="mouth" data-val="variant01" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">1</span></div>
+                    <div class="avatar-opt" data-key="mouth" data-val="variant02" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">2</span></div>
+                    <div class="avatar-opt" data-key="mouth" data-val="variant03" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">3</span></div>
+                    <div class="avatar-opt" data-key="mouth" data-val="variant05" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">4</span></div>
+                    <div class="avatar-opt" data-key="mouth" data-val="variant06" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">5</span></div>
+                    <div class="avatar-opt" data-key="mouth" data-val="variant12" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">6</span></div>
+                    <div class="avatar-opt" data-key="mouth" data-val="variant20" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">7</span></div>
+                    <div class="avatar-opt" data-key="mouth" data-val="variant30" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">8</span></div>
+                </div>
+
+                <!-- Glasses -->
+                <div class="avatar-options-panel" data-panel="glasses">
+                    <div class="avatar-opt selected" data-key="glasses" data-val="" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">بدون</span></div>
+                    <div class="avatar-opt" data-key="glasses" data-val="variant01" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">1</span></div>
+                    <div class="avatar-opt" data-key="glasses" data-val="variant02" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">2</span></div>
+                    <div class="avatar-opt" data-key="glasses" data-val="variant03" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">3</span></div>
+                    <div class="avatar-opt" data-key="glasses" data-val="variant04" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">4</span></div>
+                    <div class="avatar-opt" data-key="glasses" data-val="variant05" onclick="pickAvatarOpt(this)"><span class="avatar-opt-label">5</span></div>
+                </div>
+
+                <input type="hidden" name="avatar_config" id="avatarConfigInput" value="">
+            </div>
+
+            <!-- ═══════════════════════════════════════════════════
+                 Step 3: Motivation Archetype
+                 ═══════════════════════════════════════════════════ -->
+            <div class="wizard-step" data-step="3">
                 <h2 class="step-title">ما الذي يحفزك؟</h2>
                 <p class="step-subtitle">اختر الأسلوب الذي يناسبك في التعلم</p>
 
@@ -469,9 +651,9 @@ body {
             </div>
 
             <!-- ═══════════════════════════════════════════════════
-                 Step 3: Bio
+                 Step 4: Bio
                  ═══════════════════════════════════════════════════ -->
-            <div class="wizard-step" data-step="3">
+            <div class="wizard-step" data-step="4">
                 <h2 class="step-title">حدثنا عن نفسك</h2>
                 <p class="step-subtitle">اكتب نبذة قصيرة عنك (اختياري)</p>
 
@@ -482,9 +664,9 @@ body {
             </div>
 
             <!-- ═══════════════════════════════════════════════════
-                 Step 4: Pick First Track
+                 Step 5: Pick First Track
                  ═══════════════════════════════════════════════════ -->
-            <div class="wizard-step" data-step="4">
+            <div class="wizard-step" data-step="5">
                 <h2 class="step-title">اختر عالمك الأول</h2>
                 <p class="step-subtitle">يمكنك استكشاف العوالم الأخرى لاحقاً</p>
 
@@ -516,6 +698,7 @@ body {
                     <div class="wizard-dot" data-dot="2"></div>
                     <div class="wizard-dot" data-dot="3"></div>
                     <div class="wizard-dot" data-dot="4"></div>
+                    <div class="wizard-dot" data-dot="5"></div>
                 </div>
             </div>
         </form>
@@ -527,7 +710,7 @@ body {
 <script>
 (function() {
     var currentStep = 1;
-    var totalSteps = 4;
+    var totalSteps = 5;
     var selectedMotivation = '';
     var selectedTrack = '';
 
@@ -538,6 +721,69 @@ body {
     var bioCharCount = document.getElementById('bioCharCount');
     var motivationInput = document.getElementById('motivationInput');
     var firstTrackInput = document.getElementById('firstTrackInput');
+    var avatarConfigInput = document.getElementById('avatarConfigInput');
+    var avatarPreviewImg = document.getElementById('avatarPreviewImg');
+
+    /* ── Avatar Builder State ── */
+    var avatarState = {
+        seed: 'shalaby',
+        skinColor: 'f2d3b1',
+        hair: 'short01',
+        hairColor: '2c1b18',
+        eyes: 'variant01',
+        mouth: 'variant01',
+        glasses: '',
+        glassesProbability: '0'
+    };
+
+    function buildAvatarUrl(cfg) {
+        var base = 'https://api.dicebear.com/9.x/adventurer/svg';
+        var params = ['seed=' + cfg.seed];
+        if (cfg.skinColor) params.push('skinColor=' + cfg.skinColor);
+        if (cfg.hair) params.push('hair=' + cfg.hair);
+        if (cfg.hairColor) params.push('hairColor=' + cfg.hairColor);
+        if (cfg.eyes) params.push('eyes=' + cfg.eyes);
+        if (cfg.mouth) params.push('mouth=' + cfg.mouth);
+        if (cfg.glasses) {
+            params.push('glasses=' + cfg.glasses);
+            params.push('glassesProbability=100');
+        } else {
+            params.push('glassesProbability=0');
+        }
+        return base + '?' + params.join('&');
+    }
+
+    function updateAvatarPreview() {
+        avatarPreviewImg.src = buildAvatarUrl(avatarState);
+        avatarState.glassesProbability = avatarState.glasses ? '100' : '0';
+        avatarConfigInput.value = JSON.stringify(avatarState);
+    }
+
+    window.showAvatarPanel = function(tab) {
+        var panel = tab.getAttribute('data-panel');
+        var tabs = document.querySelectorAll('.avatar-tab');
+        var panels = document.querySelectorAll('.avatar-options-panel');
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+        for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
+        tab.classList.add('active');
+        var target = document.querySelector('.avatar-options-panel[data-panel="' + panel + '"]');
+        if (target) target.classList.add('active');
+    };
+
+    window.pickAvatarOpt = function(el) {
+        var key = el.getAttribute('data-key');
+        var val = el.getAttribute('data-val');
+        /* Deselect siblings */
+        var panel = el.closest('.avatar-options-panel');
+        var opts = panel.querySelectorAll('.avatar-opt');
+        for (var i = 0; i < opts.length; i++) opts[i].classList.remove('selected');
+        el.classList.add('selected');
+        avatarState[key] = val;
+        updateAvatarPreview();
+    };
+
+    /* Initialize avatar config hidden input */
+    updateAvatarPreview();
 
     /* Bio character counter */
     if (bioInput) {
@@ -605,7 +851,7 @@ body {
     /* Next step */
     window.nextStep = function() {
         /* Validation per step */
-        if (currentStep === 2 && !selectedMotivation) {
+        if (currentStep === 3 && !selectedMotivation) {
             /* Shake the archetype grid to indicate selection needed */
             var grid = document.querySelector('.archetype-grid');
             grid.style.animation = 'none';

@@ -286,6 +286,137 @@
     outline: none;
 }
 
+/* Avatar Builder Modal */
+.avatar-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    align-items: center;
+    justify-content: center;
+}
+.avatar-modal-overlay.active { display: flex; }
+.avatar-modal {
+    background: linear-gradient(135deg, #1a0a2e 0%, #2d0a3e 50%, #0a0015 100%);
+    border-radius: 24px;
+    padding: 2rem;
+    width: 90%;
+    max-width: 480px;
+    max-height: 85vh;
+    overflow-y: auto;
+    border: 1px solid rgba(255,255,255,0.15);
+    box-shadow: 0 8px 60px rgba(0,0,0,0.5);
+    text-align: center;
+    color: white;
+}
+.avatar-modal-title {
+    font-size: 1.2rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: #FFD700;
+}
+.avatar-modal-preview {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    margin: 0 auto 1rem;
+    overflow: hidden;
+    border: 3px solid rgba(235,91,0,0.5);
+    box-shadow: 0 0 20px rgba(235,91,0,0.2);
+}
+.avatar-modal-preview img { width: 100%; height: 100%; object-fit: cover; }
+.avatar-modal-tabs {
+    display: flex;
+    gap: 0.3rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+}
+.avatar-modal-tab {
+    padding: 0.3rem 0.6rem;
+    border-radius: 16px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.7);
+    transition: all 0.2s;
+}
+.avatar-modal-tab.active {
+    background: rgba(235,91,0,0.2);
+    border-color: #EB5B00;
+    color: #FFD700;
+}
+.avatar-modal-panel {
+    display: none;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    justify-content: center;
+    min-height: 50px;
+}
+.avatar-modal-panel.active { display: flex; }
+.avatar-modal-opt {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 2px solid rgba(255,255,255,0.12);
+    background: rgba(255,255,255,0.06);
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.avatar-modal-opt:hover { border-color: rgba(255,255,255,0.3); transform: scale(1.1); }
+.avatar-modal-opt.selected { border-color: #EB5B00; box-shadow: 0 0 10px rgba(235,91,0,0.4); }
+.avatar-modal-opt-color { width: 26px; height: 26px; border-radius: 6px; }
+.avatar-modal-opt-label { font-size: 0.6rem; color: rgba(255,255,255,0.7); font-weight: 600; }
+.avatar-modal-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+}
+.avatar-modal-btn {
+    flex: 1;
+    padding: 0.6rem;
+    border-radius: 14px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer;
+    border: none;
+}
+.avatar-modal-btn-save {
+    background: linear-gradient(180deg, #FF8C2E, #EB5B00);
+    color: white;
+}
+.avatar-modal-btn-cancel {
+    background: rgba(255,255,255,0.1);
+    color: rgba(255,255,255,0.7);
+    border: 1px solid rgba(255,255,255,0.2);
+}
+.sv-edit-avatar-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-family: 'Tajawal', sans-serif;
+    cursor: pointer;
+    background: rgba(235,91,0,0.15);
+    color: #EB5B00;
+    border: 1px solid rgba(235,91,0,0.3);
+    transition: all 0.2s;
+    margin-top: 0.5rem;
+}
+.sv-edit-avatar-btn:hover { background: rgba(235,91,0,0.25); }
+
 @media (max-width: 900px) {
     .sv-profile-hero { flex-direction: column; text-align: center; }
     .sv-profile-stats-row { justify-content: center; }
@@ -413,19 +544,18 @@
     <!-- Edit Form -->
     <div class="sv-profile-card">
         <div class="sv-profile-card-title">&#9997; تعديل الملف الشخصي</div>
-        <form method="POST" enctype="multipart/form-data" action="{{ url_for('student.profile') }}" class="sv-profile-form">
+        <form method="POST" action="{{ url_for('student.profile') }}" class="sv-profile-form">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="avatar_config" id="profileAvatarConfig" value="{{ current_user.avatar_config or '' }}">
             <div class="form-group" style="text-align: center;">
-                <div style="display: inline-block; position: relative; cursor: pointer;" onclick="document.getElementById('avatar-input').click()">
-                    <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #EB5B00, #FFD700); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: white; margin: 0 auto; overflow: hidden;">
-                        {% if current_user.avatar_url %}
-                            <img src="{{ current_user.avatar_url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
-                        {% else %}
-                            {{ current_user.name_ar[0] }}
-                        {% endif %}
-                    </div>
+                <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #EB5B00, #FFD700); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 800; color: white; margin: 0 auto; overflow: hidden;">
+                    {% if current_user.avatar_url %}
+                        <img id="profileAvatarThumb" src="{{ current_user.avatar_url }}" alt="" style="width:100%;height:100%;object-fit:cover;">
+                    {% else %}
+                        <span id="profileAvatarLetter">{{ current_user.name_ar[0] }}</span>
+                    {% endif %}
                 </div>
-                <input type="file" id="avatar-input" name="avatar" accept=".png,.jpg,.jpeg,.gif,.webp" style="display: none;">
+                <button type="button" class="sv-edit-avatar-btn" onclick="openAvatarModal()">&#9997; تعديل الشخصية</button>
             </div>
             <div class="form-group">
                 <label class="form-label">الاسم (عربي)</label>
@@ -472,4 +602,210 @@
         {% endif %}
     </div>
 </div>
+
+<!-- Avatar Builder Modal -->
+<div class="avatar-modal-overlay" id="avatarModalOverlay">
+    <div class="avatar-modal">
+        <div class="avatar-modal-title">&#127912; صمّم شخصيتك</div>
+        <div class="avatar-modal-preview">
+            <img id="modalAvatarPreview" src="" alt="Avatar">
+        </div>
+
+        <div class="avatar-modal-tabs">
+            <div class="avatar-modal-tab active" data-panel="m-skinColor" onclick="showModalPanel(this)">البشرة</div>
+            <div class="avatar-modal-tab" data-panel="m-hair" onclick="showModalPanel(this)">الشعر</div>
+            <div class="avatar-modal-tab" data-panel="m-hairColor" onclick="showModalPanel(this)">لون الشعر</div>
+            <div class="avatar-modal-tab" data-panel="m-eyes" onclick="showModalPanel(this)">العيون</div>
+            <div class="avatar-modal-tab" data-panel="m-mouth" onclick="showModalPanel(this)">الفم</div>
+            <div class="avatar-modal-tab" data-panel="m-glasses" onclick="showModalPanel(this)">النظارات</div>
+        </div>
+
+        <div class="avatar-modal-panel active" data-panel="m-skinColor">
+            <div class="avatar-modal-opt" data-key="skinColor" data-val="f2d3b1" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#f2d3b1"></div></div>
+            <div class="avatar-modal-opt" data-key="skinColor" data-val="ecad80" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#ecad80"></div></div>
+            <div class="avatar-modal-opt" data-key="skinColor" data-val="ffdbac" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#ffdbac"></div></div>
+            <div class="avatar-modal-opt" data-key="skinColor" data-val="e0a57a" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#e0a57a"></div></div>
+            <div class="avatar-modal-opt" data-key="skinColor" data-val="c68642" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#c68642"></div></div>
+            <div class="avatar-modal-opt" data-key="skinColor" data-val="8d5524" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#8d5524"></div></div>
+        </div>
+
+        <div class="avatar-modal-panel" data-panel="m-hair">
+            <div class="avatar-modal-opt" data-key="hair" data-val="short01" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">1</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="short02" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">2</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="short03" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">3</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="short04" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">4</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="short05" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">5</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="short19" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">6</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="long01" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">7</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="long02" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">8</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="long03" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">9</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="long04" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">10</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="long09" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">11</span></div>
+            <div class="avatar-modal-opt" data-key="hair" data-val="long15" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">12</span></div>
+        </div>
+
+        <div class="avatar-modal-panel" data-panel="m-hairColor">
+            <div class="avatar-modal-opt" data-key="hairColor" data-val="2c1b18" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#2c1b18"></div></div>
+            <div class="avatar-modal-opt" data-key="hairColor" data-val="090806" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#090806"></div></div>
+            <div class="avatar-modal-opt" data-key="hairColor" data-val="724133" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#724133"></div></div>
+            <div class="avatar-modal-opt" data-key="hairColor" data-val="b7632f" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#b7632f"></div></div>
+            <div class="avatar-modal-opt" data-key="hairColor" data-val="d6b370" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#d6b370"></div></div>
+            <div class="avatar-modal-opt" data-key="hairColor" data-val="cb6820" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#cb6820"></div></div>
+            <div class="avatar-modal-opt" data-key="hairColor" data-val="a52a2a" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#a52a2a"></div></div>
+            <div class="avatar-modal-opt" data-key="hairColor" data-val="4a4a4a" onclick="pickModalOpt(this)"><div class="avatar-modal-opt-color" style="background:#4a4a4a"></div></div>
+        </div>
+
+        <div class="avatar-modal-panel" data-panel="m-eyes">
+            <div class="avatar-modal-opt" data-key="eyes" data-val="variant01" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">1</span></div>
+            <div class="avatar-modal-opt" data-key="eyes" data-val="variant02" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">2</span></div>
+            <div class="avatar-modal-opt" data-key="eyes" data-val="variant03" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">3</span></div>
+            <div class="avatar-modal-opt" data-key="eyes" data-val="variant04" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">4</span></div>
+            <div class="avatar-modal-opt" data-key="eyes" data-val="variant05" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">5</span></div>
+            <div class="avatar-modal-opt" data-key="eyes" data-val="variant12" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">6</span></div>
+            <div class="avatar-modal-opt" data-key="eyes" data-val="variant17" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">7</span></div>
+            <div class="avatar-modal-opt" data-key="eyes" data-val="variant26" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">8</span></div>
+        </div>
+
+        <div class="avatar-modal-panel" data-panel="m-mouth">
+            <div class="avatar-modal-opt" data-key="mouth" data-val="variant01" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">1</span></div>
+            <div class="avatar-modal-opt" data-key="mouth" data-val="variant02" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">2</span></div>
+            <div class="avatar-modal-opt" data-key="mouth" data-val="variant03" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">3</span></div>
+            <div class="avatar-modal-opt" data-key="mouth" data-val="variant05" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">4</span></div>
+            <div class="avatar-modal-opt" data-key="mouth" data-val="variant06" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">5</span></div>
+            <div class="avatar-modal-opt" data-key="mouth" data-val="variant12" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">6</span></div>
+            <div class="avatar-modal-opt" data-key="mouth" data-val="variant20" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">7</span></div>
+            <div class="avatar-modal-opt" data-key="mouth" data-val="variant30" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">8</span></div>
+        </div>
+
+        <div class="avatar-modal-panel" data-panel="m-glasses">
+            <div class="avatar-modal-opt" data-key="glasses" data-val="" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">بدون</span></div>
+            <div class="avatar-modal-opt" data-key="glasses" data-val="variant01" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">1</span></div>
+            <div class="avatar-modal-opt" data-key="glasses" data-val="variant02" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">2</span></div>
+            <div class="avatar-modal-opt" data-key="glasses" data-val="variant03" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">3</span></div>
+            <div class="avatar-modal-opt" data-key="glasses" data-val="variant04" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">4</span></div>
+            <div class="avatar-modal-opt" data-key="glasses" data-val="variant05" onclick="pickModalOpt(this)"><span class="avatar-modal-opt-label">5</span></div>
+        </div>
+
+        <div class="avatar-modal-buttons">
+            <button type="button" class="avatar-modal-btn avatar-modal-btn-save" onclick="saveModalAvatar()">حفظ</button>
+            <button type="button" class="avatar-modal-btn avatar-modal-btn-cancel" onclick="closeAvatarModal()">إلغاء</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function() {
+    var defaults = {
+        seed: 'shalaby', skinColor: 'f2d3b1', hair: 'short01', hairColor: '2c1b18',
+        eyes: 'variant01', mouth: 'variant01', glasses: '', glassesProbability: '0'
+    };
+    var modalState = {};
+    var configInput = document.getElementById('profileAvatarConfig');
+    var modalPreview = document.getElementById('modalAvatarPreview');
+
+    function buildUrl(cfg) {
+        var base = 'https://api.dicebear.com/9.x/adventurer/svg';
+        var params = ['seed=' + cfg.seed];
+        if (cfg.skinColor) params.push('skinColor=' + cfg.skinColor);
+        if (cfg.hair) params.push('hair=' + cfg.hair);
+        if (cfg.hairColor) params.push('hairColor=' + cfg.hairColor);
+        if (cfg.eyes) params.push('eyes=' + cfg.eyes);
+        if (cfg.mouth) params.push('mouth=' + cfg.mouth);
+        if (cfg.glasses) {
+            params.push('glasses=' + cfg.glasses);
+            params.push('glassesProbability=100');
+        } else {
+            params.push('glassesProbability=0');
+        }
+        return base + '?' + params.join('&');
+    }
+
+    function loadState() {
+        var raw = configInput.value;
+        if (raw) {
+            try { modalState = JSON.parse(raw); return; } catch(e) {}
+        }
+        modalState = JSON.parse(JSON.stringify(defaults));
+    }
+
+    function updateModalPreview() {
+        modalPreview.src = buildUrl(modalState);
+    }
+
+    function highlightSelected() {
+        var panels = document.querySelectorAll('.avatar-modal-panel');
+        for (var p = 0; p < panels.length; p++) {
+            var opts = panels[p].querySelectorAll('.avatar-modal-opt');
+            for (var i = 0; i < opts.length; i++) {
+                var key = opts[i].getAttribute('data-key');
+                var val = opts[i].getAttribute('data-val');
+                if (modalState[key] === val || (!modalState[key] && val === '')) {
+                    opts[i].classList.add('selected');
+                } else {
+                    opts[i].classList.remove('selected');
+                }
+            }
+        }
+    }
+
+    window.openAvatarModal = function() {
+        loadState();
+        updateModalPreview();
+        highlightSelected();
+        document.getElementById('avatarModalOverlay').classList.add('active');
+    };
+
+    window.closeAvatarModal = function() {
+        document.getElementById('avatarModalOverlay').classList.remove('active');
+    };
+
+    window.showModalPanel = function(tab) {
+        var panel = tab.getAttribute('data-panel');
+        var tabs = document.querySelectorAll('.avatar-modal-tab');
+        var panels = document.querySelectorAll('.avatar-modal-panel');
+        for (var i = 0; i < tabs.length; i++) tabs[i].classList.remove('active');
+        for (var i = 0; i < panels.length; i++) panels[i].classList.remove('active');
+        tab.classList.add('active');
+        var target = document.querySelector('.avatar-modal-panel[data-panel="' + panel + '"]');
+        if (target) target.classList.add('active');
+    };
+
+    window.pickModalOpt = function(el) {
+        var key = el.getAttribute('data-key');
+        var val = el.getAttribute('data-val');
+        var panel = el.closest('.avatar-modal-panel');
+        var opts = panel.querySelectorAll('.avatar-modal-opt');
+        for (var i = 0; i < opts.length; i++) opts[i].classList.remove('selected');
+        el.classList.add('selected');
+        modalState[key] = val;
+        modalState.glassesProbability = modalState.glasses ? '100' : '0';
+        updateModalPreview();
+    };
+
+    window.saveModalAvatar = function() {
+        modalState.glassesProbability = modalState.glasses ? '100' : '0';
+        configInput.value = JSON.stringify(modalState);
+        var thumb = document.getElementById('profileAvatarThumb');
+        var letter = document.getElementById('profileAvatarLetter');
+        var url = buildUrl(modalState);
+        if (thumb) {
+            thumb.src = url;
+        } else if (letter) {
+            var img = document.createElement('img');
+            img.id = 'profileAvatarThumb';
+            img.src = url;
+            img.alt = '';
+            img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+            letter.parentNode.replaceChild(img, letter);
+        }
+        closeAvatarModal();
+    };
+
+    document.getElementById('avatarModalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) closeAvatarModal();
+    });
+})();
+</script>
 {% endblock %}
