@@ -403,19 +403,20 @@
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    padding: 0.4rem 1rem;
+    padding: 0.5rem 1.25rem;
     border-radius: 20px;
-    font-size: 0.78rem;
-    font-weight: 700;
+    font-size: 0.85rem;
+    font-weight: 800;
     font-family: 'Tajawal', sans-serif;
     cursor: pointer;
-    background: rgba(235,91,0,0.15);
-    color: #EB5B00;
-    border: 1px solid rgba(235,91,0,0.3);
+    background: linear-gradient(135deg, #EB5B00, #FF8C2E);
+    color: #fff;
+    border: none;
+    box-shadow: 0 3px 12px rgba(235,91,0,0.35);
     transition: all 0.2s;
-    margin-top: 0.5rem;
+    margin-top: 0.75rem;
 }
-.sv-edit-avatar-btn:hover { background: rgba(235,91,0,0.25); }
+.sv-edit-avatar-btn:hover { background: linear-gradient(135deg, #D04E00, #EB5B00); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(235,91,0,0.45); }
 
 @media (max-width: 900px) {
     .sv-profile-hero { flex-direction: column; text-align: center; }
