@@ -567,3 +567,431 @@
         flex-wrap: wrap;
     }
 }
+
+/* ================================================================
+   Game-Style Adventure Map (gv-*)
+   Full-bleed map with coin markers, hero, achievements
+   ================================================================ */
+
+/* ── Map Area ── */
+/* Full-bleed: break out of .sv2-main padding and fill the viewport */
+.gv-map-area {
+    position: relative;
+    overflow: hidden;
+    background-image: url('../img/verse-map/bg-map.webp');
+    background-repeat: no-repeat;
+    background-size: 100% 100%;
+    background-position: center center;
+    background-color: #1a0535;
+    min-height: calc(100vh - 80px);
+    border-radius: 20px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3);
+    margin: -18px;
+    margin-top: 0;
+}
+
+/* ── Achievements Panel (top-right) ── */
+.gv-achievements-panel {
+    position: absolute;
+    top: 22px;
+    right: 22px;
+    padding: 20px 18px;
+    z-index: 10;
+    min-width: 175px;
+    background-image: url('../img/verse-map/achievements.svg');
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+[dir="rtl"] .gv-achievements-panel { right: auto; left: 22px; }
+
+.gv-achievements-panel h3 {
+    font-size: 15px;
+    color: #fff;
+    text-align: center;
+    margin-bottom: 12px;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+    font-weight: 800;
+}
+.gv-ach-row-top {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+.gv-ach-row-bottom {
+    display: flex;
+    justify-content: center;
+}
+.gv-ach-badge {
+    width: 42px;
+    height: 42px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+}
+.gv-xp-btn {
+    display: block;
+    width: 100%;
+    height: 60px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius: 12px;
+    padding: 19px 14px;
+    font-size: 14px;
+    font-weight: 900;
+    color: #fff;
+    text-align: center;
+    letter-spacing: 0.5px;
+    cursor: default;
+}
+
+/* ── Title Badge (bottom-left) ── */
+.gv-title-badge {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    min-width: 200px;
+    min-height: 70px;
+    z-index: 10;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: contain;
+}
+
+/* ── Hero Character (bottom-right corner, inside map) ── */
+.gv-hero {
+    position: absolute;
+    bottom: 0;
+    right: 20px;
+    width: 220px;
+    height: 270px;
+    z-index: 10;
+    pointer-events: none;
+}
+
+.gv-hero-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center bottom;
+}
+.gv-hero-avatar {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    border: 3px solid #FFD700;
+    box-shadow: 0 3px 12px rgba(0,0,0,0.4);
+    object-fit: cover;
+    background: linear-gradient(135deg, #7C3AED, #A78BFA);
+}
+.gv-hero-avatar--initial {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: #fff;
+}
+
+/* ── Stats Overlay (top-left) ── */
+.gv-stats-overlay {
+    position: absolute;
+    top: 22px;
+    left: 22px;
+    z-index: 10;
+    background: rgba(30,10,60,0.7);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 14px;
+    padding: 10px 16px;
+    color: #fff;
+    font-weight: 800;
+    font-size: 0.9rem;
+    min-width: 100px;
+}
+[dir="rtl"] .gv-stats-overlay { left: auto; right: 22px; }
+
+.gv-stats-bar {
+    height: 6px;
+    background: rgba(255,255,255,0.2);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-top: 6px;
+}
+.gv-stats-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #EB5B00, #FFD700);
+    border-radius: 10px;
+    transition: width 1s ease;
+}
+
+/* ── Coins Container ── */
+.gv-map-coins {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+/* ── Individual Coin ── */
+.gv-coin {
+    position: absolute;
+    width: clamp(52px, 6vw, 60px);
+    height: clamp(52px, 6vw, 60px);
+    cursor: pointer;
+    pointer-events: all;
+    transform: translate(-50%, -50%);
+    transition: transform 0.2s ease, filter 0.2s ease;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+    z-index: 5;
+}
+.gv-coin img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    display: block;
+}
+.gv-coin:hover {
+    transform: translate(-50%, -50%) scale(1.18);
+    filter: drop-shadow(0 6px 20px rgba(255,200,50,0.7));
+    z-index: 20;
+}
+.gv-coin:active {
+    transform: translate(-50%, -50%) scale(0.95);
+}
+
+/* Tooltip on hover */
+.gv-coin::after {
+    content: attr(data-label);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(30,10,60,0.92);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+    padding: 5px 10px;
+    border-radius: 8px;
+    white-space: nowrap;
+    border: 1px solid rgba(255,200,50,0.35);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+}
+.gv-coin:hover::after {
+    opacity: 1;
+}
+
+/* ── Text number fallback for coins 10+ (only 9 number images exist) ── */
+.gv-coin-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: radial-gradient(circle at 40% 35%, #4a4a5a 0%, #2a2a35 60%, #1a1a22 100%);
+    border: 3px solid rgba(255,255,255,0.15);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,0.5), 0 2px 8px rgba(0,0,0,0.4);
+    color: rgba(255,255,255,0.85);
+    font-size: 1.1rem;
+    font-weight: 900;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+/* ── Coin States ── */
+/* Completed: subtle golden glow */
+.gv-coin--completed img {
+    filter: drop-shadow(0 0 6px rgba(255,200,50,0.5)) brightness(1.1);
+}
+
+/* Current: pulsing animation */
+.gv-coin--current img {
+    animation: gvCoinPulse 2s ease-in-out infinite;
+}
+@keyframes gvCoinPulse {
+    0%, 100% {
+        filter: drop-shadow(0 0 6px rgba(255,200,50,0.5));
+    }
+    50% {
+        filter: drop-shadow(0 0 18px rgba(255,200,50,0.9)) drop-shadow(0 0 30px rgba(255,100,0,0.4));
+    }
+}
+
+/* Locked: dimmed */
+.gv-coin--locked {
+    cursor: default;
+    pointer-events: all;
+}
+.gv-coin--locked img {
+    filter: grayscale(0.8) brightness(0.5);
+}
+.gv-coin--locked:hover {
+    transform: translate(-50%, -50%) scale(1);
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.5));
+}
+.gv-coin--locked::after {
+    content: '🔒';
+    font-size: 14px;
+    padding: 4px 8px;
+    border: none;
+    background: rgba(30,10,60,0.8);
+}
+
+/* Treasure */
+.gv-coin--treasure {
+    cursor: default;
+}
+.gv-coin--treasure::after {
+    display: none;
+}
+
+/* ── Modal ── */
+.gv-modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    background: rgba(20,5,40,0.8);
+    backdrop-filter: blur(6px);
+    place-items: center;
+}
+.gv-modal-overlay.show {
+    display: grid;
+}
+.gv-modal-box {
+    background: linear-gradient(145deg, #3b0764, #1a0535);
+    border: 2px solid rgba(255,200,50,0.35);
+    border-radius: 24px;
+    padding: 32px 40px;
+    text-align: center;
+    max-width: 380px;
+    width: 90%;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    animation: gvModalPop 0.3s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes gvModalPop {
+    from { opacity: 0; transform: scale(0.8); }
+    to { opacity: 1; transform: scale(1); }
+}
+.gv-modal-coin-img {
+    width: 90px;
+    height: 90px;
+    object-fit: contain;
+    margin: 0 auto 14px;
+    display: block;
+}
+.gv-modal-title {
+    font-size: 22px;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 6px;
+}
+.gv-modal-sub {
+    font-size: 14px;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 20px;
+    font-weight: 600;
+}
+.gv-modal-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+.gv-modal-start-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, #ff9a2f, #ff6a00);
+    border: none;
+    border-radius: 999px;
+    padding: 12px 28px;
+    color: #fff;
+    font-weight: 900;
+    font-size: 15px;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 6px 20px rgba(255,106,0,0.35);
+    transition: transform 0.18s ease;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+}
+.gv-modal-start-btn:hover {
+    transform: translateY(-2px);
+    color: #fff;
+}
+.gv-modal-close-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 999px;
+    padding: 10px 22px;
+    color: rgba(255,255,255,0.8);
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: background 0.18s ease;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+}
+.gv-modal-close-btn:hover {
+    background: rgba(255,255,255,0.15);
+}
+
+/* ── Responsive ── */
+@media (max-width: 900px) {
+    .gv-map-area {
+        min-height: calc(100vh - 70px);
+        border-radius: 16px;
+        margin: -12px;
+        margin-top: 0;
+    }
+    .gv-achievements-panel {
+        min-width: 130px;
+        top: 12px;
+        right: 12px;
+        padding: 12px 14px;
+    }
+    [dir="rtl"] .gv-achievements-panel { right: auto; left: 12px; }
+    .gv-title-badge {
+        bottom: 12px;
+        left: 12px;
+        min-width: 150px;
+        min-height: 50px;
+    }
+    .gv-hero {
+        width: 170px;
+        height: 210px;
+    }
+    .gv-coin {
+        width: clamp(40px, 8vw, 60px);
+        height: clamp(40px, 8vw, 60px);
+    }
+}
+@media (max-width: 480px) {
+    .gv-map-area {
+        min-height: calc(100vh - 60px);
+        margin: -8px;
+        margin-top: 0;
+    }
+    .gv-coin {
+        width: 38px;
+        height: 38px;
+    }
+    .gv-achievements-panel {
+        display: none;
+    }
+    .gv-hero {
+        width: 130px;
+        height: 160px;
+    }
+}

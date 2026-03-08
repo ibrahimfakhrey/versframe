@@ -274,31 +274,22 @@ def complete_quest(quest_id):
 @student_required
 def activities():
     student_id = current_user.id
-    source_filter = request.args.get('source', '')
 
-    query = Activity.query
-    if source_filter:
-        try:
-            query = query.filter(Activity.source == ActivitySource(source_filter))
-        except ValueError:
-            pass
-
-    all_activities = query.order_by(Activity.sort_order).all()
-
-    # Student progress
-    student_progress = {sa.activity_id: sa for sa in
-                        StudentActivity.query.filter_by(student_id=student_id).all()}
-
-    # Stats
-    total_count = Activity.query.count()
-    completed_count = StudentActivity.query.filter_by(
-        student_id=student_id, status='completed'
-    ).count()
+    # Fetch tracks + per-track progress (same as verses_map)
+    tracks = Track.query.order_by(Track.sort_order).all()
+    track_progress = {}
+    for track in tracks:
+        total_units = Unit.query.filter_by(track_id=track.id).count()
+        completed_units = StudentUnitProgress.query.filter_by(
+            student_id=student_id, track_id=track.id, status='completed'
+        ).count()
+        pct = (completed_units / total_units * 100) if total_units > 0 else 0
+        track_progress[track.id] = {
+            'total': total_units, 'completed': completed_units, 'pct': int(pct)
+        }
 
     return render_template('student/activities.html',
-                           activities=all_activities, student_progress=student_progress,
-                           total_count=total_count, completed_count=completed_count,
-                           source_filter=source_filter)
+                           tracks=tracks, track_progress=track_progress)
 
 
 @bp.route('/activity/<int:activity_id>')
