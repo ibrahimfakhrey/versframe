@@ -1,0 +1,197 @@
+{% extends "base_student.html" %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+/* ========================================================
+   Library Unit Lessons — Light Theme (sv2 compatible)
+   ======================================================== */
+.lib-breadcrumb {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 1.2rem; font-size: 0.85rem;
+    color: #9b7aab; flex-wrap: wrap;
+}
+.lib-breadcrumb a { color: #7c5c8f; text-decoration: none; font-weight: 600; }
+.lib-breadcrumb a:hover { color: #640D5F; }
+
+/* Unit header banner */
+.lib-unit-header {
+    margin-bottom: 1.8rem;
+    background: linear-gradient(135deg, #640D5F 0%, #8B1A85 50%, #4a0945 100%);
+    border-radius: 20px; padding: 1.5rem 2rem; color: #fff;
+    box-shadow: 0 4px 20px rgba(100,13,95,0.25);
+}
+.lib-unit-title { font-size: 1.25rem; font-weight: 800; color: #fff !important; margin: 0 0 0.3rem; }
+.lib-unit-sub { font-size: 0.85rem; color: rgba(255,255,255,0.8); margin: 0; }
+
+/* Lessons grid — always 3 columns */
+.lesson-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+/* Lesson card */
+.lesson-card {
+    position: relative;
+    background: linear-gradient(135deg, #2a0f4a 0%, #4a1860 60%, #3d1552 100%);
+    border-radius: 14px; padding: 1.2rem;
+    border: 1px solid rgba(139,26,133,0.25);
+    box-shadow: 0 3px 12px rgba(42,15,74,0.15);
+    text-decoration: none; color: #fff;
+    display: flex; flex-direction: column; gap: 0.6rem;
+    transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+    min-height: 160px;
+}
+.lesson-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(42,15,74,0.25);
+    border-color: #8B1A85;
+    color: #fff;
+}
+.lesson-card.completed {
+    border-color: rgba(74,222,128,0.3);
+    background: linear-gradient(135deg, #1a2e1a 0%, #2a4a2a 60%, #1f3d1f 100%);
+}
+
+/* Chapter number badge */
+.lesson-num {
+    position: absolute; top: -6px; right: -6px;
+    width: 30px; height: 30px; border-radius: 50%;
+    background: linear-gradient(135deg, #640D5F, #8B1A85);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78rem; font-weight: 800; color: #fff;
+    box-shadow: 0 2px 6px rgba(100,13,95,0.3);
+}
+.lesson-check {
+    position: absolute; top: -6px; left: -6px;
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #16a34a; display: flex; align-items: center;
+    justify-content: center; font-size: 0.8rem; color: #fff;
+    box-shadow: 0 2px 6px rgba(22,163,74,0.3);
+}
+
+.lesson-title {
+    font-size: 0.92rem; font-weight: 700; line-height: 1.35;
+    color: #fff !important; padding-top: 0.3rem;
+}
+
+.lesson-icons {
+    display: flex; gap: 0.4rem; flex-wrap: wrap;
+}
+.lesson-icon-badge {
+    display: inline-flex; align-items: center; gap: 0.25rem;
+    padding: 0.2rem 0.55rem; border-radius: 8px;
+    background: rgba(255,255,255,0.1); font-size: 0.72rem;
+    color: rgba(255,255,255,0.75); font-weight: 600;
+}
+
+.lesson-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 0.4rem; width: 100%; margin-top: auto;
+    background: linear-gradient(180deg, #FF8C2E 0%, #EB5B00 55%, #D04E00 100%);
+    color: #fff; padding: 0.5rem; border-radius: 12px;
+    font-size: 0.82rem; font-weight: 700;
+    border: none; border-bottom: 3px solid #B84700;
+    box-shadow: 0 3px 10px rgba(235,91,0,0.3);
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    text-decoration: none; cursor: pointer;
+    transition: all 0.2s;
+}
+.lesson-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 14px rgba(235,91,0,0.35);
+    color: #fff;
+}
+
+.lib-empty {
+    text-align: center; padding: 4rem 2rem;
+    background: #fff; border-radius: 16px;
+    border: 1px solid #ede4f3;
+}
+.lib-empty p { color: #7c5c8f; font-size: 0.95rem; font-weight: 600; }
+
+@media (max-width: 900px) {
+    .lesson-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+    .lesson-grid { grid-template-columns: 1fr; }
+    .lib-unit-header { padding: 1rem 1.2rem; }
+}
+</style>
+{% endblock %}
+
+{% block topbar_title %}{{ unit.name }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="lib-breadcrumb">
+    <a href="{{ url_for('student.library') }}">المكتبة</a>
+    <span>/</span>
+    <a href="{{ url_for('student.library_track', track_id=track.id) }}">{{ track.name_ar }}</a>
+    <span>/</span>
+    <span style="color:#50245F;font-weight:600;">{{ unit.name }}</span>
+</div>
+
+<!-- Unit Header -->
+<div class="lib-unit-header">
+    <h1 class="lib-unit-title">{{ unit.name }}</h1>
+    {% if unit.description %}
+    <p class="lib-unit-sub">{{ unit.description }}</p>
+    {% endif %}
+</div>
+
+{% if lessons %}
+<div class="lesson-grid">
+    {% for lesson in lessons %}
+    {% set is_done = lesson.id in completed_ids %}
+    <div class="lesson-card gsap-card {% if is_done %}completed{% endif %}">
+        <div class="lesson-num">{{ lesson.chapter_number }}</div>
+        {% if is_done %}
+        <div class="lesson-check">✓</div>
+        {% endif %}
+
+        <div class="lesson-title">{{ lesson.title_ar }}</div>
+
+        <div class="lesson-icons">
+            {% if lesson.pdf_file %}
+            <span class="lesson-icon-badge">📄 كتاب</span>
+            {% endif %}
+            {% if lesson.video_url %}
+            <span class="lesson-icon-badge">🎬 فيديو</span>
+            {% endif %}
+            {% if lesson.activity_url %}
+            <span class="lesson-icon-badge">🎮 نشاط</span>
+            {% endif %}
+            {% if lesson.content_html %}
+            <span class="lesson-icon-badge">📝 محتوى</span>
+            {% endif %}
+        </div>
+
+        <a href="{{ url_for('student.library_lesson', lesson_id=lesson.id) }}" class="lesson-btn">
+            {% if is_done %}مراجعة الدرس{% else %}ابدأ الدرس{% endif %}
+            <span>&larr;</span>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="lib-empty">
+    <div style="font-size:3rem;margin-bottom:1rem;">📖</div>
+    <p>لا توجد دروس في هذه الوحدة بعد</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof gsap !== 'undefined') {
+        gsap.from('.gsap-card', {
+            y: 20, opacity: 0, duration: 0.4,
+            stagger: 0.08, ease: 'power2.out'
+        });
+    }
+});
+</script>
+{% endblock %}

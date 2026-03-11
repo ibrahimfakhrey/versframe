@@ -1,0 +1,100 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}دروس: {{ unit.name }}{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.activities') }}">🎮 الأنشطة</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.library') }}">📖 المكتبة</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div style="margin-bottom:1rem;color:var(--text-secondary);font-size:0.85rem;">
+    <a href="{{ url_for('admin.library') }}" style="color:var(--primary);">المكتبة</a> /
+    {{ track.name_ar if track else '' }} / {{ level.name_ar if level else '' }} /
+    <strong>{{ unit.name }}</strong>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <h2 style="margin:0;color:var(--text-primary);">دروس الوحدة: {{ unit.name }}</h2>
+    <a href="{{ url_for('admin.library_lesson_create', track_id=track.id, level_id=level.id, unit_id=unit.id) }}"
+       class="btn btn-primary">+ إضافة درس</a>
+</div>
+
+{% if lessons %}
+<div class="card">
+    <div class="card-body" style="padding:0;">
+        <table class="table" style="margin:0;">
+            <thead>
+                <tr>
+                    <th style="width:50px;">#</th>
+                    <th>عنوان الدرس</th>
+                    <th>PDF</th>
+                    <th>فيديو</th>
+                    <th>نشاط</th>
+                    <th>الإجراءات</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lesson in lessons %}
+                <tr>
+                    <td>{{ lesson.chapter_number }}</td>
+                    <td>
+                        <strong>{{ lesson.title_ar }}</strong>
+                        {% if lesson.title_en %}<br><small class="text-muted">{{ lesson.title_en }}</small>{% endif %}
+                    </td>
+                    <td>
+                        {% if lesson.pdf_file %}
+                        <span style="color:var(--status-success);" title="{{ lesson.pdf_file }}">📄 موجود</span>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if lesson.video_url %}
+                        <a href="{{ lesson.video_url }}" target="_blank" style="color:var(--status-info);">🎬 رابط</a>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if lesson.activity_url %}
+                        <a href="{{ lesson.activity_url }}" target="_blank" style="color:var(--primary);">🎮 رابط</a>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="{{ url_for('admin.library_lesson_edit', lesson_id=lesson.id) }}"
+                           class="btn btn-ghost btn-sm">تعديل</a>
+                        <form method="POST" action="{{ url_for('admin.library_lesson_delete', lesson_id=lesson.id) }}"
+                              style="display:inline;" onsubmit="return confirm('هل أنت متأكد من حذف هذا الدرس؟');">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <button type="submit" class="btn btn-ghost btn-sm" style="color:var(--status-danger);">حذف</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body" style="text-align:center;padding:3rem;">
+        <div style="font-size:2.5rem;margin-bottom:0.5rem;">📚</div>
+        <p style="color:var(--text-secondary);margin-bottom:1rem;">لا توجد دروس في هذه الوحدة بعد</p>
+        <a href="{{ url_for('admin.library_lesson_create', track_id=track.id, level_id=level.id, unit_id=unit.id) }}"
+           class="btn btn-primary">إضافة أول درس</a>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

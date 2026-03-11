@@ -247,7 +247,7 @@
     {% set progress = track_progress.get(track.id, {'total': 0, 'completed': 0, 'pct': 0}) %}
     {% set img_file = verse_images.get(track.name, verse_images.get(track.id, 'coding-verse.png')) %}
 
-    <a href="{{ url_for('curriculum.track', track_id=track.id) }}" class="track-card">
+    <a href="{{ url_for('student.library_track', track_id=track.id) }}" class="track-card">
         <!-- Card Image -->
         <div class="track-card-img">
             <img src="{{ url_for('static', filename='img/verses/' ~ img_file) }}" alt="{{ track.name_ar }}">

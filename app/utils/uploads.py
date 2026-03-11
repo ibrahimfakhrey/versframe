@@ -55,7 +55,7 @@ def save_upload(file, subfolder, allowed_extensions=None):
         return None
 
     # Determine max file size based on subfolder
-    max_size = MAX_SLIDES_SIZE if subfolder == 'slides' else MAX_GENERAL_SIZE
+    max_size = MAX_SLIDES_SIZE if subfolder in ('slides', 'lessons') else MAX_GENERAL_SIZE
 
     # Read file content to check size
     file.seek(0, os.SEEK_END)

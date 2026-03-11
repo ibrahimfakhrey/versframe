@@ -1,0 +1,78 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}المكتبة{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.activities') }}">🎮 الأنشطة</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.library') }}">📖 المكتبة</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+    <h2 style="margin:0;color:var(--text-primary);">إدارة المكتبة</h2>
+    <a href="{{ url_for('admin.library_lesson_create') }}" class="btn btn-primary">+ إضافة درس</a>
+</div>
+
+{% if track_data %}
+{% for td in track_data %}
+<div class="card" style="margin-bottom:1.5rem;">
+    <div class="card-header" style="cursor:pointer;" onclick="this.parentElement.querySelector('.card-body').classList.toggle('d-none')">
+        <h3 style="margin:0;">{{ td.track.icon }} {{ td.track.name_ar }}</h3>
+        <span class="badge">{{ td.levels|length }} مستويات</span>
+    </div>
+    <div class="card-body">
+        {% for ld in td.levels %}
+        <div style="margin-bottom:1rem;padding:0.75rem;background:var(--bg-secondary);border-radius:8px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                <strong>{{ ld.level.icon }} {{ ld.level.name_ar }}</strong>
+            </div>
+            {% if ld.units %}
+            <table class="table" style="margin:0;">
+                <thead>
+                    <tr>
+                        <th style="width:40%;">الوحدة</th>
+                        <th>عدد الدروس</th>
+                        <th>الإجراءات</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ud in ld.units %}
+                    <tr>
+                        <td>{{ ud.unit.name }}</td>
+                        <td>
+                            <span class="badge {% if ud.lesson_count > 0 %}badge-success{% else %}badge-info{% endif %}">
+                                {{ ud.lesson_count }} درس
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('admin.library_unit', track_id=td.track.id, level_id=ld.level.id, unit_id=ud.unit.id) }}"
+                               class="btn btn-ghost btn-sm">عرض الدروس</a>
+                            <a href="{{ url_for('admin.library_lesson_create', track_id=td.track.id, level_id=ld.level.id, unit_id=ud.unit.id) }}"
+                               class="btn btn-outline btn-sm">+ درس</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-muted" style="padding:0.5rem;">لا توجد وحدات</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state">
+    <p>لا توجد مسارات في المنهج بعد</p>
+</div>
+{% endif %}
+{% endblock %}

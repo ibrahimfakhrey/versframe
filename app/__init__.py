@@ -147,6 +147,9 @@ def _ensure_journey_schema():
                 "ALTER TABLE activities ADD COLUMN IF NOT EXISTS level_id VARCHAR(50)",
                 "ALTER TABLE activities ADD COLUMN IF NOT EXISTS unit_id VARCHAR(50)",
                 "ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_config TEXT",
+                "ALTER TABLE lesson_contents ADD COLUMN IF NOT EXISTS pdf_file VARCHAR(300)",
+                "ALTER TABLE lesson_contents ADD COLUMN IF NOT EXISTS video_url VARCHAR(500)",
+                "ALTER TABLE lesson_contents ADD COLUMN IF NOT EXISTS activity_url VARCHAR(500)",
             ]:
                 conn.execute(text(sql))
             conn.execute(text("COMMIT"))
@@ -173,6 +176,15 @@ def _ensure_journey_schema():
                 conn.execute(text("ALTER TABLE activities ADD COLUMN unit_id VARCHAR(50)"))
             if 'avatar_config' not in existing:
                 conn.execute(text("ALTER TABLE users ADD COLUMN avatar_config TEXT"))
+            # lesson_contents new columns
+            result_lc = conn.execute(text("PRAGMA table_info(lesson_contents)"))
+            existing_lc = {row[1] for row in result_lc}
+            if 'pdf_file' not in existing_lc:
+                conn.execute(text("ALTER TABLE lesson_contents ADD COLUMN pdf_file VARCHAR(300)"))
+            if 'video_url' not in existing_lc:
+                conn.execute(text("ALTER TABLE lesson_contents ADD COLUMN video_url VARCHAR(500)"))
+            if 'activity_url' not in existing_lc:
+                conn.execute(text("ALTER TABLE lesson_contents ADD COLUMN activity_url VARCHAR(500)"))
             conn.execute(text("COMMIT"))
             print("[SCHEMA] Journey columns ensured on SQLite")
 

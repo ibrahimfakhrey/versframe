@@ -272,6 +272,9 @@ class LessonContent(db.Model):
     content_html = db.Column(db.Text, nullable=False, default='')
     quiz_json = db.Column(db.Text, nullable=True)  # JSON string
     glossary_json = db.Column(db.Text, nullable=True)  # JSON string
+    pdf_file = db.Column(db.String(300), nullable=True)  # filename in uploads/lessons/
+    video_url = db.Column(db.String(500), nullable=True)  # YouTube URL
+    activity_url = db.Column(db.String(500), nullable=True)  # external activity link
 
     __table_args__ = (
         db.ForeignKeyConstraint(

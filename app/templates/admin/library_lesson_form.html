@@ -1,0 +1,191 @@
+{% extends "base_dashboard.html" %}
+
+{% block topbar_title %}{% if lesson %}تعديل الدرس{% else %}إضافة درس جديد{% endif %}{% endblock %}
+
+{% block sidebar_nav %}
+<a class="sidebar-nav-item" href="{{ url_for('admin.dashboard') }}">📊 لوحة التحكم</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.users') }}">👥 المستخدمون</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.groups') }}">📚 المجموعات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.sessions') }}">🎓 الجلسات</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.resources') }}">📁 الموارد</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.activities') }}">🎮 الأنشطة</a>
+<a class="sidebar-nav-item active" href="{{ url_for('admin.library') }}">📖 المكتبة</a>
+<a class="sidebar-nav-item" href="{{ url_for('curriculum.home') }}">📖 المنهج</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.reports') }}">📈 التقارير</a>
+<a class="sidebar-nav-item" href="{{ url_for('admin.settings') }}">⚙️ الإعدادات</a>
+{% endblock %}
+
+{% block content %}
+<div style="margin-bottom:1rem;">
+    <a href="{{ url_for('admin.library') }}" style="color:var(--sv-purple);font-size:0.85rem;">← العودة للمكتبة</a>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3 class="card-title">{% if lesson %}تعديل الدرس{% else %}إضافة درس جديد{% endif %}</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+            <!-- Track / Level / Unit Cascading Selects -->
+            {% if not lesson %}
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;margin-bottom:var(--space-md);">
+                <div class="form-group">
+                    <label class="form-label">المسار *</label>
+                    <select name="track_id" id="sel-track" class="form-select" required onchange="loadLevels(this.value)">
+                        <option value="">اختر المسار</option>
+                        {% for t in tracks %}
+                        <option value="{{ t.id }}" {% if (pre_track is defined and pre_track == t.id) or (lesson and lesson.track_id == t.id) %}selected{% endif %}>
+                            {{ t.icon }} {{ t.name_ar }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">المستوى *</label>
+                    <select name="level_id" id="sel-level" class="form-select" required onchange="loadUnits(this)">
+                        <option value="">اختر المستوى</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">الوحدة *</label>
+                    <select name="unit_id" id="sel-unit" class="form-select" required>
+                        <option value="">اختر الوحدة</option>
+                    </select>
+                </div>
+            </div>
+            {% else %}
+            <div style="margin-bottom:var(--space-md);padding:0.75rem 1rem;background:var(--bg-secondary);border-radius:var(--radius-md);font-size:var(--text-sm);color:var(--text-secondary);">
+                <strong>المسار:</strong> {{ lesson.track_id }} |
+                <strong>المستوى:</strong> {{ lesson.level_id }} |
+                <strong>الوحدة:</strong> {{ lesson.unit_id }}
+            </div>
+            {% endif %}
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:var(--space-md);">
+                <div class="form-group">
+                    <label class="form-label">عنوان الدرس بالعربية *</label>
+                    <input type="text" name="title_ar" class="form-input" required
+                           value="{{ lesson.title_ar if lesson else '' }}" placeholder="مثال: مقدمة في البرمجة">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">عنوان الدرس بالإنجليزية</label>
+                    <input type="text" name="title_en" class="form-input" dir="ltr"
+                           value="{{ lesson.title_en if lesson else '' }}" placeholder="e.g. Introduction to Programming">
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:120px 1fr;gap:1rem;margin-bottom:var(--space-md);">
+                <div class="form-group">
+                    <label class="form-label">رقم الفصل</label>
+                    <input type="number" name="chapter_number" class="form-input" min="1"
+                           value="{{ lesson.chapter_number if lesson else 1 }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ملف PDF (حد أقصى 50 ميجا)</label>
+                    <input type="file" name="pdf_file" class="form-input" accept=".pdf"
+                           style="padding:8px;">
+                    {% if lesson and lesson.pdf_file %}
+                    <span class="form-hint" style="color:var(--success);">
+                        📄 ملف حالي: {{ lesson.pdf_file }}
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:var(--space-md);">
+                <div class="form-group">
+                    <label class="form-label">رابط الفيديو (YouTube)</label>
+                    <input type="url" name="video_url" class="form-input" dir="ltr"
+                           placeholder="https://www.youtube.com/watch?v=..."
+                           value="{{ lesson.video_url if lesson and lesson.video_url else '' }}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">رابط النشاط</label>
+                    <input type="url" name="activity_url" class="form-input" dir="ltr"
+                           placeholder="https://..."
+                           value="{{ lesson.activity_url if lesson and lesson.activity_url else '' }}">
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom:var(--space-lg);">
+                <label class="form-label">محتوى HTML (اختياري)</label>
+                <textarea name="content_html" class="form-textarea" rows="5"
+                          dir="rtl">{{ lesson.content_html if lesson else '' }}</textarea>
+            </div>
+
+            <div style="display:flex;gap:1rem;">
+                <button type="submit" class="btn btn-primary">
+                    {% if lesson %}حفظ التعديلات{% else %}إضافة الدرس{% endif %}
+                </button>
+                <a href="{{ url_for('admin.library') }}" class="btn btn-ghost">إلغاء</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+// Cascading selects data cache
+let levelsCache = {};
+
+async function loadLevels(trackId) {
+    const levelSel = document.getElementById('sel-level');
+    const unitSel = document.getElementById('sel-unit');
+    levelSel.innerHTML = '<option value="">اختر المستوى</option>';
+    unitSel.innerHTML = '<option value="">اختر الوحدة</option>';
+    if (!trackId) return;
+
+    if (levelsCache[trackId]) {
+        populateLevels(levelsCache[trackId]);
+        return;
+    }
+
+    try {
+        const res = await fetch(`/admin/api/levels/${trackId}`);
+        const data = await res.json();
+        levelsCache[trackId] = data;
+        populateLevels(data);
+    } catch(e) { console.error(e); }
+}
+
+function populateLevels(data) {
+    const levelSel = document.getElementById('sel-level');
+    const preLevel = '{{ pre_level if pre_level is defined else "" }}';
+    data.forEach(l => {
+        const opt = document.createElement('option');
+        opt.value = l.id;
+        opt.textContent = l.name_ar;
+        opt.dataset.units = JSON.stringify(l.units);
+        if (l.id === preLevel) opt.selected = true;
+        levelSel.appendChild(opt);
+    });
+    if (preLevel) loadUnits(levelSel);
+}
+
+function loadUnits(levelSel) {
+    const unitSel = document.getElementById('sel-unit');
+    unitSel.innerHTML = '<option value="">اختر الوحدة</option>';
+    const selected = levelSel.options[levelSel.selectedIndex];
+    if (!selected || !selected.dataset.units) return;
+
+    const preUnit = '{{ pre_unit if pre_unit is defined else "" }}';
+    const units = JSON.parse(selected.dataset.units);
+    units.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.textContent = u.name;
+        if (u.id === preUnit) opt.selected = true;
+        unitSel.appendChild(opt);
+    });
+}
+
+// Auto-load if pre-filled
+document.addEventListener('DOMContentLoaded', () => {
+    const trackSel = document.getElementById('sel-track');
+    if (trackSel && trackSel.value) loadLevels(trackSel.value);
+});
+</script>
+{% endblock %}

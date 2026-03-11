@@ -1,0 +1,401 @@
+{% extends "base_student.html" %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+/* ========================================================
+   E-Book Viewer — Light Theme (sv2 compatible)
+   ======================================================== */
+.lib-breadcrumb {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 1rem; font-size: 0.82rem;
+    color: #9b7aab; flex-wrap: wrap;
+}
+.lib-breadcrumb a { color: #7c5c8f; text-decoration: none; font-weight: 600; }
+.lib-breadcrumb a:hover { color: #640D5F; }
+
+/* Tabs */
+.viewer-tabs {
+    display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;
+}
+.viewer-tab {
+    padding: 0.55rem 1.2rem; border-radius: 12px;
+    background: #fff; border: 1px solid rgba(100,13,95,0.1);
+    color: #7c5c8f; font-weight: 700;
+    font-size: 0.85rem; cursor: pointer; transition: all 0.25s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    display: flex; align-items: center; gap: 0.35rem;
+    box-shadow: 0 1px 4px rgba(100,13,95,0.04);
+}
+.viewer-tab:hover { background: #f3e8f9; color: #640D5F; }
+.viewer-tab.active {
+    background: linear-gradient(135deg, #640D5F, #8B1A85);
+    border-color: transparent; color: #fff;
+    box-shadow: 0 3px 10px rgba(100,13,95,0.2);
+}
+
+/* Tab Panels */
+.viewer-panel { display: none; }
+.viewer-panel.active { display: block; }
+
+/* PDF Viewer */
+.pdf-viewer-wrap {
+    background: #2d1b3d;
+    border-radius: 20px; border: 1px solid rgba(100,13,95,0.15);
+    overflow: hidden; position: relative;
+    box-shadow: 0 4px 20px rgba(100,13,95,0.15);
+}
+.pdf-controls {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.75rem; padding: 0.7rem 1rem;
+    background: rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    flex-wrap: wrap;
+}
+.pdf-btn {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+    color: #fff; font-size: 1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+}
+.pdf-btn:hover { background: rgba(255,255,255,0.2); }
+.pdf-btn:disabled { opacity: 0.3; cursor: default; }
+.pdf-page-info {
+    color: rgba(255,255,255,0.85); font-size: 0.85rem;
+    font-weight: 700; min-width: 120px; text-align: center;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+}
+.pdf-canvas-wrap {
+    display: flex; justify-content: center; align-items: flex-start;
+    padding: 1rem; min-height: 500px; overflow: auto;
+    max-height: 75vh; background: #1a0f24;
+}
+#pdf-canvas {
+    max-width: 100%; box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    border-radius: 4px;
+}
+
+/* Video embed */
+.video-wrap {
+    position: relative; padding-bottom: 56.25%; height: 0;
+    border-radius: 16px; overflow: hidden;
+    background: #1a0f24; box-shadow: 0 4px 20px rgba(100,13,95,0.15);
+}
+.video-wrap iframe {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    border: none; border-radius: 16px;
+}
+
+/* Activity link */
+.activity-card {
+    background: #fff; border-radius: 18px; padding: 2rem; text-align: center;
+    border: 1px solid rgba(100,13,95,0.08);
+    box-shadow: 0 2px 12px rgba(100,13,95,0.06);
+}
+.activity-card h3 { color: #50245F !important; }
+.activity-card p { color: #9b7aab; }
+.activity-link {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.8rem 2rem; border-radius: 14px;
+    background: linear-gradient(180deg, #8B1A85 0%, #640D5F 100%);
+    color: #fff; font-weight: 700; font-size: 1rem;
+    text-decoration: none; border-bottom: 3px solid #4a0945;
+    transition: all 0.2s; font-family: var(--font-ar, 'Tajawal', sans-serif);
+    box-shadow: 0 3px 12px rgba(100,13,95,0.25);
+}
+.activity-link:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 18px rgba(100,13,95,0.35);
+    color: #fff;
+}
+
+/* Content HTML panel */
+.content-panel {
+    background: #fff; border-radius: 18px; padding: 1.5rem;
+    border: 1px solid rgba(100,13,95,0.08);
+    color: #50245F; line-height: 1.8; font-size: 0.95rem;
+    box-shadow: 0 2px 12px rgba(100,13,95,0.06);
+}
+
+/* Complete Button */
+.complete-section {
+    margin-top: 1.5rem; text-align: center;
+}
+.complete-btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 2.5rem; border-radius: 14px;
+    background: linear-gradient(135deg, #16a34a, #15803d);
+    color: #fff; font-weight: 800; font-size: 1rem;
+    border: none; border-bottom: 3px solid #166534;
+    cursor: pointer; transition: all 0.3s;
+    font-family: var(--font-ar, 'Tajawal', sans-serif);
+    box-shadow: 0 3px 12px rgba(22,163,74,0.3);
+}
+.complete-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 18px rgba(22,163,74,0.4);
+}
+.complete-btn:disabled {
+    opacity: 0.5; cursor: default; transform: none;
+    box-shadow: none;
+}
+.completed-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 2rem; border-radius: 14px;
+    background: rgba(22,163,74,0.08); border: 1px solid rgba(22,163,74,0.2);
+    color: #16a34a; font-weight: 700; font-size: 1rem;
+}
+
+/* Fullscreen */
+.pdf-viewer-wrap.fullscreen {
+    position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+    z-index: 9999; border-radius: 0; margin: 0;
+}
+.pdf-viewer-wrap.fullscreen .pdf-canvas-wrap {
+    max-height: calc(100vh - 56px);
+}
+</style>
+{% endblock %}
+
+{% block topbar_title %}{{ lesson.title_ar }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="lib-breadcrumb">
+    <a href="{{ url_for('student.library') }}">المكتبة</a>
+    <span>/</span>
+    <a href="{{ url_for('student.library_track', track_id=track.id) }}">{{ track.name_ar }}</a>
+    <span>/</span>
+    <a href="{{ url_for('student.library_unit', track_id=track.id, level_id=level.id, unit_id=unit.id) }}">{{ unit.name }}</a>
+    <span>/</span>
+    <span style="color:#50245F;font-weight:600;">{{ lesson.title_ar }}</span>
+</div>
+
+<!-- Tabs -->
+<div class="viewer-tabs">
+    {% if lesson.pdf_file %}
+    <button class="viewer-tab active" onclick="switchTab('book')">📄 الكتاب</button>
+    {% endif %}
+    {% if lesson.video_url %}
+    <button class="viewer-tab {% if not lesson.pdf_file %}active{% endif %}" onclick="switchTab('video')">🎬 الفيديو</button>
+    {% endif %}
+    {% if lesson.activity_url %}
+    <button class="viewer-tab {% if not lesson.pdf_file and not lesson.video_url %}active{% endif %}" onclick="switchTab('activity')">🎮 النشاط</button>
+    {% endif %}
+    {% if lesson.content_html %}
+    <button class="viewer-tab {% if not lesson.pdf_file and not lesson.video_url and not lesson.activity_url %}active{% endif %}" onclick="switchTab('content')">📝 المحتوى</button>
+    {% endif %}
+</div>
+
+<!-- Book Panel (PDF.js) -->
+{% if lesson.pdf_file %}
+<div class="viewer-panel active" id="panel-book">
+    <div class="pdf-viewer-wrap" id="pdf-viewer">
+        <div class="pdf-controls">
+            <button class="pdf-btn" id="btn-prev" title="الصفحة السابقة">◀</button>
+            <div class="pdf-page-info" id="page-info">صفحة 0 من 0</div>
+            <button class="pdf-btn" id="btn-next" title="الصفحة التالية">▶</button>
+            <span style="color:rgba(255,255,255,0.2);">|</span>
+            <button class="pdf-btn" id="btn-zout" title="تصغير">−</button>
+            <button class="pdf-btn" id="btn-zin" title="تكبير">+</button>
+            <button class="pdf-btn" id="btn-full" title="ملء الشاشة">⛶</button>
+        </div>
+        <div class="pdf-canvas-wrap">
+            <canvas id="pdf-canvas"></canvas>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Video Panel -->
+{% if lesson.video_url %}
+<div class="viewer-panel {% if not lesson.pdf_file %}active{% endif %}" id="panel-video">
+    <div class="video-wrap">
+        {% set vid_id = lesson.video_url.split('v=')[-1].split('&')[0] if 'v=' in lesson.video_url else lesson.video_url.split('/')[-1].split('?')[0] %}
+        <iframe src="https://www.youtube.com/embed/{{ vid_id }}"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowfullscreen></iframe>
+    </div>
+</div>
+{% endif %}
+
+<!-- Activity Panel -->
+{% if lesson.activity_url %}
+<div class="viewer-panel {% if not lesson.pdf_file and not lesson.video_url %}active{% endif %}" id="panel-activity">
+    <div class="activity-card">
+        <div style="font-size:3rem;margin-bottom:1rem;">🎮</div>
+        <h3>نشاط تفاعلي</h3>
+        <p style="margin-bottom:1.5rem;">أكمل النشاط التفاعلي لتعزيز فهمك</p>
+        <a href="{{ lesson.activity_url }}" target="_blank" rel="noopener" class="activity-link">
+            افتح النشاط <span>&larr;</span>
+        </a>
+    </div>
+</div>
+{% endif %}
+
+<!-- Content HTML Panel -->
+{% if lesson.content_html %}
+<div class="viewer-panel {% if not lesson.pdf_file and not lesson.video_url and not lesson.activity_url %}active{% endif %}" id="panel-content">
+    <div class="content-panel" dir="rtl">
+        {{ lesson.content_html|safe }}
+    </div>
+</div>
+{% endif %}
+
+<!-- Complete Section -->
+<div class="complete-section">
+    {% if is_completed %}
+    <div class="completed-badge">✅ تم إكمال هذا الدرس</div>
+    {% else %}
+    <button class="complete-btn" id="btn-complete" onclick="completeLesson()">
+        ✅ إكمال الدرس
+    </button>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block dashboard_js %}
+<!-- PDF.js -->
+{% if lesson.pdf_file %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+const pdfUrl = '/static/uploads/lessons/{{ lesson.pdf_file }}';
+let pdfDoc = null, pageNum = 1, pageCount = 0, scale = 1.3;
+const canvas = document.getElementById('pdf-canvas');
+const ctx = canvas.getContext('2d');
+
+async function loadPDF() {
+    try {
+        pdfDoc = await pdfjsLib.getDocument(pdfUrl).promise;
+        pageCount = pdfDoc.numPages;
+        renderPage(pageNum);
+    } catch(e) {
+        console.error('PDF load error:', e);
+        document.getElementById('page-info').textContent = 'خطأ في تحميل PDF';
+    }
+}
+
+async function renderPage(num) {
+    const page = await pdfDoc.getPage(num);
+    const viewport = page.getViewport({ scale: scale });
+    canvas.height = viewport.height;
+    canvas.width = viewport.width;
+    await page.render({ canvasContext: ctx, viewport: viewport }).promise;
+    document.getElementById('page-info').textContent = `صفحة ${num} من ${pageCount}`;
+    document.getElementById('btn-prev').disabled = (num <= 1);
+    document.getElementById('btn-next').disabled = (num >= pageCount);
+}
+
+document.getElementById('btn-prev').addEventListener('click', () => {
+    if (pageNum > 1) { pageNum--; renderPage(pageNum); }
+});
+document.getElementById('btn-next').addEventListener('click', () => {
+    if (pageNum < pageCount) { pageNum++; renderPage(pageNum); }
+});
+document.getElementById('btn-zin').addEventListener('click', () => {
+    scale = Math.min(scale + 0.2, 3); renderPage(pageNum);
+});
+document.getElementById('btn-zout').addEventListener('click', () => {
+    scale = Math.max(scale - 0.2, 0.5); renderPage(pageNum);
+});
+document.getElementById('btn-full').addEventListener('click', () => {
+    document.getElementById('pdf-viewer').classList.toggle('fullscreen');
+    renderPage(pageNum);
+});
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowLeft' && pageNum < pageCount) { pageNum++; renderPage(pageNum); }
+    if (e.key === 'ArrowRight' && pageNum > 1) { pageNum--; renderPage(pageNum); }
+    if (e.key === 'Escape') {
+        document.getElementById('pdf-viewer').classList.remove('fullscreen');
+    }
+});
+
+loadPDF();
+</script>
+{% endif %}
+
+<script>
+function switchTab(tab) {
+    document.querySelectorAll('.viewer-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.viewer-panel').forEach(p => p.classList.remove('active'));
+    event.target.closest('.viewer-tab').classList.add('active');
+    const panel = document.getElementById('panel-' + tab);
+    if (panel) panel.classList.add('active');
+}
+
+async function completeLesson() {
+    const btn = document.getElementById('btn-complete');
+    btn.disabled = true;
+    btn.textContent = 'جاري الحفظ...';
+
+    try {
+        const res = await fetch('{{ url_for("student.complete_lesson", lesson_id=lesson.id) }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token() }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        const data = await res.json();
+        if (data.success) {
+            // Confetti
+            if (typeof confetti !== 'undefined') {
+                confetti({
+                    particleCount: 100, spread: 70,
+                    origin: { y: 0.6 }, colors: ['#640D5F', '#EB5B00', '#16a34a']
+                });
+            }
+
+            // SweetAlert celebration
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '🎉 أحسنت!',
+                    html: `
+                        <div style="font-size:1.1rem;margin-bottom:0.5rem;">أكملت الدرس بنجاح</div>
+                        <div style="display:flex;justify-content:center;gap:1.5rem;margin-top:1rem;">
+                            <div style="text-align:center;">
+                                <div style="font-size:1.8rem;font-weight:800;color:#640D5F;">+${data.xp_earned}</div>
+                                <div style="font-size:0.8rem;color:#888;">نقطة خبرة</div>
+                            </div>
+                            <div style="text-align:center;">
+                                <div style="font-size:1.8rem;font-weight:800;color:#EB5B00;">+${data.coins_earned}</div>
+                                <div style="font-size:0.8rem;color:#888;">عملات</div>
+                            </div>
+                        </div>
+                    `,
+                    icon: 'success',
+                    confirmButtonText: 'رائع!',
+                    confirmButtonColor: '#640D5F',
+                });
+            }
+
+            // Replace button with badge
+            btn.outerHTML = '<div class="completed-badge">✅ تم إكمال هذا الدرس</div>';
+        }
+    } catch(e) {
+        console.error(e);
+        btn.disabled = false;
+        btn.textContent = '✅ إكمال الدرس';
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({ title: 'خطأ', text: 'حدث خطأ. حاول مرة أخرى.', icon: 'error',
+                confirmButtonColor: '#640D5F' });
+        }
+    }
+}
+
+// GSAP entrance
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof gsap !== 'undefined') {
+        gsap.from('.viewer-tabs', { y: -20, opacity: 0, duration: 0.4, ease: 'power2.out' });
+        gsap.from('.viewer-panel.active', { y: 20, opacity: 0, duration: 0.5, delay: 0.2, ease: 'power2.out' });
+        gsap.from('.complete-section', { y: 20, opacity: 0, duration: 0.4, delay: 0.4, ease: 'power2.out' });
+    }
+});
+</script>
+{% endblock %}

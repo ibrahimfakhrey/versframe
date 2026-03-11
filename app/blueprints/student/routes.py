@@ -480,23 +480,76 @@ def library():
             student_id=student_id, track_id=track.id, status='completed'
         ).count()
         pct = (completed_units / total_units * 100) if total_units > 0 else 0
+        # Count lessons with content (PDF/video/activity)
+        lesson_count = LessonContent.query.filter(
+            LessonContent.track_id == track.id,
+            db.or_(
+                LessonContent.pdf_file.isnot(None),
+                LessonContent.video_url.isnot(None),
+                LessonContent.activity_url.isnot(None),
+            )
+        ).count()
         track_progress[track.id] = {
-            'total': total_units, 'completed': completed_units, 'pct': int(pct)
+            'total': total_units, 'completed': completed_units, 'pct': int(pct),
+            'lesson_count': lesson_count,
         }
 
     return render_template('student/library.html',
                            tracks=tracks, track_progress=track_progress)
 
 
+@bp.route('/library/<track_id>')
+@student_required
+def library_track(track_id):
+    student_id = current_user.id
+    track = Track.query.get(track_id)
+    if not track:
+        flash('المسار غير موجود', 'error')
+        return redirect(url_for('student.library'))
+
+    levels = Level.query.filter_by(track_id=track_id).order_by(Level.sort_order).all()
+    level_data = []
+    for level in levels:
+        units = Unit.query.filter_by(track_id=track_id, level_id=level.id).order_by(Unit.sort_order).all()
+        unit_data = []
+        for unit in units:
+            total_lessons = LessonContent.query.filter_by(
+                track_id=track_id, level_id=level.id, unit_id=unit.id
+            ).count()
+            completed_lessons = 0
+            if total_lessons > 0:
+                lesson_ids = [l.id for l in LessonContent.query.filter_by(
+                    track_id=track_id, level_id=level.id, unit_id=unit.id
+                ).all()]
+                completed_lessons = LessonProgress.query.filter(
+                    LessonProgress.student_id == student_id,
+                    LessonProgress.lesson_id.in_(lesson_ids),
+                    LessonProgress.completed == True
+                ).count() if lesson_ids else 0
+            pct = int(completed_lessons / total_lessons * 100) if total_lessons > 0 else 0
+            unit_data.append({
+                'unit': unit, 'total': total_lessons,
+                'completed': completed_lessons, 'pct': pct,
+            })
+        level_data.append({'level': level, 'units': unit_data})
+
+    return render_template('student/library_track.html',
+                           track=track, level_data=level_data)
+
+
 @bp.route('/library/<track_id>/<level_id>/<unit_id>')
 @student_required
-def lesson_viewer(track_id, level_id, unit_id):
+def library_unit(track_id, level_id, unit_id):
+    student_id = current_user.id
     unit = Unit.query.filter_by(
         track_id=track_id, level_id=level_id, id=unit_id
     ).first()
     if not unit:
         flash('الوحدة غير موجودة', 'error')
         return redirect(url_for('student.library'))
+
+    track = Track.query.get(track_id)
+    level = Level.query.filter_by(track_id=track_id, id=level_id).first()
 
     lessons = LessonContent.query.filter_by(
         track_id=track_id, level_id=level_id, unit_id=unit_id
@@ -507,23 +560,89 @@ def lesson_viewer(track_id, level_id, unit_id):
     completed_ids = set()
     if lesson_ids:
         completed_ids = {lp.lesson_id for lp in LessonProgress.query.filter(
-            LessonProgress.student_id == current_user.id,
+            LessonProgress.student_id == student_id,
             LessonProgress.lesson_id.in_(lesson_ids),
             LessonProgress.completed == True
         ).all()}
 
-    # Track/level info
-    track = Track.query.get(track_id)
-    level = Level.query.filter_by(track_id=track_id, id=level_id).first()
+    return render_template('student/library_unit.html',
+                           track=track, level=level, unit=unit,
+                           lessons=lessons, completed_ids=completed_ids)
 
-    # Sibling units for sidebar navigation
-    sibling_units = Unit.query.filter_by(
-        track_id=track_id, level_id=level_id
-    ).order_by(Unit.sort_order).all()
 
-    return render_template('student/lesson_viewer.html',
-                           unit=unit, lessons=lessons, completed_ids=completed_ids,
-                           track=track, level=level, sibling_units=sibling_units)
+@bp.route('/library/lesson/<int:lesson_id>')
+@student_required
+def library_lesson(lesson_id):
+    lesson = db.session.get(LessonContent, lesson_id)
+    if not lesson:
+        flash('الدرس غير موجود', 'error')
+        return redirect(url_for('student.library'))
+
+    track = Track.query.get(lesson.track_id)
+    level = Level.query.filter_by(track_id=lesson.track_id, id=lesson.level_id).first()
+    unit = Unit.query.filter_by(
+        track_id=lesson.track_id, level_id=lesson.level_id, id=lesson.unit_id
+    ).first()
+
+    # Check completion
+    progress = LessonProgress.query.filter_by(
+        student_id=current_user.id, lesson_id=lesson_id
+    ).first()
+    is_completed = progress.completed if progress else False
+
+    return render_template('student/library_lesson.html',
+                           lesson=lesson, track=track, level=level, unit=unit,
+                           is_completed=is_completed)
+
+
+@bp.route('/library/lesson/<int:lesson_id>/complete', methods=['POST'])
+@student_required
+def complete_lesson(lesson_id):
+    student_id = current_user.id
+    lesson = db.session.get(LessonContent, lesson_id)
+    if not lesson:
+        return jsonify({'error': 'Lesson not found'}), 404
+
+    progress = LessonProgress.query.filter_by(
+        student_id=student_id, lesson_id=lesson_id
+    ).first()
+
+    if progress and progress.completed:
+        return jsonify({'success': True, 'already': True})
+
+    if not progress:
+        progress = LessonProgress(
+            student_id=student_id, lesson_id=lesson_id,
+            completed=True, completed_at=datetime.now(timezone.utc)
+        )
+        db.session.add(progress)
+    else:
+        progress.completed = True
+        progress.completed_at = datetime.now(timezone.utc)
+
+    # Award XP + coins
+    xp_amount = 10
+    coin_amount = 5
+    db.session.add(StudentXP(
+        student_id=student_id, amount=xp_amount,
+        reason=f'إكمال درس: {lesson.title_ar}'
+    ))
+    wallet = get_or_create_wallet(student_id)
+    wallet.coins += coin_amount
+
+    db.session.commit()
+    check_and_award_badges(student_id)
+
+    new_total_xp = StudentXP.total_xp(student_id)
+    updated_wallet = get_or_create_wallet(student_id)
+
+    return jsonify({
+        'success': True,
+        'xp_earned': xp_amount,
+        'coins_earned': coin_amount,
+        'total_xp': new_total_xp,
+        'total_coins': updated_wallet.coins,
+    })
 
 
 # ─── Verses Adventure Map ────────────────────────────────────────────

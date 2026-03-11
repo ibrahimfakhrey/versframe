@@ -8,7 +8,7 @@ from app.models.classroom import Group, GroupStudent, Session, SessionStatus, Se
 from app.models.resource import Resource, ResourceType
 from app.models.curriculum import Track, Level, Unit
 from app.models.gamification import StudentXP
-from app.models.journey import Activity, ActivityType, ActivitySource, QuestDifficulty
+from app.models.journey import Activity, ActivityType, ActivitySource, QuestDifficulty, LessonContent
 from app.utils.decorators import admin_required
 from app.utils.helpers import paginate, safe_int
 from app.utils.uploads import (save_upload, get_upload_url, delete_upload,
@@ -696,3 +696,147 @@ def curriculum():
 @admin_required
 def settings():
     return render_template('admin/settings.html')
+
+
+# --- Library Management ---
+
+@bp.route('/library')
+@admin_required
+def library():
+    tracks = Track.query.order_by(Track.sort_order).all()
+    track_data = []
+    for track in tracks:
+        levels = Level.query.filter_by(track_id=track.id).order_by(Level.sort_order).all()
+        level_data = []
+        for level in levels:
+            units = Unit.query.filter_by(track_id=track.id, level_id=level.id).order_by(Unit.sort_order).all()
+            unit_data = []
+            for unit in units:
+                lesson_count = LessonContent.query.filter_by(
+                    track_id=track.id, level_id=level.id, unit_id=unit.id
+                ).count()
+                unit_data.append({'unit': unit, 'lesson_count': lesson_count})
+            level_data.append({'level': level, 'units': unit_data})
+        track_data.append({'track': track, 'levels': level_data})
+    return render_template('admin/library.html', track_data=track_data)
+
+
+@bp.route('/library/unit/<track_id>/<level_id>/<unit_id>')
+@admin_required
+def library_unit(track_id, level_id, unit_id):
+    unit = Unit.query.filter_by(track_id=track_id, level_id=level_id, id=unit_id).first()
+    if not unit:
+        flash('الوحدة غير موجودة', 'error')
+        return redirect(url_for('admin.library'))
+    track = Track.query.get(track_id)
+    level = Level.query.filter_by(track_id=track_id, id=level_id).first()
+    lessons = LessonContent.query.filter_by(
+        track_id=track_id, level_id=level_id, unit_id=unit_id
+    ).order_by(LessonContent.chapter_number).all()
+    return render_template('admin/library_unit.html',
+                           track=track, level=level, unit=unit, lessons=lessons)
+
+
+@bp.route('/library/lesson/new', methods=['GET', 'POST'])
+@admin_required
+def library_lesson_create():
+    if request.method == 'POST':
+        track_id = request.form.get('track_id', '')
+        level_id = request.form.get('level_id', '')
+        unit_id = request.form.get('unit_id', '')
+        title_ar = request.form.get('title_ar', '').strip()
+        title_en = request.form.get('title_en', '').strip()
+        chapter_number = safe_int(request.form.get('chapter_number', 1), 1)
+        video_url = request.form.get('video_url', '').strip() or None
+        activity_url = request.form.get('activity_url', '').strip() or None
+        content_html = request.form.get('content_html', '').strip()
+
+        if not track_id or not level_id or not unit_id or not title_ar:
+            flash('يرجى ملء جميع الحقول المطلوبة', 'error')
+            tracks = Track.query.order_by(Track.sort_order).all()
+            return render_template('admin/library_lesson_form.html', tracks=tracks)
+
+        # Handle PDF upload
+        pdf_file = None
+        uploaded = request.files.get('pdf_file')
+        if uploaded and uploaded.filename:
+            saved = save_upload(uploaded, 'lessons', {'pdf'})
+            if saved:
+                pdf_file = saved
+            else:
+                flash('فشل رفع ملف PDF. تأكد من النوع والحجم (حد أقصى 50 ميجا).', 'error')
+
+        lesson = LessonContent(
+            track_id=track_id, level_id=level_id, unit_id=unit_id,
+            title_ar=title_ar, title_en=title_en,
+            chapter_number=chapter_number,
+            content_html=content_html,
+            pdf_file=pdf_file, video_url=video_url, activity_url=activity_url,
+        )
+        db.session.add(lesson)
+        db.session.commit()
+        flash('تم إنشاء الدرس بنجاح', 'success')
+        return redirect(url_for('admin.library_unit',
+                                track_id=track_id, level_id=level_id, unit_id=unit_id))
+
+    tracks = Track.query.order_by(Track.sort_order).all()
+    # Pre-fill from query params
+    pre_track = request.args.get('track_id', '')
+    pre_level = request.args.get('level_id', '')
+    pre_unit = request.args.get('unit_id', '')
+    return render_template('admin/library_lesson_form.html', tracks=tracks,
+                           pre_track=pre_track, pre_level=pre_level, pre_unit=pre_unit)
+
+
+@bp.route('/library/lesson/<int:lesson_id>', methods=['GET', 'POST'])
+@admin_required
+def library_lesson_edit(lesson_id):
+    lesson = db.session.get(LessonContent, lesson_id)
+    if not lesson:
+        flash('الدرس غير موجود', 'error')
+        return redirect(url_for('admin.library'))
+
+    if request.method == 'POST':
+        lesson.title_ar = request.form.get('title_ar', lesson.title_ar).strip()
+        lesson.title_en = request.form.get('title_en', lesson.title_en).strip()
+        lesson.chapter_number = safe_int(request.form.get('chapter_number', 1), 1)
+        lesson.video_url = request.form.get('video_url', '').strip() or None
+        lesson.activity_url = request.form.get('activity_url', '').strip() or None
+        lesson.content_html = request.form.get('content_html', '').strip()
+
+        # Handle PDF upload (replace if new)
+        uploaded = request.files.get('pdf_file')
+        if uploaded and uploaded.filename:
+            saved = save_upload(uploaded, 'lessons', {'pdf'})
+            if saved:
+                # Delete old PDF
+                if lesson.pdf_file:
+                    delete_upload(lesson.pdf_file, 'lessons')
+                lesson.pdf_file = saved
+            else:
+                flash('فشل رفع ملف PDF.', 'error')
+
+        db.session.commit()
+        flash('تم تحديث الدرس بنجاح', 'success')
+        return redirect(url_for('admin.library_unit',
+                                track_id=lesson.track_id, level_id=lesson.level_id,
+                                unit_id=lesson.unit_id))
+
+    tracks = Track.query.order_by(Track.sort_order).all()
+    return render_template('admin/library_lesson_form.html', lesson=lesson, tracks=tracks)
+
+
+@bp.route('/library/lesson/<int:lesson_id>/delete', methods=['POST'])
+@admin_required
+def library_lesson_delete(lesson_id):
+    lesson = db.session.get(LessonContent, lesson_id)
+    if lesson:
+        track_id, level_id, unit_id = lesson.track_id, lesson.level_id, lesson.unit_id
+        if lesson.pdf_file:
+            delete_upload(lesson.pdf_file, 'lessons')
+        db.session.delete(lesson)
+        db.session.commit()
+        flash('تم حذف الدرس', 'success')
+        return redirect(url_for('admin.library_unit',
+                                track_id=track_id, level_id=level_id, unit_id=unit_id))
+    return redirect(url_for('admin.library'))

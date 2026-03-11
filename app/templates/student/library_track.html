@@ -1,0 +1,192 @@
+{% extends "base_student.html" %}
+
+{% block dashboard_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/student.css') }}">
+<style>
+/* ========================================================
+   Library Track — Light Theme (sv2 compatible)
+   ======================================================== */
+.lib-breadcrumb {
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 1.2rem; font-size: 0.85rem;
+    color: #9b7aab; flex-wrap: wrap;
+}
+.lib-breadcrumb a { color: #7c5c8f; text-decoration: none; font-weight: 600; }
+.lib-breadcrumb a:hover { color: #640D5F; }
+
+/* Track header banner */
+.lib-track-header {
+    display: flex; align-items: center; gap: 1.2rem;
+    margin-bottom: 1.8rem;
+    background: linear-gradient(135deg, #640D5F 0%, #8B1A85 50%, #4a0945 100%);
+    border-radius: 20px; padding: 1.5rem 2rem; color: #fff;
+    box-shadow: 0 4px 20px rgba(100,13,95,0.25);
+}
+.lib-track-icon {
+    width: 56px; height: 56px; border-radius: 16px;
+    background: rgba(255,255,255,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.8rem; flex-shrink: 0;
+}
+.lib-track-title { font-size: 1.35rem; font-weight: 800; color: #fff !important; margin: 0; }
+.lib-track-sub { font-size: 0.85rem; color: rgba(255,255,255,0.8); margin: 0.25rem 0 0; }
+
+/* Level sections */
+.lib-level-section { margin-bottom: 1.5rem; }
+.lib-level-header {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.65rem 1.1rem; margin-bottom: 0.9rem;
+    background: linear-gradient(135deg, #f3e8f9 0%, #ede4f3 100%);
+    border-radius: 14px;
+    border-right: 4px solid #8B1A85;
+}
+.lib-level-icon { font-size: 1.2rem; }
+.lib-level-name { font-size: 0.95rem; font-weight: 700; color: #50245F !important; }
+
+/* Units grid — always 3 columns */
+.lib-units-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.9rem;
+}
+
+/* Unit card */
+.lib-unit-card {
+    background: linear-gradient(135deg, #2a0f4a 0%, #4a1860 60%, #3d1552 100%);
+    border-radius: 14px; padding: 1.1rem 1.2rem;
+    border: 1px solid rgba(139,26,133,0.25);
+    box-shadow: 0 3px 12px rgba(42,15,74,0.15);
+    text-decoration: none; color: #fff;
+    display: flex; flex-direction: column; gap: 0.5rem;
+    transition: transform 0.25s, box-shadow 0.25s, border-color 0.25s;
+    min-height: 130px;
+}
+.lib-unit-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 24px rgba(42,15,74,0.25);
+    border-color: #8B1A85;
+    color: #fff;
+}
+.lib-unit-name {
+    font-size: 0.92rem; font-weight: 700; line-height: 1.35;
+    color: #fff !important;
+}
+.lib-unit-meta {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.78rem; color: rgba(255,255,255,0.65);
+}
+.lib-unit-progress { margin-top: auto; padding-top: 0.3rem; }
+.lib-progress-row {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.3rem;
+}
+.lib-progress-label { font-size: 0.72rem; color: rgba(255,255,255,0.5); }
+.lib-unit-pct { font-size: 0.75rem; font-weight: 800; color: #FFD700; }
+.lib-unit-bar {
+    height: 5px; background: rgba(255,255,255,0.15);
+    border-radius: 10px; overflow: hidden;
+}
+.lib-unit-fill {
+    height: 100%; border-radius: 10px;
+    background: linear-gradient(90deg, #EB5B00, #FFD700);
+    transition: width 1s ease;
+    min-width: 0;
+}
+
+.lib-empty {
+    text-align: center; padding: 3rem;
+    color: #9b7aab; font-size: 0.95rem;
+    background: #fff; border-radius: 14px;
+    border: 1px solid #ede4f3;
+}
+
+@media (max-width: 900px) {
+    .lib-units-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+    .lib-units-grid { grid-template-columns: 1fr; }
+    .lib-track-header { padding: 1rem 1.2rem; flex-direction: column; text-align: center; }
+}
+</style>
+{% endblock %}
+
+{% block topbar_title %}{{ track.name_ar }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<div class="lib-breadcrumb">
+    <a href="{{ url_for('student.library') }}">المكتبة</a>
+    <span>/</span>
+    <span style="color:#50245F;font-weight:600;">{{ track.name_ar }}</span>
+</div>
+
+<!-- Track Header -->
+<div class="lib-track-header">
+    {% if track.icon %}
+    <div class="lib-track-icon">{{ track.icon }}</div>
+    {% endif %}
+    <div>
+        <h1 class="lib-track-title">{{ track.name_ar }}</h1>
+        {% if track.description_ar %}
+        <p class="lib-track-sub">{{ track.description_ar }}</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if level_data %}
+{% for ld in level_data %}
+<div class="lib-level-section">
+    <div class="lib-level-header">
+        <span class="lib-level-icon">{{ ld.level.icon }}</span>
+        <span class="lib-level-name">{{ ld.level.name_ar }}</span>
+    </div>
+
+    {% if ld.units %}
+    <div class="lib-units-grid">
+        {% for ud in ld.units %}
+        <a href="{{ url_for('student.library_unit', track_id=track.id, level_id=ld.level.id, unit_id=ud.unit.id) }}"
+           class="lib-unit-card gsap-card">
+            <div class="lib-unit-name">{{ ud.unit.name }}</div>
+            <div class="lib-unit-meta">
+                <span>📚 {{ ud.total }} دروس</span>
+                {% if ud.completed > 0 %}
+                <span style="color:#4ade80;font-weight:600;">✓ {{ ud.completed }} مكتمل</span>
+                {% endif %}
+            </div>
+            <div class="lib-unit-progress">
+                <div class="lib-progress-row">
+                    <span class="lib-progress-label">التقدم</span>
+                    <span class="lib-unit-pct">{{ ud.pct }}%</span>
+                </div>
+                <div class="lib-unit-bar">
+                    <div class="lib-unit-fill" style="width:{{ ud.pct }}%;"></div>
+                </div>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="lib-empty">لا توجد وحدات في هذا المستوى</div>
+    {% endif %}
+</div>
+{% endfor %}
+{% else %}
+<div class="lib-empty" style="padding:4rem;">
+    <div style="font-size:3rem;margin-bottom:1rem;">📚</div>
+    <p>لا توجد مستويات في هذا المسار بعد</p>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block dashboard_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof gsap !== 'undefined') {
+        gsap.from('.gsap-card', {
+            y: 20, opacity: 0, duration: 0.4,
+            stagger: 0.06, ease: 'power2.out'
+        });
+    }
+});
+</script>
+{% endblock %}
